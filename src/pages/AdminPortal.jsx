@@ -1,0 +1,264 @@
+import { useState } from 'react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, Leaf, TrendingUp, DollarSign, Star, Activity } from 'lucide-react';
+import MetricCard from '../components/shared/MetricCard';
+import StatusBadge from '../components/shared/StatusBadge';
+import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
+import StarRating from '../components/shared/StarRating';
+import { MOCK_JOBS, MOCK_PROVIDERS_ADMIN, MOCK_PAYMENTS, MOCK_REVIEWS } from '../lib/mockData';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { toast } from 'sonner';
+
+const NAV = [
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'providers', label: 'Providers', icon: Users },
+  { key: 'jobs', label: 'Jobs', icon: Briefcase },
+  { key: 'payments', label: 'Payments', icon: CreditCard },
+  { key: 'reviews', label: 'Reviews', icon: Star },
+];
+
+const WEEKLY_DATA = [
+  { day: 'Mon', jobs: 4, gmv: 220 },
+  { day: 'Tue', jobs: 7, gmv: 385 },
+  { day: 'Wed', jobs: 5, gmv: 275 },
+  { day: 'Thu', jobs: 9, gmv: 495 },
+  { day: 'Fri', jobs: 12, gmv: 660 },
+  { day: 'Sat', jobs: 15, gmv: 825 },
+  { day: 'Sun', jobs: 6, gmv: 330 },
+];
+
+export default function AdminPortal() {
+  const [tab, setTab] = useState('dashboard');
+  const [providers, setProviders] = useState(MOCK_PROVIDERS_ADMIN);
+  const [jobs, setJobs] = useState(MOCK_JOBS);
+  const [payments, setPayments] = useState(MOCK_PAYMENTS);
+
+  const activeProviders = providers.filter(p => p.status === 'active').length;
+  const pendingProviders = providers.filter(p => p.status === 'pending_approval').length;
+  const totalGMV = MOCK_PAYMENTS.reduce((s, p) => s + p.amount, 0);
+  const platformRevenue = MOCK_PAYMENTS.reduce((s, p) => s + p.platform_fee, 0);
+  const weekJobs = jobs.filter(j => j.status !== 'cancelled').length;
+  const avgJobValue = totalGMV / (MOCK_PAYMENTS.length || 1);
+
+  const handleApprove = (provider) => {
+    setProviders(prev => prev.map(p => p.id === provider.id ? { ...p, status: 'active' } : p));
+    toast.success(`${provider.business_name} approved and activated.`);
+  };
+
+  const handleReject = (provider) => {
+    setProviders(prev => prev.map(p => p.id === provider.id ? { ...p, status: 'suspended' } : p));
+    toast.error(`${provider.business_name} has been rejected.`);
+  };
+
+  const handleSuspend = (p) => {
+    setProviders(prev => prev.map(x => x.id === p.id ? { ...x, status: 'suspended' } : x));
+    toast.success(`${p.business_name} suspended.`);
+  };
+
+  const handleRefund = (payment) => {
+    setPayments(prev => prev.map(p => p.id === payment.id ? { ...p, status: 'refunded' } : p));
+    toast.success(`Payment refunded for job ${payment.job_id}.`);
+  };
+
+  const handleCancelJob = (job) => {
+    setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'cancelled' } : j));
+    toast.success('Job cancelled.');
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="bg-card border-b border-border sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <Leaf size={16} className="text-primary-foreground" />
+          </div>
+          <span className="font-display font-bold text-lg text-foreground">GreenCare</span>
+          <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full ml-1">Admin</span>
+          <div className="ml-auto flex items-center gap-2">
+            <Shield size={16} className="text-purple-600" />
+            <span className="text-sm font-medium text-foreground">Super Admin</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+        {tab === 'dashboard' && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Platform Overview</h2>
+              <p className="text-sm text-muted-foreground">Real-time metrics across the marketplace</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <MetricCard title="Active Providers" value={activeProviders} icon={Users} />
+              <MetricCard title="Pending Approval" value={pendingProviders} icon={Activity} color="text-amber-600" bgColor="bg-amber-100" />
+              <MetricCard title="Total GMV" value={`$${totalGMV.toFixed(0)}`} icon={DollarSign} color="text-blue-600" bgColor="bg-blue-100" />
+              <MetricCard title="Platform Revenue" value={`$${platformRevenue.toFixed(0)}`} icon={TrendingUp} color="text-purple-600" bgColor="bg-purple-100" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <MetricCard title="Jobs This Week" value={weekJobs} icon={Briefcase} />
+              <MetricCard title="Avg Job Value" value={`$${avgJobValue.toFixed(0)}`} icon={Star} color="text-amber-600" bgColor="bg-amber-100" />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="bg-card border border-border rounded-xl p-5">
+                <h3 className="text-sm font-bold text-foreground mb-4">Jobs This Week</h3>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={WEEKLY_DATA}>
+                    <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <Tooltip />
+                    <Bar dataKey="jobs" fill="hsl(142,60%,28%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-5">
+                <h3 className="text-sm font-bold text-foreground mb-4">Daily GMV ($)</h3>
+                <ResponsiveContainer width="100%" height={160}>
+                  <LineChart data={WEEKLY_DATA}>
+                    <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
+                    <Tooltip formatter={v => [`$${v}`, 'GMV']} />
+                    <Line type="monotone" dataKey="gmv" stroke="hsl(200,70%,45%)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {pendingProviders > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+                <h3 className="text-sm font-bold text-amber-800 mb-3">{pendingProviders} Provider{pendingProviders > 1 ? 's' : ''} Awaiting Approval</h3>
+                {providers.filter(p => p.status === 'pending_approval').map(p => (
+                  <ProviderApprovalRow key={p.id} provider={p} onApprove={handleApprove} onReject={handleReject} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'providers' && (
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-5">Providers</h2>
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              {providers.map((p, i) => (
+                <div key={p.id} className={`flex items-center gap-3 px-5 py-4 ${i < providers.length - 1 ? 'border-b border-border' : ''}`}>
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-primary">{p.name?.[0]}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{p.business_name}</p>
+                    <p className="text-xs text-muted-foreground">{p.user_email}</p>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>⭐ {p.avg_rating || '—'}</span>
+                    <span>{p.total_jobs_completed} jobs</span>
+                  </div>
+                  <StatusBadge status={p.status} />
+                  <div className="flex gap-1">
+                    {p.status === 'pending_approval' && (
+                      <>
+                        <button onClick={() => handleApprove(p)} className="px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors">Approve</button>
+                        <button onClick={() => handleReject(p)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Reject</button>
+                      </>
+                    )}
+                    {p.status === 'active' && (
+                      <button onClick={() => handleSuspend(p)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Suspend</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'jobs' && (
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-5">All Jobs</h2>
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              {jobs.map((j, i) => (
+                <div key={j.id} className={`flex items-center gap-3 px-5 py-4 ${i < jobs.length - 1 ? 'border-b border-border' : ''}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{j.service_name}</p>
+                    <p className="text-xs text-muted-foreground">{j.customer_name} → {j.provider_name || 'Unassigned'}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(j.scheduled_date).toLocaleDateString()} · {j.zip_code}</p>
+                  </div>
+                  <StatusBadge status={j.status} />
+                  {j.quoted_price && <span className="text-sm font-bold text-foreground hidden sm:block">${j.quoted_price}</span>}
+                  {!['completed', 'cancelled'].includes(j.status) && (
+                    <button onClick={() => handleCancelJob(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'payments' && (
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-5">Payments</h2>
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              {payments.map((p, i) => (
+                <div key={p.id} className={`flex items-center gap-3 px-5 py-4 ${i < payments.length - 1 ? 'border-b border-border' : ''}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">Job #{p.job_id}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right mr-3 hidden sm:block">
+                    <p className="text-xs text-muted-foreground">Platform: <span className="font-semibold text-foreground">${p.platform_fee?.toFixed(2)}</span></p>
+                    <p className="text-xs text-muted-foreground">Provider: <span className="font-semibold text-foreground">${p.payout_amount?.toFixed(2)}</span></p>
+                  </div>
+                  <span className="text-sm font-bold text-foreground">${p.amount?.toFixed(2)}</span>
+                  <StatusBadge status={p.status} />
+                  {p.status === 'captured' && (
+                    <button onClick={() => handleRefund(p)} className="px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">Refund</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'reviews' && (
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-5">Reviews</h2>
+            <div className="space-y-3">
+              {MOCK_REVIEWS.map(r => (
+                <div key={r.id} className="bg-card border border-border rounded-xl p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-semibold text-foreground">{r.customer_name}</p>
+                        <span className="text-xs text-muted-foreground">→</span>
+                        <p className="text-sm text-muted-foreground">Provider #{r.provider_id}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground italic mt-1">"{r.comment}"</p>
+                    </div>
+                    <StarRating rating={r.rating} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Bottom Nav */}
+      <nav className="bg-card border-t border-border sticky bottom-0 z-30">
+        <div className="max-w-5xl mx-auto flex">
+          {NAV.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
+                tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Icon size={18} />
+              <span className="hidden sm:block">{label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+    </div>
+  );
+}

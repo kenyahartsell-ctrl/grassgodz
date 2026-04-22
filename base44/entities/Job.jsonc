@@ -1,0 +1,83 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "CustomerProfile ID"
+    },
+    "customer_email": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "provider_id": {
+      "type": "string",
+      "description": "ProviderProfile ID, nullable until claimed"
+    },
+    "provider_email": {
+      "type": "string"
+    },
+    "provider_name": {
+      "type": "string"
+    },
+    "service_id": {
+      "type": "string"
+    },
+    "service_name": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "zip_code": {
+      "type": "string"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "requested",
+        "quoted",
+        "accepted",
+        "scheduled",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "requested"
+    },
+    "customer_notes": {
+      "type": "string"
+    },
+    "provider_notes": {
+      "type": "string"
+    },
+    "quoted_price": {
+      "type": "number"
+    },
+    "final_price": {
+      "type": "number"
+    },
+    "platform_fee": {
+      "type": "number"
+    },
+    "provider_payout": {
+      "type": "number"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "customer_id",
+    "service_id",
+    "address",
+    "zip_code"
+  ]
+}

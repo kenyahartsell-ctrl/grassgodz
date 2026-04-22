@@ -1,0 +1,197 @@
+// Mock data for "acting as" demo mode
+
+export const MOCK_SERVICES = [
+  { id: 's1', name: 'Lawn Mowing', description: 'Full lawn mowing including edging and cleanup', base_price_estimate: 45, icon: 'Scissors' },
+  { id: 's2', name: 'Leaf Removal', description: 'Seasonal leaf blowing, raking, and removal', base_price_estimate: 80, icon: 'Wind' },
+  { id: 's3', name: 'Hedge Trimming', description: 'Precision hedge and shrub trimming', base_price_estimate: 65, icon: 'Crop' },
+  { id: 's4', name: 'Fertilization', description: 'Lawn fertilization and weed treatment', base_price_estimate: 90, icon: 'Sprout' },
+  { id: 's5', name: 'Aeration', description: 'Core aeration for healthier grass growth', base_price_estimate: 110, icon: 'CircleDot' },
+  { id: 's6', name: 'Snow Removal', description: 'Driveway and walkway snow removal', base_price_estimate: 75, icon: 'Snowflake' },
+];
+
+export const MOCK_CUSTOMER = {
+  id: 'c1',
+  user_email: 'sarah.johnson@example.com',
+  name: 'Sarah Johnson',
+  phone: '(555) 234-5678',
+  service_address: '742 Evergreen Terrace, Springfield, IL',
+  zip_code: '62701',
+};
+
+export const MOCK_PROVIDER = {
+  id: 'p1',
+  user_email: 'mike@greenthumbpro.com',
+  name: 'Mike Torres',
+  business_name: 'Green Thumb Pro',
+  bio: 'Family-owned lawn care business with over 10 years of experience serving the greater Springfield area.',
+  years_experience: 10,
+  avg_rating: 4.8,
+  total_jobs_completed: 312,
+  service_zip_codes: ['62701', '62702', '62703'],
+  services_offered: ['s1', 's2', 's3', 's4'],
+  status: 'active',
+  onboarding_complete: true,
+};
+
+export const MOCK_JOBS = [
+  {
+    id: 'j1',
+    customer_id: 'c1',
+    customer_name: 'Sarah Johnson',
+    customer_email: 'sarah.johnson@example.com',
+    provider_id: 'p1',
+    provider_name: 'Green Thumb Pro',
+    service_id: 's1',
+    service_name: 'Lawn Mowing',
+    address: '742 Evergreen Terrace, Springfield, IL',
+    zip_code: '62701',
+    scheduled_date: '2026-04-28',
+    status: 'scheduled',
+    quoted_price: 55,
+    final_price: 55,
+    platform_fee: 13.75,
+    provider_payout: 41.25,
+    customer_notes: 'Please be careful around the rose bushes near the fence.',
+    created_at: '2026-04-20T10:00:00Z',
+  },
+  {
+    id: 'j2',
+    customer_id: 'c1',
+    customer_name: 'Sarah Johnson',
+    customer_email: 'sarah.johnson@example.com',
+    provider_id: null,
+    service_id: 's2',
+    service_name: 'Leaf Removal',
+    address: '742 Evergreen Terrace, Springfield, IL',
+    zip_code: '62701',
+    scheduled_date: '2026-05-02',
+    status: 'requested',
+    customer_notes: 'Large oak tree in the back yard sheds a lot.',
+    created_at: '2026-04-21T14:00:00Z',
+  },
+  {
+    id: 'j3',
+    customer_id: 'c1',
+    customer_name: 'Sarah Johnson',
+    customer_email: 'sarah.johnson@example.com',
+    provider_id: 'p1',
+    provider_name: 'Green Thumb Pro',
+    service_id: 's1',
+    service_name: 'Lawn Mowing',
+    address: '742 Evergreen Terrace, Springfield, IL',
+    zip_code: '62701',
+    scheduled_date: '2026-04-01',
+    status: 'completed',
+    quoted_price: 55,
+    final_price: 55,
+    platform_fee: 13.75,
+    provider_payout: 41.25,
+    completed_at: '2026-04-01T16:30:00Z',
+    created_at: '2026-03-28T09:00:00Z',
+  },
+  {
+    id: 'j4',
+    customer_id: 'c2',
+    customer_name: 'Bob Williams',
+    customer_email: 'bob@example.com',
+    provider_id: null,
+    service_id: 's3',
+    service_name: 'Hedge Trimming',
+    address: '123 Maple St, Springfield, IL',
+    zip_code: '62701',
+    scheduled_date: '2026-04-30',
+    status: 'requested',
+    customer_notes: 'Several large hedges on the property perimeter.',
+    created_at: '2026-04-21T11:00:00Z',
+  },
+  {
+    id: 'j5',
+    customer_id: 'c3',
+    customer_name: 'Alice Chen',
+    customer_email: 'alice@example.com',
+    provider_id: null,
+    service_id: 's1',
+    service_name: 'Lawn Mowing',
+    address: '456 Oak Ave, Springfield, IL',
+    zip_code: '62702',
+    scheduled_date: '2026-04-29',
+    status: 'quoted',
+    customer_notes: 'Small front and back yard.',
+    created_at: '2026-04-20T15:00:00Z',
+  },
+];
+
+export const MOCK_QUOTES = [
+  {
+    id: 'q1',
+    job_id: 'j2',
+    provider_id: 'p2',
+    provider_name: 'Ace Lawn Services',
+    price: 85,
+    message: "I can handle this with my team. We'll bag and haul away all leaves.",
+    status: 'pending',
+    expires_at: '2026-04-25T23:59:00Z',
+  },
+  {
+    id: 'q2',
+    job_id: 'j2',
+    provider_id: 'p3',
+    provider_name: 'Springfield Yard Works',
+    price: 75,
+    message: 'Happy to help! I have the right equipment for large trees.',
+    status: 'pending',
+    expires_at: '2026-04-25T23:59:00Z',
+  },
+];
+
+export const MOCK_REVIEWS = [
+  {
+    id: 'r1',
+    job_id: 'j3',
+    customer_id: 'c1',
+    customer_name: 'Sarah Johnson',
+    provider_id: 'p1',
+    rating: 5,
+    comment: 'Mike did a fantastic job! The lawn looks perfect. Very professional and on time.',
+    created_at: '2026-04-01T18:00:00Z',
+  },
+  {
+    id: 'r2',
+    job_id: 'jOld1',
+    customer_id: 'c2',
+    customer_name: 'Bob Williams',
+    provider_id: 'p1',
+    rating: 5,
+    comment: 'Excellent service, will definitely book again.',
+    created_at: '2026-03-15T12:00:00Z',
+  },
+  {
+    id: 'r3',
+    job_id: 'jOld2',
+    customer_id: 'c3',
+    customer_name: 'Alice Chen',
+    provider_id: 'p1',
+    rating: 4,
+    comment: 'Good work but arrived 30 minutes late.',
+    created_at: '2026-03-01T10:00:00Z',
+  },
+];
+
+export const MOCK_PROVIDERS_ADMIN = [
+  { ...MOCK_PROVIDER, id: 'p1' },
+  { id: 'p2', name: 'Carlos Rivera', business_name: 'Ace Lawn Services', status: 'active', avg_rating: 4.6, total_jobs_completed: 89, years_experience: 5, user_email: 'carlos@acelawn.com' },
+  { id: 'p3', name: 'Jenny Park', business_name: 'Springfield Yard Works', status: 'pending_approval', avg_rating: 0, total_jobs_completed: 0, years_experience: 3, user_email: 'jenny@syw.com' },
+  { id: 'p4', name: 'Dave Monroe', business_name: 'Monroe Outdoors', status: 'pending_approval', avg_rating: 0, total_jobs_completed: 0, years_experience: 7, user_email: 'dave@monroe.com' },
+];
+
+export const MOCK_PAYMENTS = [
+  { id: 'pay1', job_id: 'j1', amount: 55, platform_fee: 13.75, payout_amount: 41.25, status: 'authorized', created_at: '2026-04-20T10:30:00Z' },
+  { id: 'pay2', job_id: 'j3', amount: 55, platform_fee: 13.75, payout_amount: 41.25, status: 'captured', created_at: '2026-04-01T16:30:00Z' },
+];
+
+export const MOCK_EARNINGS = [
+  { month: 'Jan', earnings: 820 },
+  { month: 'Feb', earnings: 940 },
+  { month: 'Mar', earnings: 1120 },
+  { month: 'Apr', earnings: 780 },
+];

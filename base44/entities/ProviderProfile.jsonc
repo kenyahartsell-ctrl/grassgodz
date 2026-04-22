@@ -1,0 +1,68 @@
+{
+  "name": "ProviderProfile",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "business_name": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "years_experience": {
+      "type": "number"
+    },
+    "stripe_connect_account_id": {
+      "type": "string"
+    },
+    "onboarding_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "service_zip_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "services_offered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of service IDs"
+    },
+    "avg_rating": {
+      "type": "number",
+      "default": 0
+    },
+    "total_jobs_completed": {
+      "type": "number",
+      "default": 0
+    },
+    "profile_image_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_approval",
+        "active",
+        "paused",
+        "suspended"
+      ],
+      "default": "pending_approval"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "CustomerProfile",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user"
+    },
+    "name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "billing_address": {
+      "type": "string"
+    },
+    "service_address": {
+      "type": "string"
+    },
+    "zip_code": {
+      "type": "string"
+    },
+    "stripe_customer_id": {
+      "type": "string"
+    },
+    "default_payment_method_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

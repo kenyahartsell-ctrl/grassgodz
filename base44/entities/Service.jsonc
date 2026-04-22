@@ -1,0 +1,29 @@
+{
+  "name": "Service",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Service name e.g. Lawn Mowing"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the service"
+    },
+    "base_price_estimate": {
+      "type": "number",
+      "description": "Base price estimate in dollars"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Icon name from lucide-react"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

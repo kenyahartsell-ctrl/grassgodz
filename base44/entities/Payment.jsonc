@@ -1,0 +1,41 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "provider_id": {
+      "type": "string"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "platform_fee": {
+      "type": "number"
+    },
+    "payout_amount": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "authorized",
+        "captured",
+        "refunded",
+        "failed"
+      ],
+      "default": "authorized"
+    }
+  },
+  "required": [
+    "job_id",
+    "amount"
+  ]
+}

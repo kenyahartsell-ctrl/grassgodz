@@ -16,7 +16,7 @@ const NAV = [
   { key: 'profile', label: 'Profile', icon: User },
 ];
 
-export default function ProviderPortal() {
+export default function ProviderPortal({ reviews = [] }) {
   const [tab, setTab] = useState('dashboard');
   const [myJobs, setMyJobs] = useState(MOCK_JOBS.filter(j => j.provider_id === 'p1'));
   const [availableJobs, setAvailableJobs] = useState(MOCK_JOBS.filter(j => !j.provider_id));
@@ -25,6 +25,12 @@ export default function ProviderPortal() {
   const inProgress = myJobs.filter(j => j.status === 'in_progress');
   const completed = myJobs.filter(j => j.status === 'completed');
   const totalEarnings = completed.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
+
+  // Live average rating from reviews
+  const myReviews = reviews.filter(r => r.provider_id === 'p1');
+  const avgRating = myReviews.length > 0
+    ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
+    : MOCK_PROVIDER.avg_rating;
 
   const handleSubmitQuote = (job, quoteData) => {
     toast.success(`Quote of $${quoteData.price} submitted for ${job.service_name}!`);
@@ -85,7 +91,7 @@ export default function ProviderPortal() {
               <MetricCard title="Scheduled" value={scheduled.length} icon={CalendarDays} />
               <MetricCard title="In Progress" value={inProgress.length} icon={TrendingUp} color="text-orange-600" bgColor="bg-orange-100" />
               <MetricCard title="Total Completed" value={MOCK_PROVIDER.total_jobs_completed} icon={Star} color="text-amber-600" bgColor="bg-amber-100" />
-              <MetricCard title="Avg Rating" value={MOCK_PROVIDER.avg_rating} icon={Star} color="text-amber-500" bgColor="bg-amber-50" />
+              <MetricCard title="Avg Rating" value={avgRating} icon={Star} color="text-amber-500" bgColor="bg-amber-50" />
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5">
@@ -223,7 +229,7 @@ export default function ProviderPortal() {
                 <div>
                   <p className="font-bold text-foreground">{MOCK_PROVIDER.business_name}</p>
                   <p className="text-sm text-muted-foreground">{MOCK_PROVIDER.name}</p>
-                  <StarRating rating={MOCK_PROVIDER.avg_rating} showValue />
+                  <StarRating rating={Number(avgRating)} showValue />
                 </div>
               </div>
               <hr className="border-border mb-4" />
@@ -247,18 +253,31 @@ export default function ProviderPortal() {
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5">
-              <h3 className="text-sm font-bold text-foreground mb-3">Reviews ({MOCK_REVIEWS.filter(r => r.provider_id === 'p1').length})</h3>
-              <div className="space-y-3">
-                {MOCK_REVIEWS.filter(r => r.provider_id === 'p1').map(r => (
-                  <div key={r.id} className="border-b border-border last:border-0 pb-3 last:pb-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-foreground">{r.customer_name}</span>
-                      <StarRating rating={r.rating} size={12} />
-                    </div>
-                    <p className="text-xs text-muted-foreground">{r.comment}</p>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-foreground">Reviews ({myReviews.length})</h3>
+                {myReviews.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <StarRating rating={Number(avgRating)} size={13} />
+                    <span className="text-sm font-bold text-foreground">{avgRating}</span>
                   </div>
-                ))}
+                )}
               </div>
+              {myReviews.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No reviews yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {myReviews.map(r => (
+                    <div key={r.id} className="border-b border-border last:border-0 pb-3 last:pb-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-foreground">{r.customer_name}</span>
+                        <StarRating rating={r.rating} size={12} />
+                      </div>
+                      {r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}
+                      <p className="text-xs text-muted-foreground/60 mt-0.5">{new Date(r.created_at).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

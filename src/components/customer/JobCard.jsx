@@ -1,7 +1,7 @@
 import { Calendar, MapPin, DollarSign } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
 
-export default function JobCard({ job, onViewQuotes, onReview }) {
+export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
   return (
     <div className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-3">
@@ -51,13 +51,18 @@ export default function JobCard({ job, onViewQuotes, onReview }) {
             Review Quotes
           </button>
         )}
-        {job.status === 'completed' && onReview && (
+        {job.status === 'completed' && !reviewed && onReview && (
           <button
             onClick={() => onReview(job)}
             className="text-xs font-medium text-amber-700 border border-amber-200 bg-amber-50 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors"
           >
             Leave Review
           </button>
+        )}
+        {job.status === 'completed' && reviewed && (
+          <span className="text-xs font-medium text-green-700 border border-green-200 bg-green-50 rounded-lg px-3 py-1.5">
+            ✓ Reviewed
+          </span>
         )}
       </div>
     </div>

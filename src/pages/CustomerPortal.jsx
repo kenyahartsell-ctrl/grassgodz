@@ -14,12 +14,15 @@ const NAV = [
   { key: 'profile', label: 'Account', icon: User },
 ];
 
-export default function CustomerPortal() {
+export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
   const [tab, setTab] = useState('home');
   const [selectedService, setSelectedService] = useState(null);
   const [selectedJobForQuotes, setSelectedJobForQuotes] = useState(null);
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
   const [jobs, setJobs] = useState(MOCK_JOBS.filter(j => j.customer_id === 'c1'));
+
+  // Track which job IDs have already been reviewed
+  const reviewedJobIds = new Set(reviews.filter(r => r.customer_id === 'c1').map(r => r.job_id));
 
   const upcomingJobs = jobs.filter(j => ['scheduled', 'accepted', 'in_progress', 'quoted', 'requested'].includes(j.status));
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
@@ -50,6 +53,7 @@ export default function CustomerPortal() {
   };
 
   const handleReview = (data) => {
+    onReviewSubmit({ ...data, customer_id: 'c1', customer_name: MOCK_CUSTOMER.name });
     toast.success('Review submitted! Thank you for your feedback.');
   };
 
@@ -108,7 +112,7 @@ export default function CustomerPortal() {
                 <h2 className="text-base font-bold text-foreground mb-3">Upcoming Jobs</h2>
                 <div className="space-y-3">
                   {upcomingJobs.slice(0, 2).map(j => (
-                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={setSelectedJobForReview} />
+                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} />
                   ))}
                 </div>
                 {upcomingJobs.length > 2 && (
@@ -131,7 +135,7 @@ export default function CustomerPortal() {
                 </div>
                 <div className="space-y-3">
                   {upcomingJobs.map(j => (
-                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={setSelectedJobForReview} />
+                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} />
                   ))}
                 </div>
               </div>
@@ -145,7 +149,7 @@ export default function CustomerPortal() {
                 </div>
                 <div className="space-y-3">
                   {pastJobs.map(j => (
-                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={setSelectedJobForReview} />
+                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} reviewed={reviewedJobIds.has(j.id)} />
                   ))}
                 </div>
               </div>

@@ -4,7 +4,7 @@ import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
 import StarRating from '../components/shared/StarRating';
-import { MOCK_JOBS, MOCK_PROVIDERS_ADMIN, MOCK_PAYMENTS, MOCK_REVIEWS } from '../lib/mockData';
+import { MOCK_JOBS, MOCK_PROVIDERS_ADMIN, MOCK_PAYMENTS } from '../lib/mockData';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { toast } from 'sonner';
 
@@ -26,7 +26,7 @@ const WEEKLY_DATA = [
   { day: 'Sun', jobs: 6, gmv: 330 },
 ];
 
-export default function AdminPortal() {
+export default function AdminPortal({ reviews = [] }) {
   const [tab, setTab] = useState('dashboard');
   const [providers, setProviders] = useState(MOCK_PROVIDERS_ADMIN);
   const [jobs, setJobs] = useState(MOCK_JOBS);
@@ -222,7 +222,7 @@ export default function AdminPortal() {
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">Reviews</h2>
             <div className="space-y-3">
-              {MOCK_REVIEWS.map(r => (
+              {reviews.map(r => (
                 <div key={r.id} className="bg-card border border-border rounded-xl p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>

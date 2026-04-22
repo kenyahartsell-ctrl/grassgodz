@@ -11,16 +11,22 @@ import ProviderPortal from '@/pages/ProviderPortal';
 import AdminPortal from '@/pages/AdminPortal';
 import RoleSwitcher from '@/components/RoleSwitcher';
 import { Toaster as Sonner } from 'sonner';
+import { MOCK_REVIEWS } from '@/lib/mockData';
 
 function MarketplaceApp() {
   const [role, setRole] = useState('customer');
+  const [reviews, setReviews] = useState(MOCK_REVIEWS);
+
+  const handleNewReview = (review) => {
+    setReviews(prev => [{ ...review, id: `r_${Date.now()}`, created_at: new Date().toISOString() }, ...prev]);
+  };
 
   return (
     <div className="relative">
       <RoleSwitcher currentRole={role} onRoleChange={setRole} />
-      {role === 'customer' && <CustomerPortal />}
-      {role === 'provider' && <ProviderPortal />}
-      {role === 'admin' && <AdminPortal />}
+      {role === 'customer' && <CustomerPortal reviews={reviews} onReviewSubmit={handleNewReview} />}
+      {role === 'provider' && <ProviderPortal reviews={reviews} />}
+      {role === 'admin' && <AdminPortal reviews={reviews} />}
     </div>
   );
 }

@@ -71,7 +71,7 @@ export default function AdminPortal() {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <Leaf size={16} className="text-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-lg text-foreground">GreenCare</span>
+          <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
           <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full ml-1">Admin</span>
           <div className="ml-auto flex items-center gap-2">
             <Shield size={16} className="text-purple-600" />

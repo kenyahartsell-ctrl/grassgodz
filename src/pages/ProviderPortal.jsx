@@ -50,7 +50,7 @@ export default function ProviderPortal() {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <Leaf size={16} className="text-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-lg text-foreground">GreenCare</span>
+          <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
           <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full ml-1">Provider</span>
           <div className="ml-auto flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -181,7 +181,7 @@ export default function ProviderPortal() {
 
             <div className="bg-card border border-border rounded-xl p-5 mb-5">
               <h3 className="text-sm font-bold text-foreground mb-1">Pay Structure</h3>
-              <p className="text-xs text-muted-foreground mb-3">GreenCare takes 25% platform fee on each job.</p>
+              <p className="text-xs text-muted-foreground mb-3">Grassgodz takes 25% platform fee on each job.</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-primary/5 rounded-lg p-3 text-center">
                   <p className="text-xs text-muted-foreground">You receive</p>

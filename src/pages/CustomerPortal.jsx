@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { Home, Briefcase, User, Leaf, Plus, CheckCircle2, Clock, History } from 'lucide-react';
+import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History } from 'lucide-react';
 import ServiceCard from '../components/customer/ServiceCard';
 import RequestJobModal from '../components/customer/RequestJobModal';
 import JobCard from '../components/customer/JobCard';
 import QuotesModal from '../components/customer/QuotesModal';
 import ReviewModal from '../components/customer/ReviewModal';
+import BookingModal from '../components/customer/BookingModal';
 import { MOCK_SERVICES, MOCK_JOBS, MOCK_CUSTOMER } from '../lib/mockData';
 import { toast } from 'sonner';
 
 const NAV = [
   { key: 'home', label: 'Home', icon: Home },
+  { key: 'book', label: 'Book', icon: CalendarPlus },
   { key: 'jobs', label: 'My Jobs', icon: Briefcase },
   { key: 'profile', label: 'Account', icon: User },
 ];
@@ -20,6 +22,7 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
   const [selectedJobForQuotes, setSelectedJobForQuotes] = useState(null);
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
   const [jobs, setJobs] = useState(MOCK_JOBS.filter(j => j.customer_id === 'c1'));
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
   // Track which job IDs have already been reviewed
   const reviewedJobIds = new Set(reviews.filter(r => r.customer_id === 'c1').map(r => r.job_id));
@@ -50,6 +53,21 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
     ));
     setSelectedJobForQuotes(null);
     toast.success(`Quote accepted! Card authorized for $${quote.price}. Payment will be captured on completion.`);
+  };
+
+  const handleBooking = (data) => {
+    const newJob = {
+      id: `j_${Date.now()}`,
+      customer_id: 'c1',
+      customer_name: MOCK_CUSTOMER.name,
+      customer_email: MOCK_CUSTOMER.user_email,
+      status: 'requested',
+      ...data,
+      created_at: new Date().toISOString(),
+    };
+    setJobs(prev => [newJob, ...prev]);
+    setTab('jobs');
+    toast.success('Booking request sent! Providers in your area will respond shortly.');
   };
 
   const handleReview = (data) => {
@@ -98,6 +116,12 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-bold text-foreground">Request a Service</h2>
+                <button
+                  onClick={() => setTab('book')}
+                  className="text-xs font-semibold text-primary flex items-center gap-1"
+                >
+                  <CalendarPlus size={13} /> Book a date
+                </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {MOCK_SERVICES.map(s => (
@@ -120,6 +144,36 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'book' && (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-foreground">Book a Service</h2>
+              <p className="text-sm text-muted-foreground mt-1">Choose a service and pick your preferred date & time.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 mb-6">
+              {MOCK_SERVICES.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setShowBookingModal(s)}
+                  className="group text-left bg-card border border-border rounded-xl p-4 hover:border-primary/40 hover:shadow-md transition-all flex items-center gap-4"
+                >
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <CalendarPlus className="text-primary w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground text-sm">{s.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{s.description}</p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <span className="text-sm font-bold text-primary">From ${s.base_price_estimate}</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Book now →</p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -244,6 +298,13 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
           job={selectedJobForReview}
           onClose={() => setSelectedJobForReview(null)}
           onSubmit={handleReview}
+        />
+      )}
+      {showBookingModal && (
+        <BookingModal
+          preselectedService={typeof showBookingModal === 'object' ? showBookingModal : null}
+          onClose={() => setShowBookingModal(false)}
+          onSubmit={handleBooking}
         />
       )}
     </div>

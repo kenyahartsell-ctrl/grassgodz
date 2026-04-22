@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell } from 'lucide-react';
 import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
+import BookingRequestCard from '../components/provider/BookingRequestCard';
 import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
 import { MOCK_PROVIDER, MOCK_JOBS, MOCK_REVIEWS, MOCK_EARNINGS } from '../lib/mockData';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'bookings', label: 'Bookings', icon: Bell },
   { key: 'available', label: 'Available', icon: Search },
   { key: 'myjobs', label: 'My Jobs', icon: CalendarDays },
   { key: 'earnings', label: 'Earnings', icon: DollarSign },
@@ -20,6 +22,38 @@ export default function ProviderPortal({ reviews = [] }) {
   const [tab, setTab] = useState('dashboard');
   const [myJobs, setMyJobs] = useState(MOCK_JOBS.filter(j => j.provider_id === 'p1'));
   const [availableJobs, setAvailableJobs] = useState(MOCK_JOBS.filter(j => !j.provider_id));
+  const [bookingRequests, setBookingRequests] = useState([
+    {
+      id: 'br1',
+      customer_id: 'c4',
+      customer_name: 'Tom Bradley',
+      service_id: 's1',
+      service_name: 'Lawn Mowing',
+      address: '88 Birchwood Dr, Springfield, IL',
+      zip_code: '62701',
+      scheduled_date: '2026-04-30',
+      scheduled_time: '10:00 AM',
+      status: 'requested',
+      customer_notes: 'Corner lot, extra wide. Takes about 2 hours.',
+      base_price: 65,
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'br2',
+      customer_id: 'c5',
+      customer_name: 'Nina Patel',
+      service_id: 's3',
+      service_name: 'Hedge Trimming',
+      address: '210 Sycamore Lane, Springfield, IL',
+      zip_code: '62702',
+      scheduled_date: '2026-05-03',
+      scheduled_time: '2:00 PM',
+      status: 'requested',
+      customer_notes: 'Front hedges only, about 40ft total.',
+      base_price: 70,
+      created_at: new Date().toISOString(),
+    },
+  ]);
 
   const scheduled = myJobs.filter(j => ['scheduled', 'accepted'].includes(j.status));
   const inProgress = myJobs.filter(j => j.status === 'in_progress');
@@ -31,6 +65,26 @@ export default function ProviderPortal({ reviews = [] }) {
   const avgRating = myReviews.length > 0
     ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
     : MOCK_PROVIDER.avg_rating;
+
+  const handleAcceptBooking = (booking) => {
+    const acceptedJob = {
+      ...booking,
+      id: `j_${Date.now()}`,
+      provider_id: 'p1',
+      provider_name: MOCK_PROVIDER.business_name,
+      provider_email: MOCK_PROVIDER.user_email,
+      status: 'scheduled',
+      quoted_price: booking.base_price,
+    };
+    setMyJobs(prev => [acceptedJob, ...prev]);
+    setBookingRequests(prev => prev.filter(b => b.id !== booking.id));
+    toast.success(`Booking accepted! ${booking.service_name} for ${booking.customer_name} is now scheduled.`);
+  };
+
+  const handleDeclineBooking = (booking) => {
+    setBookingRequests(prev => prev.filter(b => b.id !== booking.id));
+    toast.error(`Booking for ${booking.customer_name} declined.`);
+  };
 
   const handleSubmitQuote = (job, quoteData) => {
     toast.success(`Quote of $${quoteData.price} submitted for ${job.service_name}!`);
@@ -112,6 +166,28 @@ export default function ProviderPortal({ reviews = [] }) {
               </ResponsiveContainer>
             </div>
 
+            {bookingRequests.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-foreground">Pending Booking Requests</h3>
+                  <button onClick={() => setTab('bookings')} className="text-xs font-semibold text-primary">View all →</button>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+                  <Bell size={18} className="text-amber-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-amber-800">{bookingRequests.length} booking request{bookingRequests.length > 1 ? 's' : ''} awaiting your response</p>
+                    <p className="text-xs text-amber-700 mt-0.5">Customers have selected specific dates and times for you.</p>
+                  </div>
+                  <button
+                    onClick={() => setTab('bookings')}
+                    className="flex-shrink-0 bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-800 transition-colors"
+                  >
+                    Review
+                  </button>
+                </div>
+              </div>
+            )}
+
             {inProgress.length > 0 && (
               <div>
                 <h3 className="text-sm font-bold text-foreground mb-3">In Progress</h3>
@@ -120,6 +196,33 @@ export default function ProviderPortal({ reviews = [] }) {
                     <ProviderJobCard key={j.id} job={j} onMarkComplete={handleMarkComplete} />
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'bookings' && (
+          <div>
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-foreground">Booking Requests</h2>
+              <p className="text-sm text-muted-foreground">Customers who have scheduled a specific date and time.</p>
+            </div>
+            {bookingRequests.length === 0 ? (
+              <div className="text-center py-16">
+                <Bell className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground font-medium">No pending booking requests</p>
+                <p className="text-sm text-muted-foreground mt-1">When customers book you for a specific date, they'll appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {bookingRequests.map(b => (
+                  <BookingRequestCard
+                    key={b.id}
+                    job={b}
+                    onAccept={handleAcceptBooking}
+                    onDecline={handleDeclineBooking}
+                  />
+                ))}
               </div>
             )}
           </div>

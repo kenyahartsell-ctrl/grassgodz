@@ -5,9 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import { useState } from 'react';
 import { Toaster as Sonner } from 'sonner';
-import { MOCK_REVIEWS } from '@/lib/mockData';
 
 // Portals
 import CustomerPortal from '@/pages/CustomerPortal';
@@ -27,19 +25,15 @@ import ProviderPendingPage from '@/pages/ProviderPendingPage';
 import ProviderSuspendedPage from '@/pages/ProviderSuspendedPage';
 
 function CustomerApp() {
-  const [reviews, setReviews] = useState(MOCK_REVIEWS);
-  const handleNewReview = (review) => {
-    setReviews(prev => [{ ...review, id: `r_${Date.now()}`, created_at: new Date().toISOString() }, ...prev]);
-  };
-  return <CustomerPortal reviews={reviews} onReviewSubmit={handleNewReview} />;
+  return <CustomerPortal />;
 }
 
 function ProviderApp() {
-  return <ProviderPortal reviews={MOCK_REVIEWS} />;
+  return <ProviderPortal />;
 }
 
 function AdminApp() {
-  return <AdminPortal reviews={MOCK_REVIEWS} />;
+  return <AdminPortal />;
 }
 
 const AuthenticatedApp = () => {

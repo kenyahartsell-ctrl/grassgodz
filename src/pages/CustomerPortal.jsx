@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2 } from 'lucide-react';
 import ServiceCard from '../components/customer/ServiceCard';
 import RequestJobModal from '../components/customer/RequestJobModal';
 import JobCard from '../components/customer/JobCard';
 import QuotesModal from '../components/customer/QuotesModal';
 import ReviewModal from '../components/customer/ReviewModal';
 import BookingModal from '../components/customer/BookingModal';
-import { MOCK_SERVICES, MOCK_JOBS, MOCK_CUSTOMER } from '../lib/mockData';
+import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 const NAV = [
@@ -16,64 +16,116 @@ const NAV = [
   { key: 'profile', label: 'Account', icon: User },
 ];
 
-export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
+export default function CustomerPortal() {
   const [tab, setTab] = useState('home');
+  const [user, setUser] = useState(null);
+  const [customerProfile, setCustomerProfile] = useState(null);
+  const [services, setServices] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedJobForQuotes, setSelectedJobForQuotes] = useState(null);
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
-  const [jobs, setJobs] = useState(MOCK_JOBS.filter(j => j.customer_id === 'c1'));
   const [showBookingModal, setShowBookingModal] = useState(false);
 
-  // Track which job IDs have already been reviewed
-  const reviewedJobIds = new Set(reviews.filter(r => r.customer_id === 'c1').map(r => r.job_id));
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const me = await base44.auth.me();
+        setUser(me);
 
+        const [profiles, allServices, myJobs, myReviews] = await Promise.all([
+          base44.entities.CustomerProfile.filter({ user_email: me.email }),
+          base44.entities.Service.filter({ active: true }),
+          base44.entities.Job.filter({ customer_email: me.email }),
+          base44.entities.Review.filter({ customer_id: me.email }),
+        ]);
+
+        setCustomerProfile(profiles[0] || null);
+        setServices(allServices);
+        setJobs(myJobs);
+        setReviews(myReviews);
+      } catch (err) {
+        toast.error('Failed to load data.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const refreshJobs = async () => {
+    if (!user) return;
+    const myJobs = await base44.entities.Job.filter({ customer_email: user.email });
+    setJobs(myJobs);
+  };
+
+  const reviewedJobIds = new Set(reviews.map(r => r.job_id));
   const upcomingJobs = jobs.filter(j => ['scheduled', 'accepted', 'in_progress', 'quoted', 'requested'].includes(j.status));
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
 
-  const handleRequestJob = (data) => {
-    const newJob = {
-      id: `j_${Date.now()}`,
-      customer_id: 'c1',
-      customer_name: MOCK_CUSTOMER.name,
-      customer_email: MOCK_CUSTOMER.user_email,
+  const handleRequestJob = async (data) => {
+    await base44.entities.Job.create({
+      customer_id: customerProfile?.id || user.email,
+      customer_name: user.full_name,
+      customer_email: user.email,
       status: 'requested',
       ...data,
-      created_at: new Date().toISOString(),
-    };
-    setJobs(prev => [newJob, ...prev]);
+    });
+    await refreshJobs();
     setTab('jobs');
     toast.success('Quote request submitted! Providers in your area will respond shortly.');
   };
 
-  const handleAcceptQuote = (quote) => {
-    setJobs(prev => prev.map(j =>
-      j.id === quote.job_id
-        ? { ...j, status: 'accepted', quoted_price: quote.price, provider_name: quote.provider_name, provider_id: quote.provider_id }
-        : j
-    ));
+  const handleAcceptQuote = async (quote) => {
+    await base44.entities.Job.update(quote.job_id, {
+      status: 'accepted',
+      quoted_price: quote.price,
+      provider_name: quote.provider_name,
+      provider_id: quote.provider_id,
+      provider_email: quote.provider_email,
+    });
+    await base44.entities.Quote.update(quote.id, { status: 'accepted' });
+    await refreshJobs();
     setSelectedJobForQuotes(null);
     toast.success(`Quote accepted! Card authorized for $${quote.price}. Payment will be captured on completion.`);
   };
 
-  const handleBooking = (data) => {
-    const newJob = {
-      id: `j_${Date.now()}`,
-      customer_id: 'c1',
-      customer_name: MOCK_CUSTOMER.name,
-      customer_email: MOCK_CUSTOMER.user_email,
+  const handleBooking = async (data) => {
+    await base44.entities.Job.create({
+      customer_id: customerProfile?.id || user.email,
+      customer_name: user.full_name,
+      customer_email: user.email,
       status: 'requested',
       ...data,
-      created_at: new Date().toISOString(),
-    };
-    setJobs(prev => [newJob, ...prev]);
+    });
+    await refreshJobs();
     setTab('jobs');
     toast.success('Booking request sent! Providers in your area will respond shortly.');
   };
 
-  const handleReview = (data) => {
-    onReviewSubmit({ ...data, customer_id: 'c1', customer_name: MOCK_CUSTOMER.name });
+  const handleReview = async (data) => {
+    await base44.entities.Review.create({
+      ...data,
+      customer_id: user.email,
+      customer_name: user.full_name,
+    });
+    const myReviews = await base44.entities.Review.filter({ customer_id: user.email });
+    setReviews(myReviews);
     toast.success('Review submitted! Thank you for your feedback.');
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const displayName = user?.full_name || 'there';
+  const displayAddress = customerProfile?.service_address || '';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -86,9 +138,9 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
           <div className="ml-auto flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">{MOCK_CUSTOMER.name[0]}</span>
+              <span className="text-xs font-bold text-primary">{displayName[0]}</span>
             </div>
-            <span className="text-sm font-medium text-foreground hidden sm:block">{MOCK_CUSTOMER.name}</span>
+            <span className="text-sm font-medium text-foreground hidden sm:block">{displayName}</span>
           </div>
         </div>
       </header>
@@ -102,8 +154,8 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full" />
               <div className="absolute -right-2 -bottom-10 w-24 h-24 bg-white/5 rounded-full" />
               <p className="text-sm font-medium text-white/70 mb-1">Welcome back,</p>
-              <h1 className="text-2xl font-bold mb-1">{MOCK_CUSTOMER.name.split(' ')[0]} 👋</h1>
-              <p className="text-sm text-white/80">{MOCK_CUSTOMER.service_address}</p>
+              <h1 className="text-2xl font-bold mb-1">{displayName.split(' ')[0]} 👋</h1>
+              {displayAddress && <p className="text-sm text-white/80">{displayAddress}</p>}
               {upcomingJobs.length > 0 && (
                 <div className="mt-4 bg-white/15 rounded-xl px-4 py-3 flex items-center gap-2 text-sm">
                   <CheckCircle2 size={15} />
@@ -124,7 +176,7 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {MOCK_SERVICES.map(s => (
+                {services.map(s => (
                   <ServiceCard key={s.id} service={s} onSelect={setSelectedService} />
                 ))}
               </div>
@@ -154,7 +206,7 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
               <p className="text-sm text-muted-foreground mt-1">Choose a service and pick your preferred date & time.</p>
             </div>
             <div className="grid grid-cols-1 gap-3 mb-6">
-              {MOCK_SERVICES.map(s => (
+              {services.map(s => (
                 <button
                   key={s.id}
                   onClick={() => setShowBookingModal(s)}
@@ -225,35 +277,25 @@ export default function CustomerPortal({ reviews = [], onReviewSubmit }) {
             <div className="bg-card border border-border rounded-xl p-5 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xl font-bold text-primary">{MOCK_CUSTOMER.name[0]}</span>
+                  <span className="text-xl font-bold text-primary">{displayName[0]}</span>
                 </div>
                 <div>
-                  <p className="font-bold text-foreground">{MOCK_CUSTOMER.name}</p>
-                  <p className="text-sm text-muted-foreground">{MOCK_CUSTOMER.user_email}</p>
+                  <p className="font-bold text-foreground">{displayName}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
               <hr className="border-border" />
               <div className="space-y-3">
                 {[
-                  { label: 'Phone', value: MOCK_CUSTOMER.phone },
-                  { label: 'Service Address', value: MOCK_CUSTOMER.service_address },
-                  { label: 'ZIP Code', value: MOCK_CUSTOMER.zip_code },
+                  { label: 'Phone', value: customerProfile?.phone || '—' },
+                  { label: 'Service Address', value: customerProfile?.service_address || '—' },
+                  { label: 'ZIP Code', value: customerProfile?.zip_code || '—' },
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <p className="text-xs text-muted-foreground font-medium">{label}</p>
                     <p className="text-sm text-foreground mt-0.5">{value}</p>
                   </div>
                 ))}
-              </div>
-              <hr className="border-border" />
-              <div>
-                <p className="text-xs text-muted-foreground font-medium mb-2">Payment Method</p>
-                <div className="flex items-center gap-3 bg-muted/50 rounded-lg p-3">
-                  <div className="w-10 h-6 bg-blue-600 rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">VISA</span>
-                  </div>
-                  <span className="text-sm text-foreground">•••• •••• •••• 4242</span>
-                </div>
               </div>
             </div>
           </div>

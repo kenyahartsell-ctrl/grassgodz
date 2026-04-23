@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2 } from 'lucide-react';
 import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
 import BookingRequestCard from '../components/provider/BookingRequestCard';
 import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
-import { MOCK_PROVIDER, MOCK_JOBS, MOCK_REVIEWS, MOCK_EARNINGS } from '../lib/mockData';
+import { MOCK_EARNINGS } from '../lib/mockData';
+import { base44 } from '@/api/base44Client';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 
@@ -18,49 +19,75 @@ const NAV = [
   { key: 'profile', label: 'Profile', icon: User },
 ];
 
-export default function ProviderPortal({ reviews = [] }) {
+export default function ProviderPortal() {
   const [tab, setTab] = useState('dashboard');
-  const [myJobs, setMyJobs] = useState(MOCK_JOBS.filter(j => j.provider_id === 'p1'));
-  const [availableJobs, setAvailableJobs] = useState(MOCK_JOBS.filter(j => !j.provider_id));
-  const [bookingRequests, setBookingRequests] = useState([
-    {
-      id: 'br1',
-      customer_id: 'c4',
-      customer_name: 'Tom Bradley',
-      service_id: 's1',
-      service_name: 'Lawn Mowing',
-      address: '88 Birchwood Dr, Springfield, IL',
-      zip_code: '62701',
-      scheduled_date: '2026-04-30',
-      scheduled_time: '10:00 AM',
-      status: 'requested',
-      customer_notes: 'Corner lot, extra wide. Takes about 2 hours.',
-      base_price: 65,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'br2',
-      customer_id: 'c5',
-      customer_name: 'Nina Patel',
-      service_id: 's3',
-      service_name: 'Hedge Trimming',
-      address: '210 Sycamore Lane, Springfield, IL',
-      zip_code: '62702',
-      scheduled_date: '2026-05-03',
-      scheduled_time: '2:00 PM',
-      status: 'requested',
-      customer_notes: 'Front hedges only, about 40ft total.',
-      base_price: 70,
-      created_at: new Date().toISOString(),
-    },
-  ]);
+  const [user, setUser] = useState(null);
+  const [providerProfile, setProviderProfile] = useState(null);
+  const [myJobs, setMyJobs] = useState([]);
+  const [availableJobs, setAvailableJobs] = useState([]);
+  const [bookingRequests, setBookingRequests] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const me = await base44.auth.me();
+        setUser(me);
+
+        const [profiles] = await Promise.all([
+          base44.entities.ProviderProfile.filter({ user_email: me.email }),
+        ]);
+
+        const profile = profiles[0] || null;
+        setProviderProfile(profile);
+
+        if (profile) {
+          const [mine, available, myReviews] = await Promise.all([
+            base44.entities.Job.filter({ provider_email: me.email }),
+            base44.entities.Job.filter({ status: 'requested' }),
+            base44.entities.Review.filter({ provider_id: profile.id }),
+          ]);
+
+          const bookings = available.filter(j =>
+            j.scheduled_date && Array.isArray(profile.service_zip_codes) &&
+            profile.service_zip_codes.includes(j.zip_code)
+          );
+
+          setMyJobs(mine);
+          setAvailableJobs(available.filter(j => !j.provider_id));
+          setBookingRequests(bookings.filter(j => !j.provider_id));
+          setReviews(myReviews);
+        }
+      } catch (err) {
+        toast.error('Failed to load data.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const refreshJobs = async () => {
+    if (!user) return;
+    const [mine, available] = await Promise.all([
+      base44.entities.Job.filter({ provider_email: user.email }),
+      base44.entities.Job.filter({ status: 'requested' }),
+    ]);
+    setMyJobs(mine);
+    setAvailableJobs(available.filter(j => !j.provider_id));
+    setBookingRequests(available.filter(j =>
+      !j.provider_id && j.scheduled_date &&
+      Array.isArray(providerProfile?.service_zip_codes) &&
+      providerProfile.service_zip_codes.includes(j.zip_code)
+    ));
+  };
 
   const scheduled = myJobs.filter(j => ['scheduled', 'accepted'].includes(j.status));
   const inProgress = myJobs.filter(j => j.status === 'in_progress');
   const completed = myJobs.filter(j => j.status === 'completed');
   const totalEarnings = completed.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
 
-  // Monthly summary calculations
   const now = new Date();
   const thisMonthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
   const thisMonthCompleted = completed.filter(j => {
@@ -70,47 +97,71 @@ export default function ProviderPortal({ reviews = [] }) {
   });
   const thisMonthEarnings = thisMonthCompleted.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
 
-  // Live average rating from reviews
-  const myReviews = reviews.filter(r => r.provider_id === 'p1');
-  const avgRating = myReviews.length > 0
-    ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
-    : MOCK_PROVIDER.avg_rating;
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : providerProfile?.avg_rating || '—';
 
-  const handleAcceptBooking = (booking) => {
-    const acceptedJob = {
-      ...booking,
-      id: `j_${Date.now()}`,
-      provider_id: 'p1',
-      provider_name: MOCK_PROVIDER.business_name,
-      provider_email: MOCK_PROVIDER.user_email,
+  const handleAcceptBooking = async (booking) => {
+    await base44.entities.Job.update(booking.id, {
+      provider_id: providerProfile.id,
+      provider_name: providerProfile.business_name,
+      provider_email: user.email,
       status: 'scheduled',
       quoted_price: booking.base_price,
-    };
-    setMyJobs(prev => [acceptedJob, ...prev]);
-    setBookingRequests(prev => prev.filter(b => b.id !== booking.id));
+    });
+    await refreshJobs();
     toast.success(`Booking accepted! ${booking.service_name} for ${booking.customer_name} is now scheduled.`);
   };
 
-  const handleDeclineBooking = (booking) => {
-    setBookingRequests(prev => prev.filter(b => b.id !== booking.id));
+  const handleDeclineBooking = async (booking) => {
+    await base44.entities.Job.update(booking.id, { status: 'cancelled' });
+    await refreshJobs();
     toast.error(`Booking for ${booking.customer_name} declined.`);
   };
 
-  const handleSubmitQuote = (job, quoteData) => {
+  const handleSubmitQuote = async (job, quoteData) => {
+    await base44.entities.Quote.create({
+      job_id: job.id,
+      provider_id: providerProfile.id,
+      provider_name: providerProfile.business_name,
+      provider_email: user.email,
+      price: quoteData.price,
+      message: quoteData.message,
+      status: 'pending',
+    });
     toast.success(`Quote of $${quoteData.price} submitted for ${job.service_name}!`);
   };
 
-  const handleMarkInProgress = (job) => {
-    setMyJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'in_progress' } : j));
+  const handleMarkInProgress = async (job) => {
+    await base44.entities.Job.update(job.id, { status: 'in_progress' });
+    await refreshJobs();
     toast.success('Job marked as in progress.');
   };
 
-  const handleMarkComplete = (job) => {
-    setMyJobs(prev => prev.map(j =>
-      j.id === job.id ? { ...j, status: 'completed', completed_at: new Date().toISOString() } : j
-    ));
-    toast.success(`Job completed! $${(job.quoted_price * 0.75).toFixed(2)} will be transferred to your account.`);
+  const handleMarkComplete = async (job) => {
+    const providerPayout = (job.quoted_price || 0) * 0.75;
+    const platformFee = (job.quoted_price || 0) * 0.25;
+    await base44.entities.Job.update(job.id, {
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      final_price: job.quoted_price,
+      provider_payout: providerPayout,
+      platform_fee: platformFee,
+    });
+    await refreshJobs();
+    toast.success(`Job completed! $${providerPayout.toFixed(2)} will be transferred to your account.`);
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const displayName = providerProfile?.name || user?.full_name || 'Provider';
+  const businessName = providerProfile?.business_name || displayName;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -124,16 +175,16 @@ export default function ProviderPortal({ reviews = [] }) {
           <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full ml-1">Provider</span>
           <div className="ml-auto flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">{MOCK_PROVIDER.name[0]}</span>
+              <span className="text-xs font-bold text-primary">{displayName[0]}</span>
             </div>
-            <span className="text-sm font-medium text-foreground hidden sm:block">{MOCK_PROVIDER.business_name}</span>
+            <span className="text-sm font-medium text-foreground hidden sm:block">{businessName}</span>
           </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {/* Onboarding Banner */}
-        {!MOCK_PROVIDER.onboarding_complete && (
+        {!providerProfile?.onboarding_complete && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
             <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
@@ -148,13 +199,13 @@ export default function ProviderPortal({ reviews = [] }) {
           <div className="space-y-5">
             <div>
               <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
-              <p className="text-sm text-muted-foreground">Welcome back, {MOCK_PROVIDER.name.split(' ')[0]}</p>
+              <p className="text-sm text-muted-foreground">Welcome back, {displayName.split(' ')[0]}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <MetricCard title="Scheduled" value={scheduled.length} icon={CalendarDays} />
               <MetricCard title="In Progress" value={inProgress.length} icon={TrendingUp} color="text-orange-600" bgColor="bg-orange-100" />
-              <MetricCard title="Total Completed" value={MOCK_PROVIDER.total_jobs_completed} icon={Star} color="text-amber-600" bgColor="bg-amber-100" />
+              <MetricCard title="Total Completed" value={providerProfile?.total_jobs_completed || completed.length} icon={Star} color="text-amber-600" bgColor="bg-amber-100" />
               <MetricCard title="Avg Rating" value={avgRating} icon={Star} color="text-amber-500" bgColor="bg-amber-50" />
             </div>
 
@@ -242,7 +293,9 @@ export default function ProviderPortal({ reviews = [] }) {
           <div>
             <div className="mb-5">
               <h2 className="text-xl font-bold text-foreground">Available Jobs</h2>
-              <p className="text-sm text-muted-foreground">Jobs in your service area · ZIP {MOCK_PROVIDER.service_zip_codes.join(', ')}</p>
+              <p className="text-sm text-muted-foreground">
+                Jobs in your service area · ZIP {providerProfile?.service_zip_codes?.join(', ') || '—'}
+              </p>
             </div>
             {availableJobs.length === 0 ? (
               <div className="text-center py-16">
@@ -287,6 +340,13 @@ export default function ProviderPortal({ reviews = [] }) {
                 </div>
               </div>
             )}
+            {myJobs.length === 0 && (
+              <div className="text-center py-16">
+                <CalendarDays className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground font-medium">No jobs yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Accept bookings or submit quotes to get started.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -316,7 +376,7 @@ export default function ProviderPortal({ reviews = [] }) {
 
             <div className="grid grid-cols-2 gap-3 mb-5">
               <MetricCard title="Total Earned" value={`$${totalEarnings.toFixed(2)}`} icon={DollarSign} />
-              <MetricCard title="Pending Payout" value="$41.25" icon={TrendingUp} color="text-blue-600" bgColor="bg-blue-100" />
+              <MetricCard title="Pending Payout" value="$0.00" icon={TrendingUp} color="text-blue-600" bgColor="bg-blue-100" />
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5 mb-5">
@@ -335,20 +395,24 @@ export default function ProviderPortal({ reviews = [] }) {
             </div>
 
             <h3 className="text-sm font-semibold text-foreground mb-3">Payment History</h3>
-            <div className="space-y-2">
-              {completed.map(j => (
-                <div key={j.id} className="flex items-center justify-between bg-card border border-border rounded-lg px-4 py-3">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{j.service_name}</p>
-                    <p className="text-xs text-muted-foreground">{j.completed_at ? new Date(j.completed_at).toLocaleDateString() : '—'}</p>
+            {completed.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No completed jobs yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {completed.map(j => (
+                  <div key={j.id} className="flex items-center justify-between bg-card border border-border rounded-lg px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{j.service_name}</p>
+                      <p className="text-xs text-muted-foreground">{j.completed_at ? new Date(j.completed_at).toLocaleDateString() : '—'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-primary">+${j.provider_payout?.toFixed(2) || '—'}</p>
+                      <p className="text-xs text-muted-foreground">of ${j.final_price}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-primary">+${j.provider_payout?.toFixed(2) || '—'}</p>
-                    <p className="text-xs text-muted-foreground">of ${j.final_price}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -358,56 +422,58 @@ export default function ProviderPortal({ reviews = [] }) {
             <div className="bg-card border border-border rounded-xl p-5 mb-4">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xl font-bold text-primary">{MOCK_PROVIDER.name[0]}</span>
+                  <span className="text-xl font-bold text-primary">{displayName[0]}</span>
                 </div>
                 <div>
-                  <p className="font-bold text-foreground">{MOCK_PROVIDER.business_name}</p>
-                  <p className="text-sm text-muted-foreground">{MOCK_PROVIDER.name}</p>
-                  <StarRating rating={Number(avgRating)} showValue />
+                  <p className="font-bold text-foreground">{businessName}</p>
+                  <p className="text-sm text-muted-foreground">{displayName}</p>
+                  <StarRating rating={Number(avgRating) || 0} showValue />
                 </div>
               </div>
               <hr className="border-border mb-4" />
               <div className="space-y-3">
                 {[
-                  { label: 'Email', value: MOCK_PROVIDER.user_email },
-                  { label: 'Experience', value: `${MOCK_PROVIDER.years_experience} years` },
-                  { label: 'Service ZIPs', value: MOCK_PROVIDER.service_zip_codes.join(', ') },
-                  { label: 'Total Jobs', value: MOCK_PROVIDER.total_jobs_completed },
+                  { label: 'Email', value: user?.email },
+                  { label: 'Experience', value: providerProfile?.years_experience ? `${providerProfile.years_experience} years` : '—' },
+                  { label: 'Service ZIPs', value: providerProfile?.service_zip_codes?.join(', ') || '—' },
+                  { label: 'Total Jobs', value: providerProfile?.total_jobs_completed || completed.length },
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <p className="text-xs text-muted-foreground font-medium">{label}</p>
                     <p className="text-sm text-foreground mt-0.5">{value}</p>
                   </div>
                 ))}
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Bio</p>
-                  <p className="text-sm text-foreground mt-0.5">{MOCK_PROVIDER.bio}</p>
-                </div>
+                {providerProfile?.bio && (
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Bio</p>
+                    <p className="text-sm text-foreground mt-0.5">{providerProfile.bio}</p>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-foreground">Reviews ({myReviews.length})</h3>
-                {myReviews.length > 0 && (
+                <h3 className="text-sm font-bold text-foreground">Reviews ({reviews.length})</h3>
+                {reviews.length > 0 && (
                   <div className="flex items-center gap-1.5">
                     <StarRating rating={Number(avgRating)} size={13} />
                     <span className="text-sm font-bold text-foreground">{avgRating}</span>
                   </div>
                 )}
               </div>
-              {myReviews.length === 0 ? (
+              {reviews.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No reviews yet.</p>
               ) : (
                 <div className="space-y-3">
-                  {myReviews.map(r => (
+                  {reviews.map(r => (
                     <div key={r.id} className="border-b border-border last:border-0 pb-3 last:pb-0">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-foreground">{r.customer_name}</span>
                         <StarRating rating={r.rating} size={12} />
                       </div>
                       {r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}
-                      <p className="text-xs text-muted-foreground/60 mt-0.5">{new Date(r.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground/60 mt-0.5">{new Date(r.created_date).toLocaleDateString()}</p>
                     </div>
                   ))}
                 </div>

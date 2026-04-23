@@ -242,7 +242,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
         </div>
 
         {/* Map */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" style={{ pointerEvents: mapLoaded ? 'auto' : 'none' }}>
           {geolocating && (
             <div className="absolute top-4 left-4 z-20 bg-white rounded-lg shadow-md px-3 py-2 flex items-center gap-2 text-xs">
               <Loader2 size={14} className="animate-spin text-primary" />
@@ -257,7 +257,6 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             onLoad={() => setMapLoaded(true)}
             mapboxAccessToken={MAPBOX_TOKEN}
             mapStyle="mapbox://styles/mapbox/light-v11"
-            style={{ pointerEvents: mapLoaded ? 'auto' : 'none' }}
           >
             <NavigationControl position="top-right" />
             <GeolocateControl position="top-right" />

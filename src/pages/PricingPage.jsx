@@ -8,8 +8,8 @@ const SAMPLE_PRICES = [
   { service: 'Leaf Removal', range: '$60 – $225', avg: '$90', note: 'Based on yard size and volume' },
   { service: 'Hedge Trimming', range: '$50 – $180', avg: '$75', note: 'Based on linear footage' },
   { service: 'Fertilization', range: '$70 – $195', avg: '$95', note: 'Depends on lawn square footage' },
-  { service: 'Core Aeration', range: '$80 – $240', avg: '$110', note: 'By lawn size' },
-  { service: 'Snow Removal', range: '$50 – $180', avg: '$75', note: 'Based on area and snowfall' },
+  { service: 'Core Aeration', range: '$80 – $499', avg: '$110', note: 'By lawn size' },
+  { service: 'Snow Removal', range: '$50 – $499', avg: '$75', note: 'Based on area and snowfall' },
 ];
 
 const FAQS = [

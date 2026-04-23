@@ -89,7 +89,7 @@ export default function ProsLandingPage() {
               { step: '1', title: 'Apply (5 minutes, free)', desc: 'Fill out a quick application with your experience, service area, and the services you offer.' },
               { step: '2', title: 'Get approved', desc: "We verify your info and background check, then walk you through a quick Stripe onboarding to set up your payouts." },
               { step: '3', title: 'Accept jobs in your area', desc: "Browse open jobs and booking requests in your zip codes. Accept what works for your schedule, quote, or confirm." },
-              { step: '4', title: 'Get paid for completed work', desc: "Mark jobs complete in the app. Your 75% share is transferred automatically, every week." },
+              { step: '4', title: 'Get paid for completed work', desc: "Mark jobs complete in the app. Your share is transferred automatically, every week." },
             ].map(({ step, title, desc }) => (
               <div key={step} className="flex gap-4 items-start">
                 <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg flex-shrink-0">{step}</div>

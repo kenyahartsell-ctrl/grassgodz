@@ -86,6 +86,17 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
     payout: (job.quoted_price || 50) * 0.75,
   })).sort((a, b) => a.distance - b.distance);
 
+  // Guard: check if Mapbox token is available
+  if (!MAPBOX_TOKEN) {
+    return (
+      <div className="h-full bg-background flex flex-col items-center justify-center">
+        <MapPin className="w-10 h-10 text-muted-foreground/30 mb-3" />
+        <p className="text-muted-foreground font-medium">Map unavailable</p>
+        <p className="text-xs text-muted-foreground mt-1">Mapbox token not configured.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full bg-background flex flex-col">
       {/* Header with filters */}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Scissors, Wind, Sprout, Snowflake, CircleDot, Crop, Star, Shield, Users, ArrowRight, CheckCircle } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
@@ -26,31 +26,9 @@ const TESTIMONIALS = [
 ];
 
 export default function HomePage() {
-  const [zip, setZip] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  const handleZipSubmit = async (e) => {
-    e.preventDefault();
-    if (!zip.trim()) return;
-    setLoading(true);
-    // ANALYTICS HOOK: track('zip_submitted', { zip })
-    try {
-      const providers = await base44.entities.ProviderProfile.filter({ status: 'active' });
-      const hasProvider = providers.some(p =>
-        Array.isArray(p.service_zip_codes) && p.service_zip_codes.includes(zip.trim())
-      );
-      if (hasProvider) {
-        navigate(`/signup/customer?zip=${zip.trim()}`);
-      } else {
-        navigate(`/not-available?zip=${zip.trim()}`);
-      }
-    } catch {
-      navigate(`/signup/customer?zip=${zip.trim()}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,25 +58,14 @@ export default function HomePage() {
           </p>
 
           {/* ZIP form */}
-          <form onSubmit={handleZipSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
-            <input
-              type="text"
-              value={zip}
-              onChange={e => setZip(e.target.value)}
-              placeholder="Enter your ZIP code"
-              maxLength={5}
-              pattern="[0-9]{5}"
-              className="flex-1 rounded-xl px-5 py-4 text-foreground text-base bg-white focus:outline-none focus:ring-2 focus:ring-primary shadow-lg"
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-green-400 hover:bg-green-300 text-green-950 font-bold px-7 py-4 rounded-xl transition-colors disabled:opacity-70 whitespace-nowrap shadow-lg text-base"
+          <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
+            <Link
+              to="/book"
+              className="flex-1 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-7 py-4 rounded-xl transition-colors whitespace-nowrap shadow-lg text-base flex items-center justify-center"
             >
-              {loading ? 'Checking...' : 'Get Instant Quote'}
-            </button>
-          </form>
+              Get Instant Quote
+            </Link>
+          </div>
 
           {/* Secondary CTA */}
           <a

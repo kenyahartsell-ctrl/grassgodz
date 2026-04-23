@@ -60,6 +60,16 @@ export default function ProviderPortal({ reviews = [] }) {
   const completed = myJobs.filter(j => j.status === 'completed');
   const totalEarnings = completed.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
 
+  // Monthly summary calculations
+  const now = new Date();
+  const thisMonthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const thisMonthCompleted = completed.filter(j => {
+    if (!j.completed_at) return false;
+    const d = new Date(j.completed_at);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const thisMonthEarnings = thisMonthCompleted.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
+
   // Live average rating from reviews
   const myReviews = reviews.filter(r => r.provider_id === 'p1');
   const avgRating = myReviews.length > 0
@@ -283,6 +293,27 @@ export default function ProviderPortal({ reviews = [] }) {
         {tab === 'earnings' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">Earnings</h2>
+
+            {/* Monthly Summary Card */}
+            <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 mb-5 text-white">
+              <p className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-1">{thisMonthName} Summary</p>
+              <div className="flex items-end gap-6 mt-2">
+                <div>
+                  <p className="text-3xl font-bold">${thisMonthEarnings.toFixed(2)}</p>
+                  <p className="text-xs text-white/70 mt-0.5">Earned this month</p>
+                </div>
+                <div className="border-l border-white/20 pl-6">
+                  <p className="text-3xl font-bold">{thisMonthCompleted.length}</p>
+                  <p className="text-xs text-white/70 mt-0.5">Jobs completed</p>
+                </div>
+              </div>
+              {thisMonthCompleted.length > 0 && (
+                <p className="text-xs text-white/60 mt-3">
+                  Avg ${(thisMonthEarnings / thisMonthCompleted.length).toFixed(2)} per job this month
+                </p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3 mb-5">
               <MetricCard title="Total Earned" value={`$${totalEarnings.toFixed(2)}`} icon={DollarSign} />
               <MetricCard title="Pending Payout" value="$41.25" icon={TrendingUp} color="text-blue-600" bgColor="bg-blue-100" />

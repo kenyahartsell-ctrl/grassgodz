@@ -8,6 +8,7 @@ import ReviewModal from '../components/customer/ReviewModal';
 import BookingModal from '../components/customer/BookingModal';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import CustomerProfileEditor from '@/components/customer/CustomerProfileEditor';
 
 const NAV = [
   { key: 'home', label: 'Home', icon: Home },
@@ -274,30 +275,14 @@ export default function CustomerPortal() {
         {tab === 'profile' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">Account</h2>
-            <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xl font-bold text-primary">{displayName[0]}</span>
-                </div>
-                <div>
-                  <p className="font-bold text-foreground">{displayName}</p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                </div>
-              </div>
-              <hr className="border-border" />
-              <div className="space-y-3">
-                {[
-                  { label: 'Phone', value: customerProfile?.phone || '—' },
-                  { label: 'Service Address', value: customerProfile?.service_address || '—' },
-                  { label: 'ZIP Code', value: customerProfile?.zip_code || '—' },
-                ].map(({ label, value }) => (
-                  <div key={label}>
-                    <p className="text-xs text-muted-foreground font-medium">{label}</p>
-                    <p className="text-sm text-foreground mt-0.5">{value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <CustomerProfileEditor
+              user={user}
+              profile={customerProfile}
+              onProfileUpdated={async () => {
+                const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+                setCustomerProfile(profiles[0] || null);
+              }}
+            />
           </div>
         )}
       </main>

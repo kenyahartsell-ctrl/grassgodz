@@ -26,6 +26,26 @@
     },
     "default_payment_method_id": {
       "type": "string"
+    },
+    "notify_new_quote": {
+      "type": "boolean",
+      "default": true,
+      "description": "Email when a provider sends a new quote"
+    },
+    "notify_job_accepted": {
+      "type": "boolean",
+      "default": true,
+      "description": "Email when a provider accepts their job"
+    },
+    "notify_job_completed": {
+      "type": "boolean",
+      "default": true,
+      "description": "Email when a job is marked complete"
+    },
+    "notify_promotions": {
+      "type": "boolean",
+      "default": false,
+      "description": "Promotional emails and offers"
     }
   },
   "required": [

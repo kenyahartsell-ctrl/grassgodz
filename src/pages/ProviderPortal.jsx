@@ -7,6 +7,7 @@ import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
 import { MOCK_EARNINGS } from '../lib/mockData';
 import { base44 } from '@/api/base44Client';
+import ProviderProfileEditor from '@/components/provider/ProviderProfileEditor';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 
@@ -419,66 +420,16 @@ export default function ProviderPortal() {
         {tab === 'profile' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">Profile</h2>
-            <div className="bg-card border border-border rounded-xl p-5 mb-4">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xl font-bold text-primary">{displayName[0]}</span>
-                </div>
-                <div>
-                  <p className="font-bold text-foreground">{businessName}</p>
-                  <p className="text-sm text-muted-foreground">{displayName}</p>
-                  <StarRating rating={Number(avgRating) || 0} showValue />
-                </div>
-              </div>
-              <hr className="border-border mb-4" />
-              <div className="space-y-3">
-                {[
-                  { label: 'Email', value: user?.email },
-                  { label: 'Experience', value: providerProfile?.years_experience ? `${providerProfile.years_experience} years` : '—' },
-                  { label: 'Service ZIPs', value: providerProfile?.service_zip_codes?.join(', ') || '—' },
-                  { label: 'Total Jobs', value: providerProfile?.total_jobs_completed || completed.length },
-                ].map(({ label, value }) => (
-                  <div key={label}>
-                    <p className="text-xs text-muted-foreground font-medium">{label}</p>
-                    <p className="text-sm text-foreground mt-0.5">{value}</p>
-                  </div>
-                ))}
-                {providerProfile?.bio && (
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium">Bio</p>
-                    <p className="text-sm text-foreground mt-0.5">{providerProfile.bio}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-foreground">Reviews ({reviews.length})</h3>
-                {reviews.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <StarRating rating={Number(avgRating)} size={13} />
-                    <span className="text-sm font-bold text-foreground">{avgRating}</span>
-                  </div>
-                )}
-              </div>
-              {reviews.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No reviews yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {reviews.map(r => (
-                    <div key={r.id} className="border-b border-border last:border-0 pb-3 last:pb-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-foreground">{r.customer_name}</span>
-                        <StarRating rating={r.rating} size={12} />
-                      </div>
-                      {r.comment && <p className="text-xs text-muted-foreground">{r.comment}</p>}
-                      <p className="text-xs text-muted-foreground/60 mt-0.5">{new Date(r.created_date).toLocaleDateString()}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <ProviderProfileEditor
+              user={user}
+              profile={providerProfile}
+              avgRating={avgRating}
+              reviews={reviews}
+              onProfileUpdated={async () => {
+                const profiles = await base44.entities.ProviderProfile.filter({ user_email: user.email });
+                setProviderProfile(profiles[0] || null);
+              }}
+            />
           </div>
         )}
       </main>

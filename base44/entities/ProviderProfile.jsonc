@@ -60,6 +60,26 @@
         "suspended"
       ],
       "default": "pending_approval"
+    },
+    "notify_new_booking": {
+      "type": "boolean",
+      "default": true,
+      "description": "Email when a customer books a job"
+    },
+    "notify_job_updates": {
+      "type": "boolean",
+      "default": true,
+      "description": "Email on job status changes"
+    },
+    "notify_payment_received": {
+      "type": "boolean",
+      "default": true,
+      "description": "Email when payment is processed"
+    },
+    "notify_promotions": {
+      "type": "boolean",
+      "default": false,
+      "description": "Promotional emails and platform news"
     }
   },
   "required": [

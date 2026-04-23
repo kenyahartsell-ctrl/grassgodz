@@ -20,9 +20,9 @@ const SERVICES = [
 
 // PLACEHOLDER TESTIMONIALS — replace with real reviews after launch
 const TESTIMONIALS = [
-  { name: 'Sarah M.', city: 'Springfield, IL', rating: 5, quote: "Booked in under a minute. Mike showed up on time and the lawn looked perfect. Will never call around for quotes again." },
-  { name: 'David R.', city: 'Decatur, IL', rating: 5, quote: "Honest pricing, great pros. I love that I can track the job and pay through the app without any awkward cash exchanges." },
-  { name: 'Karen T.', city: 'Bloomington, IL', rating: 5, quote: "I've used Grassgodz three times now. Each pro has been professional, fast, and thorough. Highly recommend." },
+  { name: 'Sarah M.', city: 'Washington, D.C.', rating: 5, quote: "Booked in under a minute. Mike showed up on time and the lawn looked perfect. Will never call around for quotes again." },
+  { name: 'David R.', city: 'Silver Spring, MD', rating: 5, quote: "Honest pricing, great pros. I love that I can track the job and pay through the app without any awkward cash exchanges." },
+  { name: 'Karen T.', city: 'Arlington, VA', rating: 5, quote: "I've used Grassgodz three times now. Each pro has been professional, fast, and thorough. Highly recommend." },
 ];
 
 export default function HomePage() {

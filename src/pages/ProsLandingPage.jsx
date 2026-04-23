@@ -9,9 +9,9 @@ import PublicFooter from '@/components/public/PublicFooter';
 
 // PLACEHOLDER TESTIMONIALS — replace with real provider quotes after launch
 const PRO_TESTIMONIALS = [
-  { name: 'Carlos R.', biz: 'Ace Lawn Services', city: 'Springfield, IL', quote: "I was spending hours chasing new customers. With Grassgodz, jobs just come to me and I get paid on time every week. Game changer." },
-  { name: 'Jenny P.', biz: 'Springfield Yard Works', city: 'Decatur, IL', quote: "The app makes scheduling so simple. I accepted 3 jobs on my lunch break and earned $480 that Saturday. Highly recommend." },
-  { name: 'Dave M.', biz: 'Monroe Outdoors', city: 'Bloomington, IL', quote: "Finally, a platform that actually respects the professionals. Clear pay structure, no surprises, and the support team is responsive." },
+  { name: 'Carlos R.', biz: 'Ace Lawn Services', city: 'Washington, D.C.', quote: "I was spending hours chasing new customers. With Grassgodz, jobs just come to me and I get paid on time every week. Game changer." },
+  { name: 'Jenny P.', biz: 'Silver Spring Yard Works', city: 'Silver Spring, MD', quote: "The app makes scheduling so simple. I accepted 3 jobs on my lunch break and earned $480 that Saturday. Highly recommend." },
+  { name: 'Dave M.', biz: 'Arlington Outdoors', city: 'Arlington, VA', quote: "Finally, a platform that actually respects the professionals. Clear pay structure, no surprises, and the support team is responsive." },
 ];
 
 export default function ProsLandingPage() {

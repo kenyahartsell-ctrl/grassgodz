@@ -55,26 +55,31 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <PublicNav />
 
-      {/* HERO — replace background image URL with a licensed photo before launch */}
-      {/* Unsplash placeholder: https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600 */}
+      {/* HERO */}
       <section
-        className="relative min-h-[70vh] md:min-h-screen flex items-center justify-center"
+        className="relative min-h-[92vh] flex items-center justify-center"
         style={{
-          backgroundImage: `linear-gradient(135deg, rgba(20,83,45,0.85) 0%, rgba(20,83,45,0.6) 100%), url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&auto=format&fit=crop')`,
+          backgroundImage: `linear-gradient(160deg, rgba(14,60,32,0.93) 0%, rgba(20,83,45,0.75) 100%), url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&auto=format&fit=crop')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        <div className="relative z-10 max-w-2xl mx-auto px-4 text-center text-white">
-          <h1 className="text-4xl md:text-6xl font-display font-bold leading-tight mb-4">
-            Lawn care that<br />just shows up.
+        <div className="relative z-10 max-w-2xl mx-auto px-4 text-center text-white py-16">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/90 mb-6">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            Pros available in your area now
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight mb-4 tracking-tight">
+            Lawn Care<br />On Demand
           </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-8 leading-relaxed">
-            Top-rated local pros, fair prices, and zero hassle.<br className="hidden md:block" /> Book in 60 seconds.
+          <p className="text-lg md:text-xl text-white/80 mb-8 max-w-md mx-auto">
+            Get an instant quote and book your lawn service in under 60 seconds.
           </p>
 
-          {/* Zip form */}
-          <form onSubmit={handleZipSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          {/* ZIP form */}
+          <form onSubmit={handleZipSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
             <input
               type="text"
               value={zip}
@@ -82,18 +87,34 @@ export default function HomePage() {
               placeholder="Enter your ZIP code"
               maxLength={5}
               pattern="[0-9]{5}"
-              className="flex-1 rounded-xl px-5 py-4 text-foreground text-base bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+              className="flex-1 rounded-xl px-5 py-4 text-foreground text-base bg-white focus:outline-none focus:ring-2 focus:ring-primary shadow-lg"
               required
             />
             <button
               type="submit"
               disabled={loading}
-              className="bg-primary hover:bg-primary/90 text-white font-bold px-7 py-4 rounded-xl transition-colors disabled:opacity-70 whitespace-nowrap"
+              className="bg-green-400 hover:bg-green-300 text-green-950 font-bold px-7 py-4 rounded-xl transition-colors disabled:opacity-70 whitespace-nowrap shadow-lg text-base"
             >
-              {loading ? 'Checking...' : 'Get Started'}
+              {loading ? 'Checking...' : 'Get Instant Quote'}
             </button>
           </form>
-          <p className="mt-4 text-sm text-white/60">Trusted by 1,200+ homeowners across the greater Midwest</p>
+
+          {/* Secondary CTA */}
+          <a
+            href="/pros"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-white/70 hover:text-white transition-colors underline underline-offset-4"
+          >
+            Become a Provider <ArrowRight size={14} />
+          </a>
+
+          {/* Trust bar */}
+          <div className="mt-10 flex items-center justify-center gap-6 flex-wrap text-xs text-white/60">
+            <span>⭐ 4.8 avg rating</span>
+            <span>·</span>
+            <span>1,200+ jobs done</span>
+            <span>·</span>
+            <span>Pay only after completion</span>
+          </div>
         </div>
       </section>
 
@@ -103,9 +124,9 @@ export default function HomePage() {
           <h2 className="text-2xl md:text-3xl font-display font-bold text-center text-foreground mb-10">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { step: '1', icon: '📍', title: 'Tell us what you need', desc: 'Enter your zip code, pick a service, and describe your yard. Takes less than a minute.' },
-              { step: '2', icon: '🌿', title: 'Get matched with vetted pros', desc: 'Local providers in your area send you competitive quotes. You pick the best fit.' },
-              { step: '3', icon: '☀️', title: 'Sit back and enjoy', desc: 'Your pro shows up on schedule. Pay securely through the app only after the job is done.' },
+              { step: '1', icon: '📍', title: 'Enter your ZIP', desc: 'Tell us where you are and what you need.' },
+              { step: '2', icon: '💬', title: 'Get quotes fast', desc: 'Vetted local pros respond with competitive prices.' },
+              { step: '3', icon: '✅', title: 'Pay after completion', desc: 'Job done right — then your card is charged. Zero risk.' },
             ].map(card => (
               <div key={card.step} className="bg-secondary/40 rounded-2xl p-6 text-center">
                 <div className="text-4xl mb-4">{card.icon}</div>
@@ -185,8 +206,8 @@ export default function HomePage() {
       <section className="py-14 px-4 bg-background">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl font-display font-bold text-foreground mb-3">Honest pricing, no surprises</h2>
-          <p className="text-muted-foreground text-sm leading-relaxed mb-5">
-            You pay the quoted price — nothing more. Your pro keeps 75% for their great work. Grassgodz takes 25% to cover secure payments, customer support, and smart matching.
+          <p className="text-muted-foreground text-sm mb-5">
+            You pay the quoted price. No hidden fees. Pros keep 75% — Grassgodz takes 25% to run the platform.
           </p>
           <a href="/pricing" className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
             See sample prices <ArrowRight size={14} />
@@ -197,13 +218,14 @@ export default function HomePage() {
       {/* PROVIDER TEASER */}
       <section className="py-16 px-4 bg-secondary/30">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">Grow your landscaping business with us</h2>
-          <p className="text-muted-foreground mb-6">Earn $500–$2,000 per week. Set your own schedule. Get paid weekly.</p>
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">Are you a landscaping pro?</h2>
+          <p className="text-muted-foreground mb-2">Earn $500–$2,000/week. Your schedule. Weekly payouts.</p>
+          <p className="text-sm text-muted-foreground mb-6">No marketing needed — we bring the customers to you.</p>
           <a
             href="/pros"
             className="inline-flex items-center gap-2 bg-foreground text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-foreground/90 transition-colors"
           >
-            Become a Pro <ArrowRight size={16} />
+            Become a Provider <ArrowRight size={16} />
           </a>
         </div>
       </section>

@@ -1,10 +1,19 @@
-import { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
-import PricingCalculator from '@/components/public/PricingCalculator';
+import InstantQuoteForm from '@/components/public/InstantQuoteForm';
+import GuestBookingModal from '@/components/public/GuestBookingModal';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function BookingPage() {
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [quoteData, setQuoteData] = useState(null);
+
+  const handleQuoteSubmit = (data) => {
+    setQuoteData(data);
+    setShowBookingModal(true);
+    toast.success('Quote ready! Proceed to booking.');
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -14,13 +23,11 @@ export default function BookingPage() {
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-2">Get Your Instant Quote</h1>
           <p className="text-muted-foreground text-base">
-            Choose your service, property size, and get an instant price estimate. No hidden fees.
+            Enter your address, choose your service, and get an instant price estimate. No hidden fees.
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-sm">
-          <PricingCalculator />
-        </div>
+        <InstantQuoteForm onBookingSubmit={handleQuoteSubmit} />
 
         {/* Info Cards */}
         <div className="grid md:grid-cols-3 gap-4 mt-12">
@@ -39,6 +46,17 @@ export default function BookingPage() {
       </main>
 
       <PublicFooter />
+
+      {showBookingModal && quoteData && (
+        <GuestBookingModal
+          onClose={() => setShowBookingModal(false)}
+          summary={{
+            total: quoteData.total,
+            address: quoteData.address,
+            service: quoteData.service,
+          }}
+        />
+      )}
     </div>
   );
 }

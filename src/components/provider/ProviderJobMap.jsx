@@ -258,8 +258,8 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             mapboxAccessToken={MAPBOX_TOKEN}
             mapStyle="mapbox://styles/mapbox/light-v11"
           >
-            <NavigationControl position="top-right" />
-            <GeolocateControl position="top-right" />
+            {mapLoaded && <NavigationControl position="top-right" />}
+            {mapLoaded && <GeolocateControl position="top-right" />}
 
             {/* Provider location */}
             {providerLocation && (

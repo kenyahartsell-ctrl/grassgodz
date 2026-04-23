@@ -257,6 +257,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             onLoad={() => setMapLoaded(true)}
             mapboxAccessToken={MAPBOX_TOKEN}
             mapStyle="mapbox://styles/mapbox/light-v11"
+            style={{ pointerEvents: mapLoaded ? 'auto' : 'none' }}
           >
             <NavigationControl position="top-right" />
             <GeolocateControl position="top-right" />

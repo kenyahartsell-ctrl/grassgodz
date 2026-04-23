@@ -3,6 +3,7 @@ import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, Tr
 import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
 import BookingRequestCard from '../components/provider/BookingRequestCard';
+import ProviderJobMap from '../components/provider/ProviderJobMap';
 import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
 import { MOCK_EARNINGS } from '../lib/mockData';
@@ -291,25 +292,19 @@ export default function ProviderPortal() {
         )}
 
         {tab === 'available' && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-foreground">Available Jobs</h2>
-              <p className="text-sm text-muted-foreground">
-                Jobs in your service area · ZIP {providerProfile?.service_zip_codes?.join(', ') || '—'}
-              </p>
-            </div>
+          <div className="h-96 bg-card rounded-xl overflow-hidden border border-border">
             {availableJobs.length === 0 ? (
-              <div className="text-center py-16">
-                <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+              <div className="h-full flex flex-col items-center justify-center">
+                <Search className="w-10 h-10 text-muted-foreground/30 mb-3" />
                 <p className="text-muted-foreground font-medium">No available jobs right now</p>
                 <p className="text-sm text-muted-foreground mt-1">New requests will appear here as customers submit them.</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {availableJobs.map(j => (
-                  <AvailableJobCard key={j.id} job={j} onSubmitQuote={handleSubmitQuote} />
-                ))}
-              </div>
+              <ProviderJobMap
+                jobs={availableJobs}
+                providerProfile={providerProfile}
+                onAcceptJob={handleAcceptBooking}
+              />
             )}
           </div>
         )}

@@ -257,7 +257,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             onLoad={() => {
               requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                  setTimeout(() => setMapLoaded(true), 100);
+                  setTimeout(() => setMapLoaded(true), 300);
                 });
               });
             }}

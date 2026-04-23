@@ -65,9 +65,9 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
     }
   }, []);
 
-  // Only show available jobs, filter & sort
-  const availableJobs = jobs.filter(j => !j.provider_id && j.status === 'requested');
-  const filtered = availableJobs.filter(job => {
+  // Only show available jobs, filter & sort — with safety check
+  const validJobs = Array.isArray(jobs) ? jobs.filter(j => !j.provider_id && j.status === 'requested') : [];
+  const filtered = validJobs.filter(job => {
     const jobLat = job.lat || parseFloat(job.address?.split(',')[0]) || DC_CENTER.lat;
     const jobLng = job.lng || parseFloat(job.address?.split(',')[1]) || DC_CENTER.lng;
     const dist = providerLocation ? getDistance(providerLocation.lat, providerLocation.lng, jobLat, jobLng) : 0;
@@ -277,7 +277,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             )}
 
             {/* Job markers */}
-            {mapLoaded && filtered.map(job => (
+            {mapLoaded && filtered.length > 0 && filtered.map(job => (
               <Marker key={job.id} longitude={job.lng} latitude={job.lat} anchor="bottom">
                 <button
                   onClick={() => setSelectedJob(job)}
@@ -295,6 +295,16 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
               </Marker>
             ))}
           </Map>
+
+          {/* Empty state message */}
+          {mapLoaded && filtered.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-lg">
+              <div className="text-center">
+                <MapPin className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-muted-foreground font-medium">No available jobs in this area yet.</p>
+              </div>
+            </div>
+          )}
 
           {/* Job detail card */}
           {selectedJob && (

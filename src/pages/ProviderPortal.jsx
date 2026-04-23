@@ -292,20 +292,12 @@ export default function ProviderPortal() {
         )}
 
         {tab === 'available' && (
-          <div className="h-96 bg-card rounded-xl overflow-hidden border border-border">
-            {availableJobs.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center">
-                <Search className="w-10 h-10 text-muted-foreground/30 mb-3" />
-                <p className="text-muted-foreground font-medium">No available jobs right now</p>
-                <p className="text-sm text-muted-foreground mt-1">New requests will appear here as customers submit them.</p>
-              </div>
-            ) : (
-              <ProviderJobMap
-                jobs={availableJobs}
-                providerProfile={providerProfile}
-                onAcceptJob={handleAcceptBooking}
-              />
-            )}
+          <div className="flex-1 -mx-4 -mb-6 rounded-t-xl overflow-hidden border-t border-border">
+            <ProviderJobMap
+              jobs={availableJobs}
+              providerProfile={providerProfile}
+              onAcceptJob={handleAcceptBooking}
+            />
           </div>
         )}
 

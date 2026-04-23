@@ -13,6 +13,17 @@ import RoleSwitcher from '@/components/RoleSwitcher';
 import { Toaster as Sonner } from 'sonner';
 import { MOCK_REVIEWS } from '@/lib/mockData';
 
+// Public pages
+import HomePage from '@/pages/HomePage';
+import ProsLandingPage from '@/pages/ProsLandingPage';
+import HowItWorksPage from '@/pages/HowItWorksPage';
+import PricingPage from '@/pages/PricingPage';
+import CustomerSignupPage from '@/pages/CustomerSignupPage';
+import ProviderSignupPage from '@/pages/ProviderSignupPage';
+import NotAvailablePage from '@/pages/NotAvailablePage';
+import ProviderPendingPage from '@/pages/ProviderPendingPage';
+import ProviderSuspendedPage from '@/pages/ProviderSuspendedPage';
+
 function MarketplaceApp() {
   const [role, setRole] = useState('customer');
   const [reviews, setReviews] = useState(MOCK_REVIEWS);
@@ -53,7 +64,23 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<MarketplaceApp />} />
+      {/* Protected app routes */}
+      <Route path="/app" element={<MarketplaceApp />} />
+      <Route path="/customer/*" element={<MarketplaceApp />} />
+      <Route path="/provider/pending" element={<ProviderPendingPage />} />
+      <Route path="/provider/suspended" element={<ProviderSuspendedPage />} />
+      <Route path="/provider/*" element={<MarketplaceApp />} />
+      <Route path="/admin/*" element={<MarketplaceApp />} />
+
+      {/* Public routes */}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/pros" element={<ProsLandingPage />} />
+      <Route path="/how-it-works" element={<HowItWorksPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/signup/customer" element={<CustomerSignupPage />} />
+      <Route path="/signup/provider" element={<ProviderSignupPage />} />
+      <Route path="/not-available" element={<NotAvailablePage />} />
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

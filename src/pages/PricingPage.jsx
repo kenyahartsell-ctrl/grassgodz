@@ -1,0 +1,103 @@
+import { CheckCircle, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import PublicNav from '@/components/public/PublicNav';
+import PublicFooter from '@/components/public/PublicFooter';
+
+const SAMPLE_PRICES = [
+  { service: 'Lawn Mowing', range: '$35 – $75', avg: '$55', note: 'Varies by lawn size and complexity' },
+  { service: 'Leaf Removal', range: '$60 – $150', avg: '$90', note: 'Based on yard size and volume' },
+  { service: 'Hedge Trimming', range: '$50 – $120', avg: '$75', note: 'Based on linear footage' },
+  { service: 'Fertilization', range: '$70 – $130', avg: '$95', note: 'Depends on lawn square footage' },
+  { service: 'Core Aeration', range: '$80 – $160', avg: '$110', note: 'By lawn size' },
+  { service: 'Snow Removal', range: '$50 – $120', avg: '$75', note: 'Based on area and snowfall' },
+];
+
+const FAQS = [
+  { q: 'Are prices fixed or negotiable?', a: 'Providers set their own prices. You\'ll receive competitive quotes from multiple pros and can choose the one that works best for your budget.' },
+  { q: 'When do I get charged?', a: 'Your card is authorized when you accept a quote, but the charge only goes through after the job is marked complete. You never pay upfront.' },
+  { q: 'What if I\'m not happy with the work?', a: 'Contact our support team within 24 hours of job completion and we\'ll work to resolve the issue — including a full or partial refund if warranted.' },
+  { q: 'Are there any hidden fees?', a: 'None. You pay the quoted price. The 25% platform fee is already factored into what providers charge — there\'s no surprise fee added at checkout.' },
+  { q: 'How does the 75/25 split work?', a: 'Providers keep 75% of every job. The remaining 25% goes to Grassgodz to cover payment processing, insurance support, customer service, and the platform.' },
+];
+
+export default function PricingPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <PublicNav />
+
+      {/* Header */}
+      <section className="py-14 px-4 bg-white text-center">
+        <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-3">Honest Pricing</h1>
+        <p className="text-muted-foreground max-w-md mx-auto text-sm leading-relaxed">No surprise fees. No hidden markups. Just transparent quotes from local pros.</p>
+      </section>
+
+      {/* Pay split */}
+      <section className="py-10 px-4 bg-background">
+        <div className="max-w-xl mx-auto">
+          <h2 className="text-xl font-bold text-foreground text-center mb-6">How pricing works</h2>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-center">
+              <p className="text-3xl font-display font-bold text-primary mb-1">75%</p>
+              <p className="text-sm font-semibold text-foreground">Goes to your pro</p>
+              <p className="text-xs text-muted-foreground mt-1">For their time, equipment, and expertise</p>
+            </div>
+            <div className="bg-muted/60 border border-border rounded-2xl p-5 text-center">
+              <p className="text-3xl font-display font-bold text-muted-foreground mb-1">25%</p>
+              <p className="text-sm font-semibold text-foreground">Platform fee</p>
+              <p className="text-xs text-muted-foreground mt-1">Covers payments, support, and matching</p>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground text-center leading-relaxed">The price you see is the price you pay. No add-ons at checkout.</p>
+        </div>
+      </section>
+
+      {/* Sample prices */}
+      <section className="py-12 px-4 bg-white">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-xl font-bold text-foreground mb-6">Sample prices by service</h2>
+          <div className="space-y-3">
+            {SAMPLE_PRICES.map(({ service, range, avg, note }) => (
+              <div key={service} className="flex items-center justify-between bg-background border border-border rounded-xl px-4 py-3.5 gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{service}</p>
+                  <p className="text-xs text-muted-foreground">{note}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-bold text-primary">{range}</p>
+                  <p className="text-xs text-muted-foreground">avg {avg}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground text-center mt-4">Prices are estimates. Final quotes are set by providers in your area and may vary.</p>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-12 px-4 bg-background">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-xl font-bold text-foreground mb-6">Pricing FAQ</h2>
+          <div className="space-y-4">
+            {FAQS.map(({ q, a }) => (
+              <div key={q} className="bg-card border border-border rounded-xl p-5">
+                <h3 className="text-sm font-bold text-foreground mb-2">{q}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-14 px-4 bg-secondary/30 text-center">
+        <h2 className="text-xl font-display font-bold text-foreground mb-2">Get a free quote today</h2>
+        <p className="text-muted-foreground text-sm mb-6">Enter your ZIP code and see real prices from pros in your area.</p>
+        <Link to="/signup/customer" className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold px-8 py-3.5 rounded-xl hover:bg-primary/90 transition-colors">
+          Get a quote <ArrowRight size={16} />
+        </Link>
+      </section>
+
+      <PublicFooter />
+    </div>
+  );
+}

@@ -1,0 +1,20 @@
+{
+  "name": "WaitlistEntry",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string"
+    },
+    "zip_code": {
+      "type": "string"
+    },
+    "signed_up_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "email",
+    "zip_code"
+  ]
+}

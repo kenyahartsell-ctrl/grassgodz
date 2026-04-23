@@ -262,7 +262,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             {mapLoaded && <GeolocateControl position="top-right" />}
 
             {/* Provider location */}
-            {providerLocation && (
+            {mapLoaded && providerLocation && (
               <Marker longitude={providerLocation.lng} latitude={providerLocation.lat} anchor="center">
                 <div className="w-10 h-10 bg-primary rounded-full border-4 border-white shadow-lg flex items-center justify-center">
                   <MapPinned size={18} className="text-white" />

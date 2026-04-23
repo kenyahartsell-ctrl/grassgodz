@@ -6,12 +6,14 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { useState } from 'react';
+import { Toaster as Sonner } from 'sonner';
+import { MOCK_REVIEWS } from '@/lib/mockData';
+
+// Portals
 import CustomerPortal from '@/pages/CustomerPortal';
 import ProviderPortal from '@/pages/ProviderPortal';
 import AdminPortal from '@/pages/AdminPortal';
-import RoleSwitcher from '@/components/RoleSwitcher';
-import { Toaster as Sonner } from 'sonner';
-import { MOCK_REVIEWS } from '@/lib/mockData';
+import SmartRedirect from '@/pages/SmartRedirect';
 
 // Public pages
 import HomePage from '@/pages/HomePage';
@@ -24,22 +26,20 @@ import NotAvailablePage from '@/pages/NotAvailablePage';
 import ProviderPendingPage from '@/pages/ProviderPendingPage';
 import ProviderSuspendedPage from '@/pages/ProviderSuspendedPage';
 
-function MarketplaceApp() {
-  const [role, setRole] = useState('customer');
+function CustomerApp() {
   const [reviews, setReviews] = useState(MOCK_REVIEWS);
-
   const handleNewReview = (review) => {
     setReviews(prev => [{ ...review, id: `r_${Date.now()}`, created_at: new Date().toISOString() }, ...prev]);
   };
+  return <CustomerPortal reviews={reviews} onReviewSubmit={handleNewReview} />;
+}
 
-  return (
-    <div className="relative">
-      <RoleSwitcher currentRole={role} onRoleChange={setRole} />
-      {role === 'customer' && <CustomerPortal reviews={reviews} onReviewSubmit={handleNewReview} />}
-      {role === 'provider' && <ProviderPortal reviews={reviews} />}
-      {role === 'admin' && <AdminPortal reviews={reviews} />}
-    </div>
-  );
+function ProviderApp() {
+  return <ProviderPortal reviews={MOCK_REVIEWS} />;
+}
+
+function AdminApp() {
+  return <AdminPortal reviews={MOCK_REVIEWS} />;
 }
 
 const AuthenticatedApp = () => {
@@ -64,13 +64,15 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      {/* Protected app routes */}
-      <Route path="/app" element={<MarketplaceApp />} />
-      <Route path="/customer/*" element={<MarketplaceApp />} />
+      {/* Post-login smart redirect — determines portal based on role/profile */}
+      <Route path="/redirect" element={<SmartRedirect />} />
+
+      {/* Role-specific portals */}
+      <Route path="/customer/*" element={<CustomerApp />} />
       <Route path="/provider/pending" element={<ProviderPendingPage />} />
       <Route path="/provider/suspended" element={<ProviderSuspendedPage />} />
-      <Route path="/provider/*" element={<MarketplaceApp />} />
-      <Route path="/admin/*" element={<MarketplaceApp />} />
+      <Route path="/provider/*" element={<ProviderApp />} />
+      <Route path="/admin/*" element={<AdminApp />} />
 
       {/* Public routes */}
       <Route path="/" element={<HomePage />} />

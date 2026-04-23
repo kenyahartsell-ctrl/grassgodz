@@ -55,7 +55,7 @@ export default function CustomerSignupPage() {
     setLoading(true);
     try {
       // Redirect to login/signup via base44 auth
-      base44.auth.redirectToLogin();
+      base44.auth.redirectToLogin(window.location.origin + '/redirect');
       // After auth, CustomerProfile creation would happen in a post-login hook
     } catch {
       toast.error('Something went wrong. Please try again.');

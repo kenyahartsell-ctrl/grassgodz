@@ -139,7 +139,7 @@ export default function ProsLandingPage() {
             <div className="bg-white rounded-xl p-5 text-center border border-border">
               <p className="text-sm text-muted-foreground mb-1">Estimated weekly earnings</p>
               <p className="text-4xl font-display font-bold text-primary">${weeklyEst.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-2">Based on avg $55/job × 75% provider share</p>
+              <p className="text-xs text-muted-foreground mt-2">Based on avg $55/job × provider share</p>
             </div>
 
             <p className="text-xs text-muted-foreground text-center">Estimate based on average pricing. Actual earnings vary by service area, season, and job mix.</p>

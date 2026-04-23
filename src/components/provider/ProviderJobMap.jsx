@@ -255,7 +255,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
               ref={mapRef}
               {...viewState}
               onMove={evt => setViewState(evt.viewState)}
-              onLoad={() => setMapLoaded(true)}
+              onLoad={() => setTimeout(() => setMapLoaded(true), 50)}
               mapboxAccessToken={MAPBOX_TOKEN}
               mapStyle="mapbox://styles/mapbox/light-v11"
             >

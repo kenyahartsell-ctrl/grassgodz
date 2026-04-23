@@ -47,6 +47,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
     todayOnly: false,
     recurringOnly: false,
   });
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Get provider's location
   useEffect(() => {
@@ -253,6 +254,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             ref={mapRef}
             {...viewState}
             onMove={evt => setViewState(evt.viewState)}
+            onLoad={() => setMapLoaded(true)}
             mapboxAccessToken={MAPBOX_TOKEN}
             mapStyle="mapbox://styles/mapbox/light-v11"
           >
@@ -269,7 +271,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             )}
 
             {/* Job markers */}
-            {filtered.map(job => (
+            {mapLoaded && filtered.map(job => (
               <Marker key={job.id} longitude={job.lng} latitude={job.lat} anchor="bottom">
                 <button
                   onClick={() => setSelectedJob(job)}

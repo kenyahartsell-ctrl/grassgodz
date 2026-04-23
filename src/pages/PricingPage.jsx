@@ -16,8 +16,7 @@ const FAQS = [
   { q: 'Are prices fixed or negotiable?', a: 'Providers set their own prices. You\'ll receive competitive quotes from multiple pros and can choose the one that works best for your budget.' },
   { q: 'When do I get charged?', a: 'Your card is authorized when you accept a quote, but the charge only goes through after the job is marked complete. You never pay upfront.' },
   { q: 'What if I\'m not happy with the work?', a: 'Contact our support team within 24 hours of job completion and we\'ll work to resolve the issue — including a full or partial refund if warranted.' },
-  { q: 'Are there any hidden fees?', a: 'None. You pay the quoted price. The 25% platform fee is already factored into what providers charge — there\'s no surprise fee added at checkout.' },
-  { q: 'How does the 75/25 split work?', a: 'Providers keep 75% of every job. The remaining 25% goes to Grassgodz to cover payment processing, insurance support, customer service, and the platform.' },
+  { q: 'Are there any hidden fees?', a: 'None. You pay the quoted price. There\'s no surprise fee added at checkout.' },
 ];
 
 export default function PricingPage() {
@@ -33,21 +32,9 @@ export default function PricingPage() {
 
       {/* Pay split */}
       <section className="py-10 px-4 bg-background">
-        <div className="max-w-xl mx-auto">
-          <h2 className="text-xl font-bold text-foreground text-center mb-6">How pricing works</h2>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-center">
-              <p className="text-3xl font-display font-bold text-primary mb-1">75%</p>
-              <p className="text-sm font-semibold text-foreground">Goes to your pro</p>
-              <p className="text-xs text-muted-foreground mt-1">For their time, equipment, and expertise</p>
-            </div>
-            <div className="bg-muted/60 border border-border rounded-2xl p-5 text-center">
-              <p className="text-3xl font-display font-bold text-muted-foreground mb-1">25%</p>
-              <p className="text-sm font-semibold text-foreground">Platform fee</p>
-              <p className="text-xs text-muted-foreground mt-1">Covers payments, support, and matching</p>
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground text-center leading-relaxed">The price you see is the price you pay. No add-ons at checkout.</p>
+        <div className="max-w-xl mx-auto text-center">
+          <h2 className="text-xl font-bold text-foreground mb-4">How pricing works</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">The price you see is the price you pay. No add-ons at checkout.</p>
         </div>
       </section>
 

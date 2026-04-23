@@ -250,14 +250,15 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             </div>
           )}
 
-          <Map
-            ref={mapRef}
-            {...viewState}
-            onMove={evt => setViewState(evt.viewState)}
-            onLoad={() => setMapLoaded(true)}
-            mapboxAccessToken={MAPBOX_TOKEN}
-            mapStyle="mapbox://styles/mapbox/light-v11"
-          >
+          {mapLoaded && (
+            <Map
+              ref={mapRef}
+              {...viewState}
+              onMove={evt => setViewState(evt.viewState)}
+              onLoad={() => setMapLoaded(true)}
+              mapboxAccessToken={MAPBOX_TOKEN}
+              mapStyle="mapbox://styles/mapbox/light-v11"
+            >
             {mapLoaded && <NavigationControl position="top-right" />}
             {mapLoaded && <GeolocateControl position="top-right" />}
 
@@ -288,7 +289,8 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
                 </button>
               </Marker>
             ))}
-          </Map>
+            </Map>
+          )}
 
           {/* Job detail card */}
           {selectedJob && (

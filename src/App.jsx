@@ -24,6 +24,7 @@ import BecomeProviderPage from '@/pages/BecomeProviderPage';
 import NotAvailablePage from '@/pages/NotAvailablePage';
 import ProviderPendingPage from '@/pages/ProviderPendingPage';
 import ProviderSuspendedPage from '@/pages/ProviderSuspendedPage';
+import BookingPage from '@/pages/BookingPage';
 
 function CustomerApp() {
   return <CustomerPortal />;
@@ -75,6 +76,7 @@ const AuthenticatedApp = () => {
       <Route path="/become-provider" element={<BecomeProviderPage />} />
       <Route path="/how-it-works" element={<HowItWorksPage />} />
       <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/book" element={<BookingPage />} />
       <Route path="/signup/customer" element={<CustomerSignupPage />} />
       <Route path="/signup/provider" element={<ProviderSignupPage />} />
       <Route path="/not-available" element={<NotAvailablePage />} />

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Scissors, ArrowRight } from 'lucide-react';
+import GuestBookingModal from './GuestBookingModal';
 
 const PROPERTY_SIZES = [
   { label: 'Small', sublabel: 'Up to ¼ acre', price: 40 },
@@ -57,7 +57,7 @@ function OptionButton({ selected, onClick, label, sublabel, price }) {
 }
 
 export default function PricingCalculator() {
-  const navigate = useNavigate();
+  const [showBooking, setShowBooking] = useState(false);
   const [size, setSize] = useState(0);
   const [height, setHeight] = useState(0);
   const [service, setService] = useState(0);
@@ -87,6 +87,7 @@ export default function PricingCalculator() {
   ];
 
   return (
+    <>
     <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
       {/* Header */}
       <div className="bg-primary px-6 py-5">
@@ -206,7 +207,7 @@ export default function PricingCalculator() {
           </div>
 
           <button
-            onClick={() => navigate('/signup/customer')}
+            onClick={() => setShowBooking(true)}
             className="w-full bg-green-400 hover:bg-green-300 text-green-950 font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-base"
           >
             Book Now <ArrowRight size={16} />
@@ -215,5 +216,13 @@ export default function PricingCalculator() {
         </div>
       </div>
     </div>
+
+    {showBooking && (
+      <GuestBookingModal
+        onClose={() => setShowBooking(false)}
+        summary={{ total, subtotal, savings, frequency, breakdown }}
+      />
+    )}
+    </>
   );
 }

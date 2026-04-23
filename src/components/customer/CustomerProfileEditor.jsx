@@ -41,10 +41,11 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
     e.preventDefault();
     setSaving(true);
     try {
+      const payload = { ...form, user_email: user.email };
       if (profile?.id) {
-        await base44.entities.CustomerProfile.update(profile.id, form);
+        await base44.entities.CustomerProfile.update(profile.id, payload);
       } else {
-        await base44.entities.CustomerProfile.create({ ...form, user_email: user.email });
+        await base44.entities.CustomerProfile.create(payload);
       }
       toast.success('Profile updated successfully.');
       setEditing(false);
@@ -70,8 +71,18 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
     setEditing(false);
   };
 
+  // Auto-open edit mode if no profile exists yet
+  const isNewProfile = !profile?.id;
+
   return (
     <div className="space-y-4">
+      {isNewProfile && !editing && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-2">
+          <Pencil size={14} className="text-amber-600 flex-shrink-0" />
+          <p className="text-xs text-amber-800 font-medium">Complete your profile to make booking faster. <button onClick={() => setEditing(true)} className="underline font-semibold">Add your info →</button></p>
+        </div>
+      )}
+
       {/* Contact Info Card */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
@@ -167,13 +178,16 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
             onClick={async () => {
               setSaving(true);
               try {
+                const notifData = {
+                  notify_new_quote: form.notify_new_quote,
+                  notify_job_accepted: form.notify_job_accepted,
+                  notify_job_completed: form.notify_job_completed,
+                  notify_promotions: form.notify_promotions,
+                };
                 if (profile?.id) {
-                  await base44.entities.CustomerProfile.update(profile.id, {
-                    notify_new_quote: form.notify_new_quote,
-                    notify_job_accepted: form.notify_job_accepted,
-                    notify_job_completed: form.notify_job_completed,
-                    notify_promotions: form.notify_promotions,
-                  });
+                  await base44.entities.CustomerProfile.update(profile.id, notifData);
+                } else {
+                  await base44.entities.CustomerProfile.create({ ...notifData, user_email: user.email });
                 }
                 toast.success('Notification preferences saved.');
                 onProfileUpdated();

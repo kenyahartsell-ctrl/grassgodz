@@ -257,7 +257,9 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
               onMove={evt => setViewState(evt.viewState)}
               onLoad={() => {
                 requestAnimationFrame(() => {
-                  requestAnimationFrame(() => setMapLoaded(true));
+                  requestAnimationFrame(() => {
+                    setTimeout(() => setMapLoaded(true), 100);
+                  });
                 });
               }}
               mapboxAccessToken={MAPBOX_TOKEN}

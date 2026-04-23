@@ -69,14 +69,14 @@ export default function HomePage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/90 mb-6">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            Pros available in your area now
+            Local pros available in your area now
           </div>
 
           <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight mb-4 tracking-tight">
-            Lawn Care<br />On Demand
+            Your Lawn.<br />Local Pros.
           </h1>
           <p className="text-lg md:text-xl text-white/80 mb-8 max-w-md mx-auto">
-            Get an instant quote and book your lawn service in under 60 seconds.
+            Get matched with a local lawn care professional in your area — book in under 60 seconds.
           </p>
 
           {/* ZIP form */}
@@ -122,16 +122,24 @@ export default function HomePage() {
       {/* HOW IT WORKS */}
       <section className="py-16 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-center text-foreground mb-10">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">How It Works</h2>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto">We connect you with trusted local lawn care professionals — fast, simple, and on your schedule.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            {/* Connector line (desktop only) */}
+            <div className="hidden md:block absolute top-10 left-1/4 right-1/4 h-0.5 bg-border z-0" />
             {[
-              { step: '1', icon: '📍', title: 'Enter your ZIP', desc: 'Tell us where you are and what you need.' },
-              { step: '2', icon: '💬', title: 'Get quotes fast', desc: 'Vetted local pros respond with competitive prices.' },
-              { step: '3', icon: '✅', title: 'Pay after completion', desc: 'Job done right — then your card is charged. Zero risk.' },
+              { step: '1', icon: '📍', title: 'Enter your address', desc: 'Tell us where you are and what service you need. Takes less than 30 seconds.' },
+              { step: '2', icon: '🤝', title: 'Get matched with a local pro', desc: 'We connect you with a vetted, insured lawn care professional in your area.' },
+              { step: '3', icon: '🌿', title: 'Sit back while we handle your lawn', desc: 'Your pro shows up, does the work, and you only pay when the job is done.' },
             ].map(card => (
-              <div key={card.step} className="bg-secondary/40 rounded-2xl p-6 text-center">
-                <div className="text-4xl mb-4">{card.icon}</div>
-                <h3 className="font-bold text-foreground text-lg mb-2">{card.title}</h3>
+              <div key={card.step} className="relative bg-secondary/40 rounded-2xl p-6 text-center z-10">
+                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center mx-auto mb-3">
+                  {card.step}
+                </div>
+                <div className="text-3xl mb-3">{card.icon}</div>
+                <h3 className="font-bold text-foreground text-base mb-2">{card.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
               </div>
             ))}
@@ -217,9 +225,9 @@ export default function HomePage() {
       {/* PRICING TRANSPARENCY */}
       <section className="py-14 px-4 bg-background">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-display font-bold text-foreground mb-3">Honest pricing, no surprises</h2>
+          <h2 className="text-2xl font-display font-bold text-foreground mb-3">A marketplace you can trust</h2>
           <p className="text-muted-foreground text-sm mb-5">
-            You pay the quoted price. No hidden fees. Pros keep 75% — Grassgodz takes 25% to run the platform.
+            GrassGodz doesn't send a crew — we connect you with independent, vetted local professionals. You see the price upfront, and your card is only charged after the job is complete.
           </p>
           <a href="/pricing" className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
             See sample prices <ArrowRight size={14} />
@@ -230,9 +238,9 @@ export default function HomePage() {
       {/* PROVIDER TEASER */}
       <section className="py-16 px-4 bg-secondary/30">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">Are you a landscaping pro?</h2>
-          <p className="text-muted-foreground mb-2">Earn $500–$2,000/week. Your schedule. Weekly payouts.</p>
-          <p className="text-sm text-muted-foreground mb-6">No marketing needed — we bring the customers to you.</p>
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">Are you a lawn care professional?</h2>
+          <p className="text-muted-foreground mb-2">Join the GrassGodz marketplace and get matched with customers in your area.</p>
+          <p className="text-sm text-muted-foreground mb-6">Earn $500–$2,000/week on your own schedule — no marketing, no hassle.</p>
           <a
             href="/pros"
             className="inline-flex items-center gap-2 bg-foreground text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-foreground/90 transition-colors"

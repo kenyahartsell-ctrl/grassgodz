@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Scissors, Wind, Sprout, Snowflake, CircleDot, Crop, Star, Shield, Users, ArrowRight, CheckCircle } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
+import PricingCalculator from '@/components/public/PricingCalculator';
 import { base44 } from '@/api/base44Client';
 
 // ANALYTICS HOOK: track('homepage_view') on mount
@@ -135,6 +136,17 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* PRICING CALCULATOR */}
+      <section className="py-16 px-4 bg-background">
+        <div className="max-w-lg mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">Get an Instant Estimate</h2>
+            <p className="text-muted-foreground text-sm">No signup needed — see your price in seconds.</p>
+          </div>
+          <PricingCalculator />
         </div>
       </section>
 

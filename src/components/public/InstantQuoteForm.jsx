@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 const PROPERTY_SIZES = [
   { label: 'Small', sublabel: 'Up to ¼ acre', price: 40 },
@@ -62,8 +63,53 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
   const [service, setService] = useState(0);
   const [addons, setAddons] = useState({ hedge: false, leaf: false });
   const [frequency, setFrequency] = useState('one-time');
+  
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [detectedSize, setDetectedSize] = useState(null);
+  const [lookupStatus, setLookupStatus] = useState(null); // 'success', 'warning', or null
 
   const toggleAddon = (key) => setAddons(a => ({ ...a, [key]: !a[key] }));
+
+  const handleAddressBlur = async () => {
+    if (!address.trim()) {
+      setDetectedSize(null);
+      setLookupStatus(null);
+      return;
+    }
+
+    setLookupLoading(true);
+    try {
+      const response = await base44.functions.invoke('getPropertySize', {
+        address: address.trim(),
+      });
+
+      if (response.data.success) {
+        const propSize = response.data.propertySize;
+        const sizeIndex = PROPERTY_SIZES.findIndex(s => s.label === propSize);
+        
+        setDetectedSize({
+          size: propSize,
+          lotSize: response.data.lotSize,
+          source: response.data.source,
+        });
+        
+        if (sizeIndex >= 0) {
+          setSize(sizeIndex);
+        }
+        
+        setLookupStatus(response.data.source === 'api' ? 'success' : 'warning');
+      } else {
+        setDetectedSize(null);
+        setLookupStatus('warning');
+      }
+    } catch (error) {
+      console.error('Property lookup failed:', error);
+      setDetectedSize(null);
+      setLookupStatus('warning');
+    } finally {
+      setLookupLoading(false);
+    }
+  };
 
   const { subtotal, discount, total, savings } = useMemo(() => {
     const base = PROPERTY_SIZES[size].price;
@@ -113,18 +159,45 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
         {/* Address */}
         <div>
           <label className="text-xs font-bold text-foreground uppercase tracking-wide mb-2.5 block">Your Address</label>
-          <input
-            type="text"
-            value={address}
-            onChange={e => setAddress(e.target.value)}
-            placeholder="123 Main St, Washington, DC 20001"
-            className="w-full border border-input rounded-xl px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={address}
+              onChange={e => setAddress(e.target.value)}
+              onBlur={handleAddressBlur}
+              placeholder="123 Main St, Washington, DC 20001"
+              className="w-full border border-input rounded-xl px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            {lookupLoading && (
+              <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" />
+            )}
+          </div>
+          
+          {/* Lookup status messages */}
+          {lookupStatus === 'success' && detectedSize && (
+            <div className="mt-2 bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-2">
+              <CheckCircle size={14} className="text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <p className="text-green-800 font-medium">Property detected: {detectedSize.size}</p>
+                <p className="text-green-700 text-xs">~{detectedSize.lotSize?.toLocaleString()} sq ft</p>
+              </div>
+            </div>
+          )}
+          
+          {lookupStatus === 'warning' && (
+            <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+              <AlertCircle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800">Could not verify property size. Please select your property size below.</p>
+            </div>
+          )}
         </div>
 
         {/* Property Size */}
         <div>
-          <label className="text-xs font-bold text-foreground uppercase tracking-wide mb-2.5 block">Property Size</label>
+          <label className="text-xs font-bold text-foreground uppercase tracking-wide mb-2.5 block">
+            Property Size
+            {detectedSize && <span className="ml-2 text-green-600 font-semibold">(Detected: {detectedSize.size})</span>}
+          </label>
           <div className="grid grid-cols-3 gap-2">
             {PROPERTY_SIZES.map((opt, i) => (
               <OptionButton key={opt.label} selected={size === i} onClick={() => setSize(i)}

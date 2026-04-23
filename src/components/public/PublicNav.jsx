@@ -21,7 +21,7 @@ export default function PublicNav() {
         <div className="hidden md:flex items-center gap-6">
           <Link to="/how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How it Works</Link>
           <Link to="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          <Link to="/pros" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">For Pros</Link>
+          <Link to="/become-provider" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">For Pros</Link>
         </div>
 
         {/* Right side */}
@@ -54,7 +54,7 @@ export default function PublicNav() {
         <div className="md:hidden border-t border-border bg-white px-4 py-4 flex flex-col gap-3">
           <Link to="/how-it-works" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">How it Works</Link>
           <Link to="/pricing" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">Pricing</Link>
-          <Link to="/pros" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">For Pros</Link>
+          <Link to="/become-provider" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">For Pros</Link>
           <hr className="border-border" />
           <button onClick={() => { setMenuOpen(false); base44.auth.redirectToLogin(window.location.origin + '/redirect'); }} className="text-sm font-medium text-foreground py-2 text-left">Sign In</button>
           <Link

@@ -20,6 +20,7 @@ import HowItWorksPage from '@/pages/HowItWorksPage';
 import PricingPage from '@/pages/PricingPage';
 import CustomerSignupPage from '@/pages/CustomerSignupPage';
 import ProviderSignupPage from '@/pages/ProviderSignupPage';
+import BecomeProviderPage from '@/pages/BecomeProviderPage';
 import NotAvailablePage from '@/pages/NotAvailablePage';
 import ProviderPendingPage from '@/pages/ProviderPendingPage';
 import ProviderSuspendedPage from '@/pages/ProviderSuspendedPage';
@@ -71,6 +72,7 @@ const AuthenticatedApp = () => {
       {/* Public routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/pros" element={<ProsLandingPage />} />
+      <Route path="/become-provider" element={<BecomeProviderPage />} />
       <Route path="/how-it-works" element={<HowItWorksPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/signup/customer" element={<CustomerSignupPage />} />

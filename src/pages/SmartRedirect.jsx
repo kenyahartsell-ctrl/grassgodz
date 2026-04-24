@@ -36,7 +36,7 @@ export default function SmartRedirect() {
           const profile = profiles[0];
           if (profile.status === 'suspended') {
             navigate('/provider/suspended', { replace: true });
-          } else if (profile.status === 'pending_approval') {
+          } else if (['pending_review', 'pending_approval', 'background_check_needed', 'more_info_needed'].includes(profile.status)) {
             navigate('/provider/pending', { replace: true });
           } else {
             // active or paused — go to provider portal

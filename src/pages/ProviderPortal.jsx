@@ -45,6 +45,16 @@ export default function ProviderPortal() {
         setProviderProfile(profile);
 
         if (profile) {
+          // Check if Stripe onboarding was just completed (e.g. returning from Stripe)
+          if (profile.stripe_connect_account_id && !profile.onboarding_complete) {
+            try {
+              const result = await base44.functions.invoke('stripeConnectComplete', {});
+              if (result.data?.onboarding_complete) {
+                profile.onboarding_complete = true;
+              }
+            } catch {}
+          }
+
           const [mine, available, myReviews] = await Promise.all([
             base44.entities.Job.filter({ provider_email: me.email }),
             base44.entities.Job.filter({ status: 'requested' }),

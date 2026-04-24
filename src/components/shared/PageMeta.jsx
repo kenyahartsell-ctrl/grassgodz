@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-const DEFAULT_OG_IMAGE = 'https://grassgodz.com/logo-og.png';
+const DEFAULT_OG_IMAGE = 'https://media.base44.com/images/public/69e949497e5928c679297ebf/7b6c1fcab_generated_image.png';
 const SITE_URL = 'https://grassgodz.com';
 
 export default function PageMeta({ title, description, ogImage, path = '' }) {

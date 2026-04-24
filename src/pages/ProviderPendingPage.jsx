@@ -1,8 +1,45 @@
-import { Clock, CheckCircle, Mail, ArrowRight } from 'lucide-react';
+import { Clock, CheckCircle, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import PublicNav from '@/components/public/PublicNav';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 export default function ProviderPendingPage() {
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [providerProfile, setProviderProfile] = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const me = await base44.auth.me();
+        const profiles = await base44.entities.ProviderProfile.filter({ user_email: me.email });
+        setProviderProfile(profiles[0] || null);
+      } catch {}
+    }
+    load();
+  }, []);
+
+  const handleStripeOnboarding = async () => {
+    if (!providerProfile) return;
+    setStripeLoading(true);
+    try {
+      const res = await base44.functions.invoke('stripeConnectOnboarding', {
+        provider_profile_id: providerProfile.id,
+        return_url: window.location.origin + '/provider',
+      });
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        toast.error(res.data?.error || 'Failed to start onboarding.');
+      }
+    } catch (err) {
+      toast.error('Failed to start Stripe onboarding. Please try again.');
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <PublicNav />
@@ -31,6 +68,20 @@ export default function ProviderPendingPage() {
             </div>
           ))}
         </div>
+
+        {providerProfile && !providerProfile.onboarding_complete && (
+          <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 text-left">
+            <p className="text-sm font-bold text-amber-800 mb-1">Connect Your Bank Account</p>
+            <p className="text-xs text-amber-700 mb-3">Set up Stripe now so payouts are ready the moment you're approved.</p>
+            <button
+              onClick={handleStripeOnboarding}
+              disabled={stripeLoading}
+              className="bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-amber-800 transition-colors disabled:opacity-60"
+            >
+              {stripeLoading ? 'Loading…' : 'Start Stripe Onboarding →'}
+            </button>
+          </div>
+        )}
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Mail size={15} />

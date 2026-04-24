@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pencil, Save, X, Bell } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Pencil, Save, X, Bell, Camera, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import StarRating from '@/components/shared/StarRating';
@@ -25,6 +25,9 @@ function Toggle({ checked, onChange, label, description }) {
 export default function ProviderProfileEditor({ user, profile, avgRating, reviews, onProfileUpdated }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState(profile?.profile_image_url || '');
+  const photoInputRef = useRef(null);
   const [form, setForm] = useState({
     name: profile?.name || user?.full_name || '',
     phone: profile?.phone || '',
@@ -39,6 +42,29 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
   });
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file.');
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setPhotoUrl(file_url);
+      if (profile?.id) {
+        await base44.entities.ProviderProfile.update(profile.id, { profile_image_url: file_url });
+      }
+      toast.success('Profile photo updated!');
+      onProfileUpdated();
+    } catch {
+      toast.error('Failed to upload photo.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -93,13 +119,36 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-lg font-bold text-primary">{(form.name || '?')[0]}</span>
+            {/* Profile photo with upload button */}
+            <div className="relative flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-border">
+                {photoUrl ? (
+                  <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-lg font-bold text-primary">{(form.name || '?')[0]}</span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoUploading}
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow border-2 border-card hover:bg-primary/90 transition-colors"
+              >
+                {photoUploading ? <Loader2 size={10} className="animate-spin" /> : <Camera size={10} />}
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
             </div>
             <div>
               <p className="font-bold text-foreground">{form.business_name || form.name}</p>
               <p className="text-xs text-muted-foreground">{form.name}</p>
               {avgRating && Number(avgRating) > 0 && <StarRating rating={Number(avgRating)} showValue />}
+              <p className="text-xs text-muted-foreground/60 mt-0.5">Tap camera icon to update photo</p>
             </div>
           </div>
           {!editing && (

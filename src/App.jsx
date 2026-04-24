@@ -26,6 +26,7 @@ import NotAvailablePage from '@/pages/NotAvailablePage';
 import ProviderPendingPage from '@/pages/ProviderPendingPage';
 import ProviderSuspendedPage from '@/pages/ProviderSuspendedPage';
 import BookingPage from '@/pages/BookingPage';
+import TestMapboxPage from '@/pages/TestMapboxPage';
 
 function CustomerApp() {
   return <CustomerPortal />;
@@ -81,6 +82,7 @@ const AuthenticatedApp = () => {
       <Route path="/signup/customer" element={<CustomerSignupPage />} />
       <Route path="/signup/provider" element={<ProviderSignupPage />} />
       <Route path="/not-available" element={<NotAvailablePage />} />
+      <Route path="/test-mapbox" element={<TestMapboxPage />} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

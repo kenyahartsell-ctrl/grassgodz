@@ -90,12 +90,19 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
   const fetchSuggestions = async (query) => {
     if (!query || query.length < 3 || !MAPBOX_TOKEN) {
       setSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=US&types=address&limit=5`;
-    const res = await fetch(url);
-    const data = await res.json();
-    setSuggestions(data.features || []);
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=US&types=address&limit=5`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const features = data.features || [];
+      setSuggestions(features);
+      setShowSuggestions(features.length > 0);
+    } catch {
+      setSuggestions([]);
+    }
   };
 
   const handleAddressChange = (e) => {
@@ -104,10 +111,7 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
     setLookupStatus(null);
     setDetectedSize(null);
     clearTimeout(autocompleteTimer.current);
-    autocompleteTimer.current = setTimeout(() => {
-      fetchSuggestions(val);
-      setShowSuggestions(true);
-    }, 250);
+    autocompleteTimer.current = setTimeout(() => fetchSuggestions(val), 300);
   };
 
   const handleSelectSuggestion = async (feature) => {

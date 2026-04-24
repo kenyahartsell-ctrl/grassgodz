@@ -187,13 +187,30 @@ export default function ProviderPortal() {
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {/* Onboarding Banner */}
-        {!providerProfile?.onboarding_complete && (
+        {providerProfile && !providerProfile?.onboarding_complete && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
             <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-amber-800">Complete Stripe Onboarding</p>
-              <p className="text-xs text-amber-700 mt-0.5">Connect your bank account to receive payouts for completed jobs.</p>
-              <button className="mt-2 text-xs font-semibold text-amber-800 underline">Start Onboarding →</button>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">Connect Your Bank Account</p>
+              <p className="text-xs text-amber-700 mt-0.5">Set up Stripe to receive weekly payouts for completed jobs.</p>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await base44.functions.invoke('stripeConnectOnboarding', {
+                      provider_profile_id: providerProfile.id,
+                      return_url: window.location.origin + '/provider',
+                    });
+                    if (res.data?.url) {
+                      window.location.href = res.data.url;
+                    }
+                  } catch {
+                    toast.error('Failed to start Stripe onboarding. Please try again.');
+                  }
+                }}
+                className="mt-2 text-xs font-semibold text-amber-800 underline hover:text-amber-900"
+              >
+                Start Stripe Onboarding →
+              </button>
             </div>
           </div>
         )}

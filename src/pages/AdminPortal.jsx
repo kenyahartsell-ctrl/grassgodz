@@ -3,6 +3,7 @@ import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, Leaf, TrendingUp
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
+import AdminProvidersTable from '../components/admin/AdminProvidersTable';
 import StarRating from '../components/shared/StarRating';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -47,7 +48,7 @@ export default function AdminPortal() {
   }, []);
 
   const activeProviders = providers.filter(p => p.status === 'active').length;
-  const pendingProviders = providers.filter(p => p.status === 'pending_approval').length;
+  const pendingProviders = providers.filter(p => ['pending_review', 'pending_approval', 'background_check_needed', 'more_info_needed'].includes(p.status)).length;
   const totalGMV = payments.reduce((s, p) => s + (p.amount || 0), 0);
   const platformRevenue = payments.reduce((s, p) => s + (p.platform_fee || 0), 0);
   const weekJobs = jobs.filter(j => j.status !== 'cancelled').length;
@@ -169,8 +170,8 @@ export default function AdminPortal() {
 
             {pendingProviders > 0 && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-                <h3 className="text-sm font-bold text-amber-800 mb-3">{pendingProviders} Provider{pendingProviders > 1 ? 's' : ''} Awaiting Approval</h3>
-                {providers.filter(p => p.status === 'pending_approval').map(p => (
+                <h3 className="text-sm font-bold text-amber-800 mb-3">{pendingProviders} Provider{pendingProviders > 1 ? 's' : ''} Awaiting Review</h3>
+                {providers.filter(p => ['pending_review', 'pending_approval'].includes(p.status)).map(p => (
                   <ProviderApprovalRow key={p.id} provider={p} onApprove={handleApprove} onReject={handleReject} />
                 ))}
               </div>
@@ -184,35 +185,13 @@ export default function AdminPortal() {
             {providers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-10">No providers yet.</p>
             ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                {providers.map((p, i) => (
-                  <div key={p.id} className={`flex items-center gap-3 px-5 py-4 ${i < providers.length - 1 ? 'border-b border-border' : ''}`}>
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-primary">{p.name?.[0] || '?'}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{p.business_name}</p>
-                      <p className="text-xs text-muted-foreground">{p.user_email}</p>
-                    </div>
-                    <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>⭐ {p.avg_rating || '—'}</span>
-                      <span>{p.total_jobs_completed || 0} jobs</span>
-                    </div>
-                    <StatusBadge status={p.status} />
-                    <div className="flex gap-1">
-                      {p.status === 'pending_approval' && (
-                        <>
-                          <button onClick={() => handleApprove(p)} className="px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors">Approve</button>
-                          <button onClick={() => handleReject(p)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Reject</button>
-                        </>
-                      )}
-                      {p.status === 'active' && (
-                        <button onClick={() => handleSuspend(p)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Suspend</button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <AdminProvidersTable
+                providers={providers}
+                onRefresh={async () => {
+                  const allProviders = await base44.entities.ProviderProfile.list();
+                  setProviders(allProviders);
+                }}
+              />
             )}
           </div>
         )}

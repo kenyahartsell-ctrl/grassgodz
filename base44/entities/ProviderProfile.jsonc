@@ -11,6 +11,13 @@
     "phone": {
       "type": "string"
     },
+    "dob": {
+      "type": "string",
+      "format": "date"
+    },
+    "home_address": {
+      "type": "string"
+    },
     "business_name": {
       "type": "string"
     },
@@ -19,6 +26,44 @@
     },
     "years_experience": {
       "type": "number"
+    },
+    "dl_state": {
+      "type": "string",
+      "description": "Driver's license state"
+    },
+    "dl_number": {
+      "type": "string",
+      "description": "Driver's license number"
+    },
+    "has_vehicle": {
+      "type": "boolean",
+      "default": false
+    },
+    "has_equipment": {
+      "type": "boolean",
+      "default": false
+    },
+    "emergency_contact_name": {
+      "type": "string"
+    },
+    "emergency_contact_phone": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "string",
+      "description": "Typed electronic signature for background check consent"
+    },
+    "consented_background_check": {
+      "type": "boolean",
+      "default": false
+    },
+    "consented_terms": {
+      "type": "boolean",
+      "default": false
+    },
+    "consent_timestamp": {
+      "type": "string",
+      "format": "date-time"
     },
     "stripe_connect_account_id": {
       "type": "string"
@@ -54,32 +99,55 @@
     "status": {
       "type": "string",
       "enum": [
-        "pending_approval",
+        "pending_review",
+        "background_check_needed",
+        "approved",
+        "rejected",
+        "more_info_needed",
         "active",
         "paused",
         "suspended"
       ],
-      "default": "pending_approval"
+      "default": "pending_review"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Internal admin notes on this provider"
+    },
+    "checkr_candidate_id": {
+      "type": "string",
+      "description": "Checkr candidate ID for background check"
+    },
+    "checkr_report_id": {
+      "type": "string",
+      "description": "Checkr report ID"
+    },
+    "background_check_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "pending",
+        "clear",
+        "consider",
+        "suspended"
+      ],
+      "default": "not_started"
     },
     "notify_new_booking": {
       "type": "boolean",
-      "default": true,
-      "description": "Email when a customer books a job"
+      "default": true
     },
     "notify_job_updates": {
       "type": "boolean",
-      "default": true,
-      "description": "Email on job status changes"
+      "default": true
     },
     "notify_payment_received": {
       "type": "boolean",
-      "default": true,
-      "description": "Email when payment is processed"
+      "default": true
     },
     "notify_promotions": {
       "type": "boolean",
-      "default": false,
-      "description": "Promotional emails and platform news"
+      "default": false
     }
   },
   "required": [

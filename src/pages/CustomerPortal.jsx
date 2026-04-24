@@ -133,9 +133,7 @@ export default function CustomerPortal() {
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Leaf size={16} className="text-primary-foreground" />
-          </div>
+          <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
           <div className="ml-auto flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">

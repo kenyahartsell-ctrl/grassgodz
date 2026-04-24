@@ -1,5 +1,6 @@
 import { Calendar, MapPin, DollarSign } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
+import JobCompletionPhotos from './JobCompletionPhotos';
 
 export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
   return (
@@ -65,6 +66,10 @@ export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
           </span>
         )}
       </div>
+
+      {job.status === 'completed' && job.completion_photos && (
+        <JobCompletionPhotos photos={job.completion_photos} />
+      )}
     </div>
   );
 }

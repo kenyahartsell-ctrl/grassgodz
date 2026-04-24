@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { X, Camera, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import imageCompression from 'browser-image-compression';
 
 const PHOTO_SLOTS = [
   { key: 'front_before', label: 'Front Yard', timing: 'Before', required: true },
@@ -36,27 +37,30 @@ function PhotoSlot({ slot, url, onUpload, uploading }) {
         }`}
       >
         {url ? (
-          <>
-            <img src={url} alt={`${slot.label} ${slot.timing}`} className="w-full h-full object-cover" />
-            <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-              <CheckCircle size={12} className="text-white" />
-            </div>
-            <div className="absolute bottom-0 inset-x-0 bg-black/40 py-1 text-xs text-white text-center font-medium">
-              Tap to replace
-            </div>
-          </>
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-            {uploading ? (
-              <Loader2 size={20} className="text-primary animate-spin" />
-            ) : (
-              <>
-                <Camera size={20} className="text-muted-foreground/50" />
-                <span className="text-xs text-muted-foreground">Tap to add</span>
-              </>
-            )}
-          </div>
-        )}
+           <>
+             <img src={url} alt={`${slot.label} ${slot.timing}`} className="w-full h-full object-cover" />
+             <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+               <CheckCircle size={12} className="text-white" />
+             </div>
+             <div className="absolute bottom-0 inset-x-0 bg-black/40 py-1 text-xs text-white text-center font-medium">
+               Tap to replace
+             </div>
+           </>
+         ) : (
+           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+             {uploading ? (
+               <>
+                 <Loader2 size={20} className="text-primary animate-spin" />
+                 <span className="text-xs text-muted-foreground">{uploading === 'compressing' ? 'Compressing...' : 'Uploading...'}</span>
+               </>
+             ) : (
+               <>
+                 <Camera size={20} className="text-muted-foreground/50" />
+                 <span className="text-xs text-muted-foreground">Tap to add</span>
+               </>
+             )}
+           </div>
+         )}
       </button>
       <input
         ref={inputRef}
@@ -80,9 +84,22 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
   const handleUpload = async (key, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(u => ({ ...u, [key]: true }));
+    setUploading(u => ({ ...u, [key]: 'compressing' }));
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      let finalFile = file;
+      try {
+        finalFile = await imageCompression.imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1600,
+          useWebWorker: true,
+          fileType: 'image/jpeg',
+        });
+      } catch (compressionError) {
+        console.warn('Image compression failed, uploading original:', compressionError);
+        // Fall back to original file
+      }
+      setUploading(u => ({ ...u, [key]: 'uploading' }));
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: finalFile });
       setPhotos(p => ({ ...p, [key]: file_url }));
     } catch {
       toast.error('Photo upload failed. Please try again.');

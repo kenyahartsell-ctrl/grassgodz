@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/shared/StatusBadge';
+import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import { format } from 'date-fns';
+import { Camera } from 'lucide-react';
 
 export default function AdminJobsTable({ jobs, onUpdateStatus }) {
+  const [selectedPhotos, setSelectedPhotos] = useState(null);
   return (
     <div className="rounded-xl border border-border overflow-hidden">
       <Table>
@@ -34,21 +37,37 @@ export default function AdminJobsTable({ jobs, onUpdateStatus }) {
               </TableCell>
               <TableCell><StatusBadge status={job.status} /></TableCell>
               <TableCell>
-                <Select onValueChange={(val) => onUpdateStatus(job, val)}>
-                  <SelectTrigger className="w-32 h-8 text-xs">
-                    <SelectValue placeholder="Change..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cancelled">Cancel</SelectItem>
-                    <SelectItem value="completed">Complete</SelectItem>
-                    <SelectItem value="requested">Re-open</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  {job.status === 'completed' && job.completion_photos && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-blue-600 hover:bg-blue-50"
+                      onClick={() => setSelectedPhotos(job.completion_photos)}
+                    >
+                      <Camera size={14} />
+                    </Button>
+                  )}
+                  <Select onValueChange={(val) => onUpdateStatus(job, val)}>
+                    <SelectTrigger className="w-32 h-8 text-xs">
+                      <SelectValue placeholder="Change..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cancelled">Cancel</SelectItem>
+                      <SelectItem value="completed">Complete</SelectItem>
+                      <SelectItem value="requested">Re-open</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {selectedPhotos && (
+        <PhotoLightbox photos={selectedPhotos} onClose={() => setSelectedPhotos(null)} />
+      )}
     </div>
   );
 }

@@ -52,6 +52,10 @@ export default function BookingPage() {
           onClose={() => setShowBookingModal(false)}
           summary={{
             total: quoteData.total,
+            subtotal: quoteData.subtotal,
+            savings: quoteData.savings,
+            frequency: quoteData.frequency,
+            breakdown: quoteData.breakdown,
             address: quoteData.address,
             service: quoteData.service,
           }}

@@ -181,6 +181,9 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
       addons: ADDONS.filter(a => addons[a.key]).map(a => a.label),
       frequency,
       total,
+      subtotal,
+      savings,
+      breakdown,
     });
   };
 

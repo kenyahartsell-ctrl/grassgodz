@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, MapPin, PlayCircle, CheckCircle, Image } from 'lucide-react';
+import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
 
@@ -37,6 +37,17 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <MapPin size={11} />
             <span>{job.address}</span>
+            {job.address && (
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-1 flex items-center gap-1 text-primary font-semibold hover:underline"
+              >
+                <Navigation size={11} />
+                Navigate
+              </a>
+            )}
           </div>
         </div>
 

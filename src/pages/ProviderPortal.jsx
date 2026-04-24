@@ -140,7 +140,7 @@ export default function ProviderPortal() {
     toast.success('Job marked as in progress.');
   };
 
-  const handleMarkComplete = async (job) => {
+  const handleMarkComplete = async (job, photos = {}) => {
     const providerPayout = (job.quoted_price || 0) * 0.75;
     const platformFee = (job.quoted_price || 0) * 0.25;
     await base44.entities.Job.update(job.id, {
@@ -149,6 +149,7 @@ export default function ProviderPortal() {
       final_price: job.quoted_price,
       provider_payout: providerPayout,
       platform_fee: platformFee,
+      completion_photos: photos,
     });
     await refreshJobs();
     toast.success(`Job completed! $${providerPayout.toFixed(2)} will be transferred to your account.`);

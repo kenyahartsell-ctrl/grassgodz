@@ -72,6 +72,36 @@
     "completed_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "completion_photos": {
+      "type": "object",
+      "description": "Before/after photos of each area. Keys: front_before, front_after, back_before, back_after, left_before, left_after, right_before, right_after",
+      "properties": {
+        "front_before": {
+          "type": "string"
+        },
+        "front_after": {
+          "type": "string"
+        },
+        "back_before": {
+          "type": "string"
+        },
+        "back_after": {
+          "type": "string"
+        },
+        "left_before": {
+          "type": "string"
+        },
+        "left_after": {
+          "type": "string"
+        },
+        "right_before": {
+          "type": "string"
+        },
+        "right_after": {
+          "type": "string"
+        }
+      }
     }
   },
   "required": [

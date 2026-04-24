@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
-import { CheckCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { CheckCircle, ArrowRight, Loader2, AlertCircle, MapPin } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 const PROPERTY_SIZES = [
   { label: 'Small', sublabel: 'Up to ¼ acre', price: 40 },
@@ -66,50 +68,78 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
   
   const [lookupLoading, setLookupLoading] = useState(false);
   const [detectedSize, setDetectedSize] = useState(null);
-  const [lookupStatus, setLookupStatus] = useState(null); // 'success', 'warning', or null
+  const [lookupStatus, setLookupStatus] = useState(null);
 
-  const toggleAddon = (key) => setAddons(a => ({ ...a, [key]: !a[key] }));
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const autocompleteTimer = useRef(null);
+  const wrapperRef = useRef(null);
 
-  const handleAddressBlur = async () => {
-    if (!address.trim()) {
-      setDetectedSize(null);
-      setLookupStatus(null);
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const fetchSuggestions = async (query) => {
+    if (!query || query.length < 3 || !MAPBOX_TOKEN) {
+      setSuggestions([]);
       return;
     }
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=US&types=address&limit=5`;
+    const res = await fetch(url);
+    const data = await res.json();
+    setSuggestions(data.features || []);
+  };
 
+  const handleAddressChange = (e) => {
+    const val = e.target.value;
+    setAddress(val);
+    setLookupStatus(null);
+    setDetectedSize(null);
+    clearTimeout(autocompleteTimer.current);
+    autocompleteTimer.current = setTimeout(() => {
+      fetchSuggestions(val);
+      setShowSuggestions(true);
+    }, 250);
+  };
+
+  const handleSelectSuggestion = async (feature) => {
+    const selected = feature.place_name;
+    setAddress(selected);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    // Trigger property size lookup
     setLookupLoading(true);
     try {
-      const response = await base44.functions.invoke('getPropertySize', {
-        address: address.trim(),
-      });
-
+      const response = await base44.functions.invoke('getPropertySize', { address: selected });
       if (response.data.success) {
         const propSize = response.data.propertySize;
         const sizeIndex = PROPERTY_SIZES.findIndex(s => s.label === propSize);
-        
-        setDetectedSize({
-          size: propSize,
-          lotSize: response.data.lotSize,
-          source: response.data.source,
-        });
-        
-        if (sizeIndex >= 0) {
-          setSize(sizeIndex);
-        }
-        
+        setDetectedSize({ size: propSize, lotSize: response.data.lotSize, source: response.data.source });
+        if (sizeIndex >= 0) setSize(sizeIndex);
         setLookupStatus(response.data.source === 'api' ? 'success' : 'warning');
       } else {
         setDetectedSize(null);
         setLookupStatus('warning');
       }
-    } catch (error) {
-      console.error('Property lookup failed:', error);
+    } catch {
       setDetectedSize(null);
       setLookupStatus('warning');
     } finally {
       setLookupLoading(false);
     }
   };
+
+  const toggleAddon = (key) => setAddons(a => ({ ...a, [key]: !a[key] }));
+
+
 
   const { subtotal, discount, total, savings } = useMemo(() => {
     const base = PROPERTY_SIZES[size].price;
@@ -159,17 +189,34 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
         {/* Address */}
         <div>
           <label className="text-xs font-bold text-foreground uppercase tracking-wide mb-2.5 block">Your Address</label>
-          <div className="relative">
+          <div className="relative" ref={wrapperRef}>
             <input
               type="text"
               value={address}
-              onChange={e => setAddress(e.target.value)}
-              onBlur={handleAddressBlur}
+              onChange={handleAddressChange}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               placeholder="123 Main St, Washington, DC 20001"
               className="w-full border border-input rounded-xl px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              autoComplete="off"
             />
             {lookupLoading && (
               <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" />
+            )}
+            {/* Suggestions dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                {suggestions.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onMouseDown={() => handleSelectSuggestion(f)}
+                    className="w-full flex items-start gap-2.5 px-4 py-3 hover:bg-muted text-left transition-colors border-b border-border last:border-0"
+                  >
+                    <MapPin size={14} className="text-primary flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-foreground">{f.place_name}</span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
           

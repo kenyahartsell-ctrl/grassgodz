@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, Leaf, TrendingUp, DollarSign, Star, Activity, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, Leaf, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube } from 'lucide-react';
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
@@ -8,6 +8,7 @@ import StarRating from '../components/shared/StarRating';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,6 +27,14 @@ export default function AdminPortal() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Log Stripe public key prefix for verification
+    const pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+    if (pubKey) {
+      console.log('[Stripe] Publishable key detected:', pubKey.substring(0, 8) + '...');
+    } else {
+      console.warn('[Stripe] VITE_STRIPE_PUBLISHABLE_KEY not found in environment');
+    }
+
     async function loadData() {
       try {
         const [allProviders, allJobs, allPayments, allReviews] = await Promise.all([
@@ -99,6 +108,23 @@ export default function AdminPortal() {
     toast.success('Job cancelled.');
   };
 
+  const handleTestStripe = async () => {
+    try {
+      const res = await base44.functions.invoke('stripeSmokeTest', {});
+      if (res.data.success) {
+        if (res.data.livemode) {
+          toast.warning('⚠️ Stripe connected but in LIVE mode — switch to test keys');
+        } else {
+          toast.success('✅ Stripe connected (test mode)');
+        }
+      } else {
+        toast.error(`❌ Stripe connection failed: ${res.data.error}`);
+      }
+    } catch (err) {
+      toast.error(`❌ Stripe connection failed: ${err.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
@@ -124,9 +150,20 @@ export default function AdminPortal() {
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
         {tab === 'dashboard' && (
           <div className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Platform Overview</h2>
-              <p className="text-sm text-muted-foreground">Real-time metrics across the marketplace</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Platform Overview</h2>
+                <p className="text-sm text-muted-foreground">Real-time metrics across the marketplace</p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleTestStripe}
+                className="flex items-center gap-2"
+              >
+                <TestTube size={14} />
+                Test Stripe
+              </Button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

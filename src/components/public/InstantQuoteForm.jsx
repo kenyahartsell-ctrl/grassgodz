@@ -5,9 +5,12 @@ import { base44 } from '@/api/base44Client';
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 const PROPERTY_SIZES = [
-  { label: 'Small', sublabel: 'Up to ¼ acre', price: 40 },
-  { label: 'Medium', sublabel: '¼ – ½ acre', price: 60 },
-  { label: 'Large', sublabel: '½ acre+', price: 80 },
+  { label: 'Rowhome', sublabel: '≤ 3,000 sq ft', price: 35 },
+  { label: 'Small', sublabel: '3,000 – 5,000 sq ft', price: 45 },
+  { label: 'Standard', sublabel: '5,000 – 8,000 sq ft', price: 55 },
+  { label: 'Large', sublabel: '8,000 – 12,000 sq ft', price: 75 },
+  { label: 'XL', sublabel: '12,000 – 20,000 sq ft', price: 95 },
+  { label: 'Estate', sublabel: '20,000+ sq ft', price: 140 },
 ];
 
 const GRASS_HEIGHTS = [
@@ -249,7 +252,7 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
             Property Size
             {detectedSize && <span className="ml-2 text-green-600 font-semibold">(Detected: {detectedSize.size})</span>}
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {PROPERTY_SIZES.map((opt, i) => (
               <OptionButton key={opt.label} selected={size === i} onClick={() => setSize(i)}
                 label={opt.label} sublabel={opt.sublabel} price={opt.price} />

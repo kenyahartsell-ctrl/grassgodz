@@ -40,8 +40,8 @@ function estimateLotSizeFromAddress(address) {
     return 25000; // Likely larger property
   }
   
-  // Default: assume medium suburban lot
-  return 7500;
+  // Default: assume standard suburban lot
+  return 6500;
 }
 
 Deno.serve(async (req) => {
@@ -77,13 +77,19 @@ Deno.serve(async (req) => {
     }
 
     // Determine property size tier
-    let propertySize = 'Medium'; // default
-    if (lotSize < 5000) {
+    let propertySize = 'Standard'; // default
+    if (lotSize <= 3000) {
+      propertySize = 'Rowhome';
+    } else if (lotSize <= 5000) {
       propertySize = 'Small';
-    } else if (lotSize >= 5000 && lotSize <= 10000) {
-      propertySize = 'Medium';
-    } else if (lotSize > 10000) {
+    } else if (lotSize <= 8000) {
+      propertySize = 'Standard';
+    } else if (lotSize <= 12000) {
       propertySize = 'Large';
+    } else if (lotSize <= 20000) {
+      propertySize = 'XL';
+    } else {
+      propertySize = 'Estate';
     }
 
     return Response.json({

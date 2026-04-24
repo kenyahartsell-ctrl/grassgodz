@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /customer
+Disallow: /provider
+Disallow: /admin
+Disallow: /api
+
+Sitemap: https://grassgodz.com/sitemap.xml

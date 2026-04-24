@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import PageMeta from '@/components/shared/PageMeta';
 import { Users, MapPin, DollarSign, Shield, CheckCircle, ArrowRight, Star } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
@@ -25,6 +26,11 @@ export default function ProsLandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title="Become a Pro | Earn $500–$2,000/wk Mowing Lawns in DC | Grassgodz"
+        description="Join the Grassgodz marketplace. Get matched with lawn care customers in your area, set your own schedule, and get paid weekly. Apply in 5 minutes."
+        path="/pros"
+      />
       <PublicNav />
 
       {/* HERO */}

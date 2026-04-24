@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import PageMeta from '@/components/shared/PageMeta';
 import { Scissors, Wind, Sprout, Snowflake, CircleDot, Crop, Star, Shield, Users, ArrowRight, CheckCircle } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
@@ -32,6 +33,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title="Grassgodz — Lawn Care That Just Shows Up | DC Metro"
+        description="Book vetted local lawn care pros in the DC metro area. Honest pricing, insured pros, and zero hassle. Get a quote in 60 seconds."
+        path="/"
+      />
       <PublicNav />
 
       {/* HERO */}

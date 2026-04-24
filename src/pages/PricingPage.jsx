@@ -1,5 +1,6 @@
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import PageMeta from '@/components/shared/PageMeta';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
 
@@ -22,6 +23,11 @@ const FAQS = [
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title="Lawn Care Pricing in DC Metro | Grassgodz"
+        description="See transparent lawn care pricing for mowing, leaf removal, hedge trimming, and more. No hidden fees — pay only after the job is done."
+        path="/pricing"
+      />
       <PublicNav />
 
       {/* Header */}

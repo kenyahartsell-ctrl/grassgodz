@@ -1,11 +1,17 @@
 import { MapPin, Users, Star, CreditCard, CheckCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import PageMeta from '@/components/shared/PageMeta';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
 
 export default function HowItWorksPage() {
   return (
     <div className="min-h-screen bg-background">
+      <PageMeta
+        title="How Grassgodz Works | Book a Lawn Pro in 60 Seconds"
+        description="From booking to a beautiful lawn in 4 simple steps. Enter your address, get matched with a vetted local pro, and pay only after the job is complete."
+        path="/how-it-works"
+      />
       <PublicNav />
 
       {/* Header */}

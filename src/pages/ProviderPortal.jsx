@@ -6,7 +6,7 @@ import BookingRequestCard from '../components/provider/BookingRequestCard';
 import ProviderJobMap from '../components/provider/ProviderJobMap';
 import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
-import { MOCK_EARNINGS } from '../lib/mockData';
+
 import { base44 } from '@/api/base44Client';
 import ProviderProfileEditor from '@/components/provider/ProviderProfileEditor';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -197,7 +197,7 @@ export default function ProviderPortal() {
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {/* Onboarding Banner */}
-        {providerProfile && !providerProfile?.onboarding_complete && (
+        {providerProfile && providerProfile.status === 'active' && !providerProfile?.onboarding_complete && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
             <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -241,20 +241,45 @@ export default function ProviderPortal() {
 
             <div className="bg-card border border-border rounded-xl p-5">
               <h3 className="text-sm font-bold text-foreground mb-4">Monthly Earnings</h3>
-              <ResponsiveContainer width="100%" height={160}>
-                <AreaChart data={MOCK_EARNINGS}>
-                  <defs>
-                    <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(142,60%,28%)" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="hsl(142,60%,28%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                  <Tooltip formatter={(v) => [`$${v}`, 'Earnings']} />
-                  <Area type="monotone" dataKey="earnings" stroke="hsl(142,60%,28%)" fill="url(#eg)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              {(() => {
+                const now = new Date();
+                const earningsData = Array.from({ length: 6 }, (_, i) => {
+                  const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+                  const month = d.toLocaleString('default', { month: 'short' });
+                  const monthJobs = completed.filter(j => {
+                    if (!j.completed_at) return false;
+                    const jd = new Date(j.completed_at);
+                    return jd.getMonth() === d.getMonth() && jd.getFullYear() === d.getFullYear();
+                  });
+                  const earnings = monthJobs.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
+                  return { month, earnings };
+                });
+                const hasEarnings = earningsData.some(d => d.earnings > 0);
+                if (!hasEarnings) {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-[160px] text-center">
+                      <p className="text-sm text-muted-foreground">No earnings yet.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Complete jobs to start earning.</p>
+                    </div>
+                  );
+                }
+                return (
+                  <ResponsiveContainer width="100%" height={160}>
+                    <AreaChart data={earningsData}>
+                      <defs>
+                        <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(142,60%,28%)" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="hsl(142,60%,28%)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
+                      <Tooltip formatter={(v) => [`$${v}`, 'Earnings']} />
+                      <Area type="monotone" dataKey="earnings" stroke="hsl(142,60%,28%)" fill="url(#eg)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                );
+              })()}
             </div>
 
             {bookingRequests.length > 0 && (

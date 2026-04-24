@@ -34,6 +34,14 @@
     "zip_code": {
       "type": "string"
     },
+    "latitude": {
+      "type": "number",
+      "description": "Set when job is created via geocoding"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Set when job is created via geocoding"
+    },
     "scheduled_date": {
       "type": "string",
       "format": "date"
@@ -75,7 +83,7 @@
     },
     "completion_photos": {
       "type": "object",
-      "description": "Before/after photos of each area. Keys: front_before, front_after, back_before, back_after, left_before, left_after, right_before, right_after",
+      "description": "Before/after photos of each area.",
       "properties": {
         "front_before": {
           "type": "string"
@@ -102,6 +110,58 @@
           "type": "string"
         }
       }
+    },
+    "cancelled_by": {
+      "type": "string",
+      "enum": [
+        "customer",
+        "provider",
+        "admin",
+        "system"
+      ]
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancellation_reason": {
+      "type": "string"
+    },
+    "cancellation_fee_charged": {
+      "type": "number",
+      "default": 0
+    },
+    "provider_no_show": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_no_show": {
+      "type": "boolean",
+      "default": false
+    },
+    "weather_check_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "safe",
+        "caution",
+        "unsafe"
+      ]
+    },
+    "weather_check_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "auto_cancelled_weather": {
+      "type": "boolean",
+      "default": false
+    },
+    "customer_weather_override": {
+      "type": "boolean",
+      "default": false
+    },
+    "subscription_id": {
+      "type": "string"
     }
   },
   "required": [

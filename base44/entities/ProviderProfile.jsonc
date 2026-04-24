@@ -100,13 +100,13 @@
       "type": "string",
       "enum": [
         "pending_review",
-        "background_check_needed",
-        "approved",
-        "rejected",
         "more_info_needed",
+        "background_check_pending",
+        "background_check_failed",
         "active",
         "paused",
-        "suspended"
+        "suspended",
+        "rejected"
       ],
       "default": "pending_review"
     },

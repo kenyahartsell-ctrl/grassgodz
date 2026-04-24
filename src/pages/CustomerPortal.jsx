@@ -311,6 +311,7 @@ export default function CustomerPortal() {
           service={selectedService}
           onClose={() => setSelectedService(null)}
           onSubmit={handleRequestJob}
+          customerProfile={customerProfile}
         />
       )}
       {selectedJobForQuotes && (
@@ -332,6 +333,7 @@ export default function CustomerPortal() {
           preselectedService={typeof showBookingModal === 'object' ? showBookingModal : null}
           onClose={() => setShowBookingModal(false)}
           onSubmit={handleBooking}
+          customerProfile={customerProfile}
         />
       )}
     </div>

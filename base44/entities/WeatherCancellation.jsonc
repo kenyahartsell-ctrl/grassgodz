@@ -1,0 +1,36 @@
+{
+  "name": "WeatherCancellation",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "condition_triggered": {
+      "type": "string"
+    },
+    "api_source": {
+      "type": "string",
+      "enum": [
+        "nws",
+        "openweather"
+      ]
+    },
+    "raw_data": {
+      "type": "string",
+      "description": "JSON stringified for audit"
+    },
+    "notification_sent": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "job_id",
+    "cancelled_at",
+    "condition_triggered"
+  ]
+}

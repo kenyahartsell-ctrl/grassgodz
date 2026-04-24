@@ -1,0 +1,33 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string"
+    },
+    "sender_id": {
+      "type": "string",
+      "description": "user_email of sender"
+    },
+    "sender_role": {
+      "type": "string",
+      "enum": [
+        "customer",
+        "provider"
+      ]
+    },
+    "body": {
+      "type": "string"
+    },
+    "read_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "job_id",
+    "sender_id",
+    "sender_role",
+    "body"
+  ]
+}

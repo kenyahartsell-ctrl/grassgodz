@@ -1,0 +1,21 @@
+{
+  "name": "JobSuppression",
+  "type": "object",
+  "properties": {
+    "provider_id": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "provider_id",
+    "job_id",
+    "expires_at"
+  ]
+}

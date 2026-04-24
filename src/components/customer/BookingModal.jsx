@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, Calendar, MapPin, FileText, Clock, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
-import { MOCK_SERVICES, MOCK_CUSTOMER } from '../../lib/mockData';
+import { X, Calendar, MapPin, FileText, Clock, ChevronLeft, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 const TIMES = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
 
@@ -12,17 +13,22 @@ function getFirstDayOfMonth(year, month) {
   return new Date(year, month, 1).getDay();
 }
 
-export default function BookingModal({ onClose, onSubmit, preselectedService = null }) {
+export default function BookingModal({ onClose, onSubmit, preselectedService = null, customerProfile = null }) {
   const today = new Date();
-  const [step, setStep] = useState(1); // 1: service, 2: date/time, 3: details, 4: confirm
+  const [step, setStep] = useState(preselectedService ? 2 : 1);
   const [selectedService, setSelectedService] = useState(preselectedService);
   const [calendarDate, setCalendarDate] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [form, setForm] = useState({
-    address: MOCK_CUSTOMER.service_address,
-    zip_code: MOCK_CUSTOMER.zip_code,
+    address: customerProfile?.service_address || '',
+    zip_code: customerProfile?.zip_code || '',
     notes: '',
+  });
+
+  const { data: services = [], isLoading: servicesLoading } = useQuery({
+    queryKey: ['services'],
+    queryFn: () => base44.entities.Service.filter({ active: true }),
   });
 
   const daysInMonth = getDaysInMonth(calendarDate.year, calendarDate.month);
@@ -114,8 +120,11 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
           {step === 1 && (
             <div>
               <p className="text-sm font-medium text-foreground mb-4">Which service do you need?</p>
+              {servicesLoading ? (
+                <div className="flex items-center justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+              ) : (
               <div className="space-y-2">
-                {MOCK_SERVICES.map(s => (
+                {services.map(s => (
                   <button
                     key={s.id}
                     onClick={() => setSelectedService(s)}
@@ -136,6 +145,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
                   </button>
                 ))}
               </div>
+              )}
             </div>
           )}
 

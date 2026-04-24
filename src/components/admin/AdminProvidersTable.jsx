@@ -9,12 +9,13 @@ import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Pending Review' },
-  { value: 'background_check_needed', label: 'Background Check Needed' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'active', label: 'Active' },
-  { value: 'rejected', label: 'Rejected' },
   { value: 'more_info_needed', label: 'More Info Needed' },
+  { value: 'background_check_pending', label: 'BG Check Pending' },
+  { value: 'background_check_failed', label: 'BG Check Failed' },
+  { value: 'active', label: 'Active' },
+  { value: 'paused', label: 'Paused' },
   { value: 'suspended', label: 'Suspended' },
+  { value: 'rejected', label: 'Rejected' },
 ];
 
 export default function AdminProvidersTable({ providers, onRefresh }) {
@@ -112,8 +113,8 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
                         Run BG Check
                       </Button>
                     )}
-                    {p.status !== 'active' && p.status !== 'approved' && (
-                      <Button size="sm" variant="ghost" className="h-7 text-xs text-emerald-600 hover:bg-emerald-50" onClick={() => updateStatus(p, 'approved')}>
+                    {p.status !== 'active' && p.status !== 'background_check_pending' && (
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-emerald-600 hover:bg-emerald-50" onClick={() => updateStatus(p, p.background_check_status === 'clear' ? 'active' : 'background_check_pending')}>
                         <Check className="w-3.5 h-3.5 mr-1" /> Approve
                       </Button>
                     )}

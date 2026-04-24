@@ -1,0 +1,30 @@
+{
+  "name": "Zip",
+  "type": "object",
+  "properties": {
+    "zip_code": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "cached_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "zip_code",
+    "latitude",
+    "longitude"
+  ]
+}

@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { X, MapPin, Calendar, FileText } from 'lucide-react';
-import { MOCK_CUSTOMER } from '../../lib/mockData';
 
-export default function RequestJobModal({ service, onClose, onSubmit }) {
+export default function RequestJobModal({ service, onClose, onSubmit, customerProfile }) {
   const [form, setForm] = useState({
-    address: MOCK_CUSTOMER.service_address,
-    zip_code: MOCK_CUSTOMER.zip_code,
+    address: customerProfile?.service_address || '',
+    zip_code: customerProfile?.zip_code || '',
     scheduled_date: '',
     customer_notes: '',
   });

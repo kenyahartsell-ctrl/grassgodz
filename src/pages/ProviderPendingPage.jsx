@@ -48,9 +48,16 @@ export default function ProviderPendingPage() {
           <Clock size={36} className="text-amber-600" />
         </div>
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">Application Under Review</h1>
-        <p className="text-muted-foreground mb-8 leading-relaxed text-sm">
+        <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
           Thanks for applying! Our team is reviewing your application. You'll hear back within <strong>1–2 business days</strong> — most pros are approved within 24 hours.
         </p>
+        <div className="w-full bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-start gap-3 text-left">
+          <Mail size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-blue-800">Check your email</p>
+            <p className="text-xs text-blue-700 mt-0.5">We sent you an invite to create your Grassgodz account. You'll need to log in to complete Stripe onboarding and access your provider portal once approved.</p>
+          </div>
+        </div>
 
         <div className="w-full bg-card border border-border rounded-2xl p-6 text-left space-y-4 mb-8">
           <h3 className="text-sm font-bold text-foreground">What happens next</h3>

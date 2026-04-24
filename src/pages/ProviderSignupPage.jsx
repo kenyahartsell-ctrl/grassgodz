@@ -93,6 +93,10 @@ export default function ProviderSignupPage() {
         status: 'pending_review',
         background_check_status: 'not_started',
       });
+
+      // Invite the provider so they can log in and access their portal
+      await base44.users.inviteUser(form.email, 'user');
+
       navigate('/provider/pending');
     } catch {
       toast.error('Submission failed. Please try again.');

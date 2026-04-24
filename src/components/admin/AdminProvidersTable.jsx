@@ -101,7 +101,7 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
                 </TableCell>
                 <TableCell onClick={e => e.stopPropagation()}>
                   <div className="flex gap-1 flex-wrap">
-                    {p.status === 'pending_review' && p.consented_background_check && (
+                    {p.consented_background_check && !['clear', 'pending'].includes(p.background_check_status) && (
                       <Button
                         size="sm" variant="ghost"
                         className="h-7 text-xs text-blue-600 hover:bg-blue-50"

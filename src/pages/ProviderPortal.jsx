@@ -48,7 +48,9 @@ export default function ProviderPortal() {
           // Check if Stripe onboarding was just completed (e.g. returning from Stripe)
           if (profile.stripe_connect_account_id && !profile.onboarding_complete) {
             try {
-              const result = await base44.functions.invoke('stripeConnectComplete', {});
+              const result = await base44.functions.invoke('checkStripeOnboardingStatus', {
+                provider_id: profile.id,
+              });
               if (result.data?.onboarding_complete) {
                 profile.onboarding_complete = true;
               }
@@ -151,18 +153,20 @@ export default function ProviderPortal() {
   };
 
   const handleMarkComplete = async (job, photos = {}) => {
-    const providerPayout = (job.quoted_price || 0) * 0.75;
-    const platformFee = (job.quoted_price || 0) * 0.25;
-    await base44.entities.Job.update(job.id, {
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-      final_price: job.quoted_price,
-      provider_payout: providerPayout,
-      platform_fee: platformFee,
-      completion_photos: photos,
-    });
-    await refreshJobs();
-    toast.success(`Job completed! $${providerPayout.toFixed(2)} will be transferred to your account.`);
+    // First save photos, then capture payment via Stripe
+    await base44.entities.Job.update(job.id, { completion_photos: photos });
+    try {
+      const res = await base44.functions.invoke('capturePayment', { job_id: job.id });
+      if (res.data?.success) {
+        const payout = res.data.payout?.toFixed(2) || ((job.quoted_price || 0) * 0.75).toFixed(2);
+        await refreshJobs();
+        toast.success(`Job completed! $${payout} will be transferred to your account.`);
+      } else {
+        toast.error(res.data?.error || 'Payment capture failed. Please contact support.');
+      }
+    } catch (err) {
+      toast.error('Payment capture failed. Please contact support.');
+    }
   };
 
   if (loading) {
@@ -204,8 +208,8 @@ export default function ProviderPortal() {
               <button
                 onClick={async () => {
                   try {
-                    const res = await base44.functions.invoke('stripeConnectOnboarding', {
-                      provider_profile_id: providerProfile.id,
+                    const res = await base44.functions.invoke('createStripeConnectAccount', {
+                      provider_id: providerProfile.id,
                       return_url: window.location.origin + '/provider',
                     });
                     if (res.data?.url) {

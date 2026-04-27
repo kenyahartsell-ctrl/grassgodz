@@ -3,7 +3,7 @@ import QuoteCard from './QuoteCard';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
-export default function QuotesModal({ job, onClose, onAcceptQuote }) {
+export default function QuotesModal({ job, onClose, onAcceptQuote, customerProfile }) {
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ['quotes', job.id],
     queryFn: () => base44.entities.Quote.filter({ job_id: job.id }),
@@ -36,7 +36,7 @@ export default function QuotesModal({ job, onClose, onAcceptQuote }) {
           ) : (
             <div className="space-y-3">
               {quotes.map(q => (
-                <QuoteCard key={q.id} quote={q} onAccept={onAcceptQuote} />
+                <QuoteCard key={q.id} quote={q} onAccept={onAcceptQuote} customerProfile={customerProfile} />
               ))}
             </div>
           )}

@@ -80,17 +80,11 @@ export default function CustomerPortal() {
   };
 
   const handleAcceptQuote = async (quote) => {
-    await base44.entities.Job.update(quote.job_id, {
-      status: 'accepted',
-      quoted_price: quote.price,
-      provider_name: quote.provider_name,
-      provider_id: quote.provider_id,
-      provider_email: quote.provider_email,
-    });
+    // Payment authorization is handled inside QuoteCard via authorizePayment backend function.
+    // Here we just update the Quote record status and refresh.
     await base44.entities.Quote.update(quote.id, { status: 'accepted' });
     await refreshJobs();
     setSelectedJobForQuotes(null);
-    toast.success(`Quote accepted! Card authorized for $${quote.price}. Payment will be captured on completion.`);
   };
 
   const handleBooking = async (data) => {
@@ -317,6 +311,7 @@ export default function CustomerPortal() {
           job={selectedJobForQuotes}
           onClose={() => setSelectedJobForQuotes(null)}
           onAcceptQuote={handleAcceptQuote}
+          customerProfile={customerProfile}
         />
       )}
       {selectedJobForReview && (

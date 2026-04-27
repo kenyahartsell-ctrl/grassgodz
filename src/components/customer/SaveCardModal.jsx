@@ -5,7 +5,8 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 const CARD_ELEMENT_OPTIONS = {
   style: {
@@ -93,9 +94,13 @@ export default function SaveCardModal({ customerProfile, onClose, onSuccess }) {
             <X size={18} />
           </button>
         </div>
-        <Elements stripe={stripePromise}>
-          <CardForm customerProfile={customerProfile} onSuccess={onSuccess} onClose={onClose} />
-        </Elements>
+        {!publishableKey ? (
+          <div className="p-6 text-sm text-destructive">Stripe is not configured. Please contact support.</div>
+        ) : (
+          <Elements stripe={stripePromise}>
+            <CardForm customerProfile={customerProfile} onSuccess={onSuccess} onClose={onClose} />
+          </Elements>
+        )}
       </div>
     </div>
   );

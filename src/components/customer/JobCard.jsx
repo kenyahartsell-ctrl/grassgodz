@@ -1,4 +1,4 @@
-import { Calendar, MapPin, DollarSign } from 'lucide-react';
+import { Calendar, MapPin, Car, Award } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
 import JobCompletionPhotos from './JobCompletionPhotos';
 
@@ -24,6 +24,24 @@ export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span className="font-medium">Provider:</span>
                 <span>{job.provider_name}</span>
+              </div>
+            )}
+            {job._providerProfile && (job._providerProfile.vehicle_make || job._providerProfile.vehicle_model) && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Car size={11} className="flex-shrink-0" />
+                <span>
+                  {[job._providerProfile.vehicle_year, job._providerProfile.vehicle_make, job._providerProfile.vehicle_model].filter(Boolean).join(' ')}
+                </span>
+              </div>
+            )}
+            {job._providerProfile?.qualifications?.length > 0 && (
+              <div className="flex items-start gap-1.5 text-xs text-muted-foreground mt-1">
+                <Award size={11} className="flex-shrink-0 mt-0.5 text-primary" />
+                <div className="flex flex-wrap gap-1">
+                  {job._providerProfile.qualifications.map((q, i) => (
+                    <span key={i} className="bg-primary/10 text-primary font-medium px-1.5 py-0.5 rounded-full text-xs">{q}</span>
+                  ))}
+                </div>
               </div>
             )}
           </div>

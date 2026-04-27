@@ -39,6 +39,25 @@
       "type": "boolean",
       "default": false
     },
+    "vehicle_make": {
+      "type": "string",
+      "description": "Vehicle make (e.g. Ford)"
+    },
+    "vehicle_model": {
+      "type": "string",
+      "description": "Vehicle model (e.g. F-150)"
+    },
+    "vehicle_year": {
+      "type": "string",
+      "description": "Vehicle year (e.g. 2021)"
+    },
+    "qualifications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of certifications, licenses, or qualifications"
+    },
     "has_equipment": {
       "type": "boolean",
       "default": false

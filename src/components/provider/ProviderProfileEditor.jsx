@@ -35,6 +35,10 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
     bio: profile?.bio || '',
     years_experience: profile?.years_experience || '',
     service_zip_codes: profile?.service_zip_codes?.join(', ') || '',
+    vehicle_make: profile?.vehicle_make || '',
+    vehicle_model: profile?.vehicle_model || '',
+    vehicle_year: profile?.vehicle_year || '',
+    qualifications: profile?.qualifications?.join(', ') || '',
     notify_new_booking: profile?.notify_new_booking ?? true,
     notify_job_updates: profile?.notify_job_updates ?? true,
     notify_payment_received: profile?.notify_payment_received ?? true,
@@ -72,6 +76,8 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
     try {
       const zipArray = form.service_zip_codes
         .split(',').map(z => z.trim()).filter(Boolean);
+      const qualsArray = form.qualifications
+        .split(',').map(q => q.trim()).filter(Boolean);
       const payload = {
         name: form.name,
         phone: form.phone,
@@ -79,6 +85,10 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
         bio: form.bio,
         years_experience: Number(form.years_experience) || 0,
         service_zip_codes: zipArray,
+        vehicle_make: form.vehicle_make,
+        vehicle_model: form.vehicle_model,
+        vehicle_year: form.vehicle_year,
+        qualifications: qualsArray,
         notify_new_booking: form.notify_new_booking,
         notify_job_updates: form.notify_job_updates,
         notify_payment_received: form.notify_payment_received,
@@ -105,6 +115,10 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
       bio: profile?.bio || '',
       years_experience: profile?.years_experience || '',
       service_zip_codes: profile?.service_zip_codes?.join(', ') || '',
+      vehicle_make: profile?.vehicle_make || '',
+      vehicle_model: profile?.vehicle_model || '',
+      vehicle_year: profile?.vehicle_year || '',
+      qualifications: profile?.qualifications?.join(', ') || '',
       notify_new_booking: profile?.notify_new_booking ?? true,
       notify_job_updates: profile?.notify_job_updates ?? true,
       notify_payment_received: profile?.notify_payment_received ?? true,
@@ -165,6 +179,7 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
               { label: 'Phone', value: profile?.phone || '—' },
               { label: 'Business Name', value: profile?.business_name || '—' },
               { label: 'Years of Experience', value: profile?.years_experience ? `${profile.years_experience} years` : '—' },
+              { label: 'Vehicle', value: [profile?.vehicle_year, profile?.vehicle_make, profile?.vehicle_model].filter(Boolean).join(' ') || '—' },
               { label: 'Service ZIPs', value: profile?.service_zip_codes?.join(', ') || '—' },
             ].map(({ label, value }) => (
               <div key={label}>
@@ -172,6 +187,16 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
                 <p className="text-sm text-foreground mt-0.5">{value}</p>
               </div>
             ))}
+            {profile?.qualifications?.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">Qualifications</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {profile.qualifications.map((q, i) => (
+                    <span key={i} className="bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">{q}</span>
+                  ))}
+                </div>
+              </div>
+            )}
             {profile?.bio && (
               <div>
                 <p className="text-xs text-muted-foreground font-medium">Bio</p>
@@ -200,6 +225,26 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
             <div>
               <label className="text-xs font-medium text-muted-foreground">Years of Experience</label>
               <input type="number" min="0" value={form.years_experience} onChange={e => set('years_experience', e.target.value)}
+                className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Vehicle (shown to customers)</label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <input value={form.vehicle_year} onChange={e => set('vehicle_year', e.target.value)}
+                  placeholder="Year"
+                  className="border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
+                <input value={form.vehicle_make} onChange={e => set('vehicle_make', e.target.value)}
+                  placeholder="Make"
+                  className="border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
+                <input value={form.vehicle_model} onChange={e => set('vehicle_model', e.target.value)}
+                  placeholder="Model"
+                  className="border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Qualifications (comma-separated)</label>
+              <input value={form.qualifications} onChange={e => set('qualifications', e.target.value)}
+                placeholder="e.g. Licensed Landscaper, Insured, EPA Certified"
                 className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
             <div>

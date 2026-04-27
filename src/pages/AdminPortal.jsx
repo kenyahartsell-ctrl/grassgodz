@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, Leaf, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, Leaf, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus } from 'lucide-react';
+import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
@@ -25,6 +26,7 @@ export default function AdminPortal() {
   const [payments, setPayments] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddJob, setShowAddJob] = useState(false);
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -233,7 +235,12 @@ export default function AdminPortal() {
 
         {tab === 'jobs' && (
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">All Jobs</h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-foreground">All Jobs</h2>
+              <Button size="sm" onClick={() => setShowAddJob(true)} className="flex items-center gap-2">
+                <Plus size={14} /> Add Job
+              </Button>
+            </div>
             {jobs.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-10">No jobs yet.</p>
             ) : (
@@ -313,6 +320,16 @@ export default function AdminPortal() {
           </div>
         )}
       </main>
+
+      {showAddJob && (
+        <AdminAddJobModal
+          onClose={() => setShowAddJob(false)}
+          onJobAdded={async () => {
+            const allJobs = await base44.entities.Job.list('-created_date', 100);
+            setJobs(allJobs);
+          }}
+        />
+      )}
 
       {/* Bottom Nav */}
       <nav className="bg-card border-t border-border sticky bottom-0 z-30">

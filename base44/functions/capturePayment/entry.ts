@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { job_id, skip_photos } = body;
+    const { job_id, skip_photos, final_price } = body;
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
 
     // Provider must own this job
@@ -40,30 +40,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Use final_price from body, or fall back to quoted_price on the job
+    const price = final_price || job.quoted_price;
+    const now = new Date().toISOString();
+    const providerPayout = price ? price * 0.75 : 0;
+    const platformFee = price ? price * 0.25 : 0;
+
     // Find payment record
     const payments = await base44.asServiceRole.entities.Payment.filter({ job_id });
     const payment = payments[0];
-    if (!payment?.stripe_payment_intent_id) {
-      return Response.json({ error: 'No authorized payment found for this job' }, { status: 404 });
+
+    if (payment?.stripe_payment_intent_id) {
+      // Capture the Stripe PaymentIntent
+      await stripe.paymentIntents.capture(payment.stripe_payment_intent_id);
+      await base44.asServiceRole.entities.Payment.update(payment.id, { status: 'captured' });
     }
+    // If no payment record (e.g. job was direct-assigned without quote flow), just mark complete
 
-    // Capture the PaymentIntent
-    await stripe.paymentIntents.capture(payment.stripe_payment_intent_id);
-
-    const now = new Date().toISOString();
-    const providerPayout = job.quoted_price * 0.75;
-    const platformFee = job.quoted_price * 0.25;
-
-    await Promise.all([
-      base44.asServiceRole.entities.Payment.update(payment.id, { status: 'captured' }),
-      base44.asServiceRole.entities.Job.update(job.id, {
-        status: 'completed',
-        completed_at: now,
-        final_price: job.quoted_price,
-        provider_payout: providerPayout,
-        platform_fee: platformFee,
-      }),
-    ]);
+    await base44.asServiceRole.entities.Job.update(job.id, {
+      status: 'completed',
+      completed_at: now,
+      final_price: price || 0,
+      provider_payout: providerPayout,
+      platform_fee: platformFee,
+    });
 
     return Response.json({ success: true, payout: providerPayout });
   } catch (error) {

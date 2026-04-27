@@ -24,6 +24,7 @@ const NAV = [
 
 export default function AdminPortal() {
   const [tab, setTab] = useState('dashboard');
+  const [dataEnv, setDataEnv] = useState('prod');
   const [providers, setProviders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -45,12 +46,12 @@ export default function AdminPortal() {
     async function loadData() {
       try {
         const [allProviders, allCustomers, allJobs, allQuotes, allPayments, allReviews] = await Promise.all([
-          base44.entities.ProviderProfile.list(),
-          base44.entities.CustomerProfile.list(),
-          base44.entities.Job.list('-created_date', 100),
-          base44.entities.Quote.list('-created_date', 200),
-          base44.entities.Payment.list('-created_date', 100),
-          base44.entities.Review.list('-created_date', 100),
+          base44.entities.ProviderProfile.list(undefined, undefined, dataEnv),
+          base44.entities.CustomerProfile.list(undefined, undefined, dataEnv),
+          base44.entities.Job.list('-created_date', 100, dataEnv),
+          base44.entities.Quote.list('-created_date', 200, dataEnv),
+          base44.entities.Payment.list('-created_date', 100, dataEnv),
+          base44.entities.Review.list('-created_date', 100, dataEnv),
         ]);
         setProviders(allProviders);
         setCustomers(allCustomers);
@@ -65,7 +66,7 @@ export default function AdminPortal() {
       }
     }
     loadData();
-  }, []);
+  }, [dataEnv]);
 
   const activeProviders = providers.filter(p => p.status === 'active').length;
   const pendingProviders = providers.filter(p => ['pending_review', 'pending_approval', 'background_check_needed', 'more_info_needed'].includes(p.status)).length;
@@ -152,6 +153,17 @@ export default function AdminPortal() {
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
           <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full ml-1">Admin</span>
           <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded-lg">
+              <label className="text-xs font-medium text-muted-foreground">DB:</label>
+              <select
+                value={dataEnv}
+                onChange={e => setDataEnv(e.target.value)}
+                className="text-xs bg-card border border-border rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="prod">Production</option>
+                <option value="dev">Test</option>
+              </select>
+            </div>
             <Shield size={16} className="text-purple-600" />
             <span className="text-sm font-medium text-foreground">Super Admin</span>
           </div>

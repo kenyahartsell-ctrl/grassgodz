@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail } from 'lucide-react';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
 import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
 import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
+import AdminEmailPanel from '@/components/admin/AdminEmailPanel';
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
@@ -20,6 +21,7 @@ const NAV = [
   { key: 'jobs', label: 'Jobs', icon: Briefcase },
   { key: 'payments', label: 'Payments', icon: CreditCard },
   { key: 'support', label: 'Support', icon: MessageSquare },
+  { key: 'email', label: 'Email', icon: Mail },
 ];
 
 export default function AdminPortal() {
@@ -325,6 +327,16 @@ export default function AdminPortal() {
               <p className="text-sm text-muted-foreground">View job conversations and send admin support messages to customers or providers.</p>
             </div>
             <AdminSupportPanel jobs={jobs} />
+          </div>
+        )}
+
+        {tab === 'email' && (
+          <div>
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-foreground">Send Email</h2>
+              <p className="text-sm text-muted-foreground">Send emails to customers or providers directly from here.</p>
+            </div>
+            <AdminEmailPanel />
           </div>
         )}
 

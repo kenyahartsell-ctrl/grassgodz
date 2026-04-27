@@ -3,9 +3,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import StarRating from '@/components/shared/StarRating';
-import { Check, X, Ban, ShieldCheck, AlertCircle, Info, ChevronDown } from 'lucide-react';
+import { Check, Ban, ShieldCheck, AlertCircle, Eye, ChevronDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import ProviderDetailModal from './ProviderDetailModal';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Pending Review' },
@@ -21,6 +22,7 @@ const STATUS_OPTIONS = [
 export default function AdminProvidersTable({ providers, onRefresh }) {
   const [loadingId, setLoadingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [selectedProvider, setSelectedProvider] = useState(null);
 
   const updateStatus = async (provider, newStatus) => {
     setLoadingId(provider.id);
@@ -49,6 +51,8 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
   };
 
   return (
+    <>
+    {selectedProvider && <ProviderDetailModal provider={selectedProvider} onClose={() => setSelectedProvider(null)} />}
     <div className="rounded-xl border border-border overflow-hidden">
       <Table>
         <TableHeader>
@@ -102,6 +106,9 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
                 </TableCell>
                 <TableCell onClick={e => e.stopPropagation()}>
                   <div className="flex gap-1 flex-wrap">
+                    <Button size="sm" variant="ghost" className="h-7 text-xs text-primary hover:bg-primary/10" onClick={() => setSelectedProvider(p)}>
+                      <Eye className="w-3.5 h-3.5 mr-1" /> View
+                    </Button>
                     {p.consented_background_check && !['clear', 'pending'].includes(p.background_check_status) && (
                       <Button
                         size="sm" variant="ghost"
@@ -164,5 +171,6 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
         </TableBody>
       </Table>
     </div>
+    </>
   );
 }

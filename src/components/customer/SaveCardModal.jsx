@@ -5,8 +5,6 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
 const CARD_ELEMENT_OPTIONS = {
   style: {
     base: {
@@ -30,7 +28,6 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
     setLoading(true);
 
     try {
-      // Get setup intent client secret
       const res = await base44.functions.invoke('createSetupIntent', {
         customer_id: customerProfile.id,
       });
@@ -46,7 +43,6 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
       }
 
       const paymentMethodId = result.setupIntent.payment_method;
-      // Save as default
       await base44.entities.CustomerProfile.update(customerProfile.id, {
         default_payment_method_id: paymentMethodId,
       });
@@ -81,6 +77,22 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
 }
 
 export default function SaveCardModal({ customerProfile, onClose, onSuccess }) {
+  const [stripePromise, setStripePromise] = useState(null);
+  const [keyError, setKeyError] = useState(false);
+
+  useEffect(() => {
+    base44.functions.invoke('getStripePublishableKey', {})
+      .then(res => {
+        const key = res.data?.publishable_key;
+        if (key) {
+          setStripePromise(loadStripe(key));
+        } else {
+          setKeyError(true);
+        }
+      })
+      .catch(() => setKeyError(true));
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl">
@@ -93,9 +105,20 @@ export default function SaveCardModal({ customerProfile, onClose, onSuccess }) {
             <X size={18} />
           </button>
         </div>
-        <Elements stripe={stripePromise}>
-          <CardForm customerProfile={customerProfile} onSuccess={onSuccess} onClose={onClose} />
-        </Elements>
+
+        {keyError ? (
+          <div className="p-6 text-center text-sm text-red-600">
+            Payment system not configured. Please contact support.
+          </div>
+        ) : !stripePromise ? (
+          <div className="p-6 flex justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Elements stripe={stripePromise}>
+            <CardForm customerProfile={customerProfile} onSuccess={onSuccess} onClose={onClose} />
+          </Elements>
+        )}
       </div>
     </div>
   );

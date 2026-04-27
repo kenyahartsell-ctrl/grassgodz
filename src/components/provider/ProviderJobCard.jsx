@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation } from 'lucide-react';
+import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, FlaskConical } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
 
@@ -76,13 +76,23 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
             </button>
           )}
           {job.status === 'in_progress' && onMarkComplete && (
-            <button
-              onClick={() => setShowPhotoModal(true)}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-primary-foreground rounded-lg py-2 text-xs font-semibold hover:bg-primary/90 transition-colors"
-            >
-              <CheckCircle size={13} />
-              Complete & Submit Photos
-            </button>
+            <>
+              <button
+                onClick={() => setShowPhotoModal(true)}
+                className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-primary-foreground rounded-lg py-2 text-xs font-semibold hover:bg-primary/90 transition-colors"
+              >
+                <CheckCircle size={13} />
+                Complete & Submit Photos
+              </button>
+              <button
+                onClick={() => onMarkComplete(job, {}, true)}
+                title="Skip photos for testing"
+                className="flex items-center justify-center gap-1.5 border border-amber-300 bg-amber-50 text-amber-700 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-amber-100 transition-colors"
+              >
+                <FlaskConical size={13} />
+                Test
+              </button>
+            </>
           )}
         </div>
       </div>

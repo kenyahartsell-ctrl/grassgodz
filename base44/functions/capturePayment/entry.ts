@@ -16,7 +16,8 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { job_id } = await req.json();
+    const body = await req.json();
+    const { job_id, skip_photos } = body;
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
 
     // Provider must own this job
@@ -30,11 +31,13 @@ Deno.serve(async (req) => {
     if (job.provider_id !== providerProfile.id) return Response.json({ error: 'Forbidden' }, { status: 403 });
     if (job.status !== 'in_progress') return Response.json({ error: 'Job must be in_progress to capture payment' }, { status: 400 });
 
-    // Verify all 8 photos present
-    const photos = job.completion_photos || {};
-    const missingPhotos = REQUIRED_PHOTO_KEYS.filter(k => !photos[k]);
-    if (missingPhotos.length > 0) {
-      return Response.json({ error: `Missing photos: ${missingPhotos.join(', ')}` }, { status: 400 });
+    // Verify all 8 photos present (skip_photos=true bypasses for testing)
+    if (!skip_photos) {
+      const photos = job.completion_photos || {};
+      const missingPhotos = REQUIRED_PHOTO_KEYS.filter(k => !photos[k]);
+      if (missingPhotos.length > 0) {
+        return Response.json({ error: `Missing photos: ${missingPhotos.join(', ')}` }, { status: 400 });
+      }
     }
 
     // Find payment record

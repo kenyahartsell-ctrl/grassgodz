@@ -152,11 +152,13 @@ export default function ProviderPortal() {
     toast.success('Job marked as in progress.');
   };
 
-  const handleMarkComplete = async (job, photos = {}) => {
+  const handleMarkComplete = async (job, photos = {}, skipPhotos = false) => {
     // First save photos, then capture payment via Stripe
-    await base44.entities.Job.update(job.id, { completion_photos: photos });
+    if (!skipPhotos) {
+      await base44.entities.Job.update(job.id, { completion_photos: photos });
+    }
     try {
-      const res = await base44.functions.invoke('capturePayment', { job_id: job.id });
+      const res = await base44.functions.invoke('capturePayment', { job_id: job.id, skip_photos: skipPhotos });
       if (res.data?.success) {
         const payout = res.data.payout?.toFixed(2) || ((job.quoted_price || 0) * 0.75).toFixed(2);
         await refreshJobs();

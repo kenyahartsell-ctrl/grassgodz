@@ -79,7 +79,8 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
   const [uploading, setUploading] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
-  const allRequired = PHOTO_SLOTS.every(s => photos[s.key]);
+  const MIN_PHOTOS = 4;
+  const allRequired = Object.keys(photos).length >= MIN_PHOTOS;
 
   const handleUpload = async (key, e) => {
     const file = e.target.files?.[0];
@@ -110,7 +111,7 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
 
   const handleSubmit = async () => {
     if (!allRequired) {
-      toast.error('Please upload all 8 required photos before completing the job.');
+      toast.error('Please upload at least 4 photos before completing the job.');
       return;
     }
     setSubmitting(true);
@@ -135,7 +136,7 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <div>
             <h2 className="font-bold text-foreground text-base">Job Completion Photos</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{uploadedCount} / {PHOTO_SLOTS.length} photos uploaded</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{uploadedCount} / {PHOTO_SLOTS.length} photos · 4 required</p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X size={18} />
@@ -153,7 +154,7 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
         {/* Photo grid */}
         <div className="flex-1 overflow-y-auto p-5">
           <p className="text-xs text-muted-foreground mb-4 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            All 8 photos are required to complete the job and receive payment.
+            A minimum of 4 photos are required to complete the job and release payment.
           </p>
 
           {/* Group by area */}
@@ -193,7 +194,7 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
           </button>
           {!allRequired && (
             <p className="text-center text-xs text-muted-foreground mt-2">
-              {PHOTO_SLOTS.length - uploadedCount} more photo{PHOTO_SLOTS.length - uploadedCount !== 1 ? 's' : ''} needed
+              {MIN_PHOTOS - uploadedCount} more photo{MIN_PHOTOS - uploadedCount !== 1 ? 's' : ''} needed (minimum {MIN_PHOTOS})
             </p>
           )}
         </div>

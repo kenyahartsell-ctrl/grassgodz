@@ -3,12 +3,7 @@ import Stripe from 'npm:stripe@16.0.0';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
-const REQUIRED_PHOTO_KEYS = [
-  'front_before', 'front_after',
-  'back_before', 'back_after',
-  'left_before', 'left_after',
-  'right_before', 'right_after',
-];
+const MIN_PHOTO_COUNT = 4;
 
 Deno.serve(async (req) => {
   try {
@@ -31,12 +26,12 @@ Deno.serve(async (req) => {
     if (job.provider_id !== providerProfile.id) return Response.json({ error: 'Forbidden' }, { status: 403 });
     if (job.status !== 'in_progress') return Response.json({ error: 'Job must be in_progress to capture payment' }, { status: 400 });
 
-    // Verify all 8 photos present (skip_photos=true bypasses for testing)
+    // Verify minimum 4 photos present (skip_photos=true bypasses for testing)
     if (!skip_photos) {
       const photos = job.completion_photos || {};
-      const missingPhotos = REQUIRED_PHOTO_KEYS.filter(k => !photos[k]);
-      if (missingPhotos.length > 0) {
-        return Response.json({ error: `Missing photos: ${missingPhotos.join(', ')}` }, { status: 400 });
+      const uploadedCount = Object.values(photos).filter(Boolean).length;
+      if (uploadedCount < MIN_PHOTO_COUNT) {
+        return Response.json({ error: `At least ${MIN_PHOTO_COUNT} photos required. Only ${uploadedCount} uploaded.` }, { status: 400 });
       }
     }
 

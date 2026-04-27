@@ -30,7 +30,10 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const { customerEmail, customerName, customerPhone, address, total, frequency, breakdown } = await req.json();
 
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection('gmail');
+    // Gmail send scope not yet authorized — gracefully skip email
+    // TODO: re-authorize Gmail connector with gmail.send scope to enable this
+    console.log(`[sendBookingConfirmation] Would send confirmation to ${customerEmail} for address ${address}`);
+    return Response.json({ success: true, skipped: true, reason: 'email_not_configured' });
 
     const breakdownHtml = breakdown.map(line =>
       `<tr>

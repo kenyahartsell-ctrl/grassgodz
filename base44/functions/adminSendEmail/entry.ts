@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
 
     // Build email
     const emailLines = [
-      `From: Grassgodz Admin <${user.email}>`,
+      `From: Grassgodz Admin <admin@grassgodz.com>`,
       `To: ${to}`,
       `Subject: ${subject}`,
       `MIME-Version: 1.0`,

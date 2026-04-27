@@ -237,14 +237,20 @@ export default function GuestBookingModal({ onClose, summary }) {
 
           {/* STEP 2: Stripe Payment */}
           {step === 2 && !done && (
-            <Elements stripe={stripePromise}>
-              <CheckoutForm
-                form={form}
-                summary={summary}
-                onSuccess={() => setDone(true)}
-                onBack={() => setStep(1)}
-              />
-            </Elements>
+            stripePromise ? (
+              <Elements stripe={stripePromise}>
+                <CheckoutForm
+                  form={form}
+                  summary={summary}
+                  onSuccess={() => setDone(true)}
+                  onBack={() => setStep(1)}
+                />
+              </Elements>
+            ) : (
+              <div className="p-10 flex justify-center">
+                <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            )
           )}
 
           {/* DONE: Confirmation */}

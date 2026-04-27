@@ -3,7 +3,7 @@ import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl';
 import { MapPin, Filter, X, Loader2, MapPinned, Zap } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || import.meta.env.VITE_MAPBOX_TOKEN || '';
 const DC_CENTER = { lat: 38.9072, lng: -77.0369 };
 
 function getDistance(lat1, lng1, lat2, lng2) {
@@ -44,7 +44,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
     zoom: 10,
   });
   const [filters, setFilters] = useState({
-    maxDistance: 50,
+    maxDistance: 100,
     serviceType: '',
   });
 
@@ -67,9 +67,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
 
   // Geocode all job addresses
   useEffect(() => {
-    const availableJobs = Array.isArray(jobs)
-      ? jobs.filter((j) => !j.provider_id && j.status === 'requested')
-      : [];
+    const availableJobs = Array.isArray(jobs) ? jobs : [];
 
     if (availableJobs.length === 0) {
       setGeocodedJobs([]);
@@ -108,7 +106,7 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
         : 0,
     }))
     .filter((job) => {
-      if (job.distance > filters.maxDistance) return false;
+      if (providerLocation && job.distance > filters.maxDistance) return false;
       if (filters.serviceType && job.service_name !== filters.serviceType) return false;
       return true;
     })

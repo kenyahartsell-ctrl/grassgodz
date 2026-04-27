@@ -5,12 +5,12 @@ import { base44 } from '@/api/base44Client';
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 const PROPERTY_SIZES = [
-  { label: 'Rowhome', sublabel: '≤ 3,000 sq ft', price: 35 },
-  { label: 'Small', sublabel: '3,000 – 5,000 sq ft', price: 45 },
-  { label: 'Standard', sublabel: '5,000 – 8,000 sq ft', price: 55 },
-  { label: 'Large', sublabel: '8,000 – 12,000 sq ft', price: 75 },
-  { label: 'XL', sublabel: '12,000 – 20,000 sq ft', price: 95 },
-  { label: 'Estate', sublabel: '20,000+ sq ft', price: 140 },
+  { label: 'Rowhome', sublabel: '≤ 3,000 sq ft', price: 45 },
+  { label: 'Small', sublabel: '3,000 – 5,000 sq ft', price: 55 },
+  { label: 'Standard', sublabel: '5,000 – 8,000 sq ft', price: 65 },
+  { label: 'Large', sublabel: '8,000 – 12,000 sq ft', price: 85 },
+  { label: 'XL', sublabel: '12,000 – 20,000 sq ft', price: 110 },
+  { label: 'Estate', sublabel: '20,000+ sq ft', price: 155 },
 ];
 
 const GRASS_HEIGHTS = [

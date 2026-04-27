@@ -5,7 +5,7 @@ import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
 
 const SAMPLE_PRICES = [
-  { service: 'Lawn Mowing', range: '$50 – $128', avg: '$70', note: 'Varies by lawn size and complexity' },
+  { service: 'Lawn Mowing', range: '$45 – $155', avg: '$75', note: 'Varies by lawn size and complexity' },
   { service: 'Leaf Removal', range: '$75 – $240', avg: '$105', note: 'Based on yard size and volume' },
   { service: 'Hedge Trimming', range: '$65 – $195', avg: '$90', note: 'Based on linear footage' },
   { service: 'Fertilization', range: '$85 – $210', avg: '$110', note: 'Depends on lawn square footage' },

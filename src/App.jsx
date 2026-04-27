@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { Toaster as Sonner } from 'sonner';
 
+import JobDetailPage from '@/pages/JobDetailPage';
+
 // Portals
 import CustomerPortal from '@/pages/CustomerPortal';
 import ProviderPortal from '@/pages/ProviderPortal';
@@ -82,6 +84,7 @@ const AuthenticatedApp = () => {
       <Route path="/signup/customer" element={<CustomerSignupPage />} />
       <Route path="/signup/provider" element={<ProviderSignupPage />} />
       <Route path="/not-available" element={<NotAvailablePage />} />
+      <Route path="/jobs/:jobId" element={<JobDetailPage />} />
       <Route path="/test-mapbox" element={<TestMapboxPage />} />
 
       <Route path="*" element={<PageNotFound />} />

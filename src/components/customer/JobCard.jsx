@@ -1,9 +1,11 @@
 import { Calendar, MapPin, Car, Award } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobCompletionPhotos from './JobCompletionPhotos';
 
 export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
   return (
+    <Link to={`/jobs/${job.id}`} className="block">
     <div className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -56,7 +58,7 @@ export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
       <div className="mt-3 flex gap-2">
         {job.status === 'requested' && onViewQuotes && (
           <button
-            onClick={() => onViewQuotes(job)}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onViewQuotes(job); }}
             className="text-xs font-medium text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary/5 transition-colors"
           >
             View Quotes
@@ -64,7 +66,7 @@ export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
         )}
         {job.status === 'quoted' && onViewQuotes && (
           <button
-            onClick={() => onViewQuotes(job)}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onViewQuotes(job); }}
             className="text-xs font-semibold bg-primary text-primary-foreground rounded-lg px-3 py-1.5 hover:bg-primary/90 transition-colors"
           >
             Review Quotes
@@ -72,7 +74,7 @@ export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
         )}
         {job.status === 'completed' && !reviewed && onReview && (
           <button
-            onClick={() => onReview(job)}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onReview(job); }}
             className="text-xs font-medium text-amber-700 border border-amber-200 bg-amber-50 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors"
           >
             Leave Review
@@ -89,5 +91,6 @@ export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
         <JobCompletionPhotos photos={job.completion_photos} />
       )}
     </div>
+    </Link>
   );
 }

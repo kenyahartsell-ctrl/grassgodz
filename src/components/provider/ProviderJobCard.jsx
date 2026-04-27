@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, FlaskConical } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
 
@@ -12,90 +13,92 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
 
   return (
     <>
-      <div className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-all">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5">
-              <h3 className="font-semibold text-foreground text-sm">{job.service_name}</h3>
-              <StatusBadge status={job.status} />
+      <Link to={`/jobs/${job.id}`} className="block">
+        <div className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-all relative">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5">
+                <h3 className="font-semibold text-foreground text-sm">{job.service_name}</h3>
+                <StatusBadge status={job.status} />
+              </div>
+              <p className="text-xs text-muted-foreground font-medium">{job.customer_name}</p>
             </div>
-            <p className="text-xs text-muted-foreground font-medium">{job.customer_name}</p>
+            {job.quoted_price && (
+              <div className="text-right">
+                <p className="text-lg font-bold text-foreground">${job.quoted_price}</p>
+                <p className="text-xs text-primary font-medium">You earn ${(job.quoted_price * 0.75).toFixed(2)}</p>
+              </div>
+            )}
           </div>
-          {job.quoted_price && (
-            <div className="text-right">
-              <p className="text-lg font-bold text-foreground">${job.quoted_price}</p>
-              <p className="text-xs text-primary font-medium">You earn ${(job.quoted_price * 0.75).toFixed(2)}</p>
+
+          <div className="space-y-1 mb-3">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Calendar size={11} />
+              <span>{new Date(job.scheduled_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <MapPin size={11} />
+              <span>{job.address}</span>
+              {job.address && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="ml-1 flex items-center gap-1 text-primary font-semibold hover:underline"
+                >
+                  <Navigation size={11} />
+                  Navigate
+                </a>
+              )}
+            </div>
+          </div>
+
+          {job.customer_notes && (
+            <div className="bg-muted/40 rounded-lg px-3 py-2 text-xs text-muted-foreground mb-3">
+              <span className="font-medium">Notes:</span> {job.customer_notes}
             </div>
           )}
-        </div>
 
-        <div className="space-y-1 mb-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Calendar size={11} />
-            <span>{new Date(job.scheduled_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <MapPin size={11} />
-            <span>{job.address}</span>
-            {job.address && (
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 flex items-center gap-1 text-primary font-semibold hover:underline"
+          {job.status === 'completed' && job.completion_photos && (
+            <div className="flex items-center gap-1.5 text-xs text-green-600 mb-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+              <Image size={12} />
+              <span>Completion photos submitted</span>
+            </div>
+          )}
+
+          <div className="flex gap-2" onClick={e => e.preventDefault()}>
+            {job.status === 'scheduled' && onMarkInProgress && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMarkInProgress(job); }}
+                className="flex-1 flex items-center justify-center gap-1.5 bg-orange-500 text-white rounded-lg py-2 text-xs font-semibold hover:bg-orange-600 transition-colors"
               >
-                <Navigation size={11} />
-                Navigate
-              </a>
+                <PlayCircle size={13} />
+                Mark In Progress
+              </button>
+            )}
+            {job.status === 'in_progress' && onMarkComplete && (
+              <>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPhotoModal(true); }}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-primary-foreground rounded-lg py-2 text-xs font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  <CheckCircle size={13} />
+                  Complete & Submit Photos
+                </button>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMarkComplete(job, {}, true); }}
+                  title="Skip photos for testing"
+                  className="flex items-center justify-center gap-1.5 border border-amber-300 bg-amber-50 text-amber-700 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-amber-100 transition-colors"
+                >
+                  <FlaskConical size={13} />
+                  Test
+                </button>
+              </>
             )}
           </div>
         </div>
-
-        {job.customer_notes && (
-          <div className="bg-muted/40 rounded-lg px-3 py-2 text-xs text-muted-foreground mb-3">
-            <span className="font-medium">Notes:</span> {job.customer_notes}
-          </div>
-        )}
-
-        {/* Show photo count if already completed */}
-        {job.status === 'completed' && job.completion_photos && (
-          <div className="flex items-center gap-1.5 text-xs text-green-600 mb-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-            <Image size={12} />
-            <span>8 completion photos submitted</span>
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          {job.status === 'scheduled' && onMarkInProgress && (
-            <button
-              onClick={() => onMarkInProgress(job)}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-orange-500 text-white rounded-lg py-2 text-xs font-semibold hover:bg-orange-600 transition-colors"
-            >
-              <PlayCircle size={13} />
-              Mark In Progress
-            </button>
-          )}
-          {job.status === 'in_progress' && onMarkComplete && (
-            <>
-              <button
-                onClick={() => setShowPhotoModal(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-primary-foreground rounded-lg py-2 text-xs font-semibold hover:bg-primary/90 transition-colors"
-              >
-                <CheckCircle size={13} />
-                Complete & Submit Photos
-              </button>
-              <button
-                onClick={() => onMarkComplete(job, {}, true)}
-                title="Skip photos for testing"
-                className="flex items-center justify-center gap-1.5 border border-amber-300 bg-amber-50 text-amber-700 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-amber-100 transition-colors"
-              >
-                <FlaskConical size={13} />
-                Test
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+      </Link>
 
       {showPhotoModal && (
         <JobPhotoUploadModal

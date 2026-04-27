@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, Leaf, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare } from 'lucide-react';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
+import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
+import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
@@ -13,16 +15,19 @@ import { Button } from '@/components/ui/button';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'customers', label: 'Customers', icon: UserCircle },
   { key: 'providers', label: 'Providers', icon: Users },
   { key: 'jobs', label: 'Jobs', icon: Briefcase },
   { key: 'payments', label: 'Payments', icon: CreditCard },
-  { key: 'reviews', label: 'Reviews', icon: Star },
+  { key: 'support', label: 'Support', icon: MessageSquare },
 ];
 
 export default function AdminPortal() {
   const [tab, setTab] = useState('dashboard');
   const [providers, setProviders] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [quotes, setQuotes] = useState([]);
   const [payments, setPayments] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,14 +44,18 @@ export default function AdminPortal() {
 
     async function loadData() {
       try {
-        const [allProviders, allJobs, allPayments, allReviews] = await Promise.all([
+        const [allProviders, allCustomers, allJobs, allQuotes, allPayments, allReviews] = await Promise.all([
           base44.entities.ProviderProfile.list(),
+          base44.entities.CustomerProfile.list(),
           base44.entities.Job.list('-created_date', 100),
+          base44.entities.Quote.list('-created_date', 200),
           base44.entities.Payment.list('-created_date', 100),
           base44.entities.Review.list('-created_date', 100),
         ]);
         setProviders(allProviders);
+        setCustomers(allCustomers);
         setJobs(allJobs);
+        setQuotes(allQuotes);
         setPayments(allPayments);
         setReviews(allReviews);
       } catch (err) {
@@ -216,6 +225,22 @@ export default function AdminPortal() {
           </div>
         )}
 
+        {tab === 'customers' && (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Customers</h2>
+                <p className="text-sm text-muted-foreground">{customers.length} registered customer{customers.length !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            {customers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-10">No customers yet.</p>
+            ) : (
+              <AdminCustomersTable customers={customers} jobs={jobs} quotes={quotes} />
+            )}
+          </div>
+        )}
+
         {tab === 'providers' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">Providers</h2>
@@ -290,6 +315,16 @@ export default function AdminPortal() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'support' && (
+          <div>
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-foreground">Support Messaging</h2>
+              <p className="text-sm text-muted-foreground">View job conversations and send admin support messages to customers or providers.</p>
+            </div>
+            <AdminSupportPanel jobs={jobs} />
           </div>
         )}
 

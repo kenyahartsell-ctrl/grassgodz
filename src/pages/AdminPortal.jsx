@@ -238,7 +238,15 @@ export default function AdminPortal() {
             {customers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-10">No customers yet.</p>
             ) : (
-              <AdminCustomersTable customers={customers} jobs={jobs} quotes={quotes} />
+              <AdminCustomersTable 
+                customers={customers} 
+                jobs={jobs} 
+                quotes={quotes}
+                onCustomerDeleted={async () => {
+                  const allCustomers = await base44.entities.CustomerProfile.list();
+                  setCustomers(allCustomers);
+                }}
+              />
             )}
           </div>
         )}

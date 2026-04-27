@@ -1,12 +1,30 @@
 import { useState } from 'react';
-import { ChevronDown, Eye, Mail } from 'lucide-react';
+import { ChevronDown, Eye, Mail, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CustomerDetailModal from './CustomerDetailModal';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
-export default function AdminCustomersTable({ customers, jobs, quotes }) {
+export default function AdminCustomersTable({ customers, jobs, quotes, onCustomerDeleted }) {
   const [expandedId, setExpandedId] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const handleDelete = async (customerId, customerName) => {
+    if (!confirm(`Delete customer profile for ${customerName}? This cannot be undone.`)) return;
+    
+    setDeletingId(customerId);
+    try {
+      await base44.functions.invoke('deleteCustomer', { customer_id: customerId });
+      toast.success(`${customerName} deleted`);
+      onCustomerDeleted?.();
+    } catch (err) {
+      toast.error('Failed to delete customer');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <>
@@ -102,6 +120,15 @@ export default function AdminCustomersTable({ customers, jobs, quotes }) {
                         <Mail size={12} /> Email
                       </Button>
                     </a>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-7 text-xs gap-1 text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(c.id, c.name || c.user_email)}
+                      disabled={deletingId === c.id}
+                    >
+                      <Trash2 size={12} /> Delete
+                    </Button>
                   </div>
                 </div>
               )}

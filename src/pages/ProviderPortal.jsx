@@ -183,9 +183,9 @@ export default function ProviderPortal() {
   const businessName = providerProfile?.business_name || displayName;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-30">
+      <header className="bg-card border-b border-border sticky top-0 z-30 flex-shrink-0">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
@@ -199,9 +199,9 @@ export default function ProviderPortal() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
+      <main className={`flex-1 overflow-y-auto ${tab === 'available' ? '' : 'max-w-3xl mx-auto w-full px-4 py-6'}`}>
         {/* Onboarding Banner */}
-        {providerProfile && providerProfile.status === 'active' && !providerProfile?.onboarding_complete && (
+        {tab !== 'available' && providerProfile && providerProfile.status === 'active' && !providerProfile?.onboarding_complete && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
             <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -349,7 +349,7 @@ export default function ProviderPortal() {
         )}
 
         {tab === 'available' && (
-          <div className="flex-1 -mx-4 -mb-6 rounded-t-xl overflow-hidden border-t border-border">
+          <div className="h-full w-full">
             <ProviderJobMap
               jobs={availableJobs}
               providerProfile={providerProfile}

@@ -1,9 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl';
+import mapboxgl from 'mapbox-gl';
 import { MapPin, Filter, X, Loader2, MapPinned, Zap } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || import.meta.env.VITE_MAPBOX_TOKEN || '';
+
+// Required for react-map-gl v7 with mapbox-gl
+if (MAPBOX_TOKEN) {
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+}
 const DC_CENTER = { lat: 38.9072, lng: -77.0369 };
 
 function getDistance(lat1, lng1, lat2, lng2) {

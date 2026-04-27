@@ -183,7 +183,7 @@ export default function ProviderPortal() {
   const businessName = providerProfile?.business_name || displayName;
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-30 flex-shrink-0">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
@@ -199,7 +199,7 @@ export default function ProviderPortal() {
         </div>
       </header>
 
-      <main className={`flex-1 overflow-y-auto ${tab === 'available' ? '' : 'max-w-3xl mx-auto w-full px-4 py-6'}`}>
+      <main className="flex-1 overflow-y-auto max-w-3xl mx-auto w-full px-4 py-6">
         {/* Onboarding Banner */}
         {tab !== 'available' && providerProfile && providerProfile.status === 'active' && !providerProfile?.onboarding_complete && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
@@ -349,12 +349,24 @@ export default function ProviderPortal() {
         )}
 
         {tab === 'available' && (
-          <div className="h-full w-full">
-            <ProviderJobMap
-              jobs={availableJobs}
-              providerProfile={providerProfile}
-              onAcceptJob={handleAcceptBooking}
-            />
+          <div>
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-foreground">Available Jobs</h2>
+              <p className="text-sm text-muted-foreground">{availableJobs.length} job{availableJobs.length !== 1 ? 's' : ''} available near you</p>
+            </div>
+            {availableJobs.length === 0 ? (
+              <div className="text-center py-16">
+                <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground font-medium">No available jobs right now</p>
+                <p className="text-sm text-muted-foreground mt-1">Check back soon — new jobs are posted daily.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {availableJobs.map(job => (
+                  <AvailableJobCard key={job.id} job={job} onSubmitQuote={handleSubmitQuote} />
+                ))}
+              </div>
+            )}
           </div>
         )}
 

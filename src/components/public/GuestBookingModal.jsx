@@ -4,8 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { base44 } from '@/api/base44Client';
 
-// Replace with your Stripe publishable key
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+// stripePromise is fetched dynamically from the backend
 
 const CARD_ELEMENT_OPTIONS = {
   style: {
@@ -154,6 +153,16 @@ export default function GuestBookingModal({ onClose, summary }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '' });
   const [done, setDone] = useState(false);
+  const [stripePromise, setStripePromise] = useState(null);
+
+  useEffect(() => {
+    base44.functions.invoke('getStripePublishableKey', {})
+      .then(res => {
+        const key = res.data?.publishable_key;
+        if (key) setStripePromise(loadStripe(key));
+      })
+      .catch(() => {});
+  }, []);
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
   const inputClass = "w-full border border-input rounded-xl px-4 py-3.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground";

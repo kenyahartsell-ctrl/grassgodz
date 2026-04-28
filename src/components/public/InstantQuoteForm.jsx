@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { CheckCircle, ArrowRight, Loader2, AlertCircle, MapPin } from 'lucide-react';
+import { CheckCircle, ArrowRight, Loader2, AlertCircle, MapPin, Users, Clock, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
@@ -61,7 +62,7 @@ function OptionButton({ selected, onClick, label, sublabel, price }) {
   );
 }
 
-export default function InstantQuoteForm({ onBookingSubmit }) {
+export default function InstantQuoteForm() {
   const [address, setAddress] = useState('');
   const [size, setSize] = useState(0);
   const [height, setHeight] = useState(0);
@@ -168,24 +169,7 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
     ...(savings > 0 ? [{ label: `${frequency === 'weekly' ? 'Weekly' : 'Biweekly'} discount (10%)`, amount: -savings, green: true }] : []),
   ];
 
-  const handleBooking = () => {
-    if (!address.trim()) {
-      alert('Please enter your address');
-      return;
-    }
-    onBookingSubmit({
-      address: address.trim(),
-      size: PROPERTY_SIZES[size].label,
-      height: GRASS_HEIGHTS[height].label,
-      service: SERVICE_TYPES[service].label,
-      addons: ADDONS.filter(a => addons[a.key]).map(a => a.label),
-      frequency,
-      total,
-      subtotal,
-      savings,
-      breakdown,
-    });
-  };
+
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
@@ -359,13 +343,35 @@ export default function InstantQuoteForm({ onBookingSubmit }) {
             ))}
           </div>
 
-          <button
-            onClick={handleBooking}
-            className="w-full bg-green-400 hover:bg-green-300 text-green-950 font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-base"
-          >
-            Book Now <ArrowRight size={16} />
-          </button>
-          <p className="text-center text-xs text-white/40 mt-2">No charge until the job is done</p>
+          {/* Sign-up CTA */}
+          <div className="border-t border-white/10 pt-4 space-y-3">
+            <p className="text-sm font-bold text-white">Ready to book this service?</p>
+            <p className="text-xs text-white/60 font-semibold uppercase tracking-wide">Here's how Grassgodz works:</p>
+            <ul className="space-y-1.5">
+              {[
+                { icon: Clock, text: 'Post your request in 60 seconds' },
+                { icon: Users, text: 'Local pros send competing quotes within 24 hours' },
+                { icon: Star, text: 'Pick the best offer and schedule' },
+              ].map(({ icon: Icon, text }, i) => (
+                <li key={i} className="flex items-center gap-2 text-xs text-white/80">
+                  <Icon size={13} className="text-green-400 flex-shrink-0" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/signup/customer"
+              className="w-full bg-green-400 hover:bg-green-300 text-green-950 font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-base"
+            >
+              Sign Up to Request <ArrowRight size={16} />
+            </Link>
+            <p className="text-center text-xs text-white/40">
+              Already have an account?{' '}
+              <Link to="/redirect" className="text-white/70 underline underline-offset-2 hover:text-white">
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

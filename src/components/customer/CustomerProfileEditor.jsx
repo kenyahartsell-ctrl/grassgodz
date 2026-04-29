@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil, Save, X, Bell } from 'lucide-react';
+import { Pencil, Save, X, Bell, LogOut, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
@@ -24,6 +24,25 @@ function Toggle({ checked, onChange, label, description }) {
 export default function CustomerProfileEditor({ user, profile, onProfileUpdated }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSignOut = () => {
+    base44.auth.logout('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await base44.functions.invoke('deleteMyAccount', { account_type: 'customer' });
+      toast.success('Account closed. Signing out...');
+      setTimeout(() => base44.auth.logout('/'), 1500);
+    } catch {
+      toast.error('Failed to close account. Please contact support.');
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
   const [form, setForm] = useState({
     name: profile?.name || user?.full_name || '',
     phone: profile?.phone || '',

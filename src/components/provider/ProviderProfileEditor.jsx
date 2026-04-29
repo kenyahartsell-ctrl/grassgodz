@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Pencil, Save, X, Bell, Camera, Loader2 } from 'lucide-react';
+import { Pencil, Save, X, Bell, Camera, Loader2, LogOut, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import StarRating from '@/components/shared/StarRating';
@@ -26,6 +26,25 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSignOut = () => {
+    base44.auth.logout('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await base44.functions.invoke('deleteMyAccount', { account_type: 'provider' });
+      toast.success('Account closed. Signing out...');
+      setTimeout(() => base44.auth.logout('/'), 1500);
+    } catch {
+      toast.error('Failed to close account. Please contact support.');
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
   const [photoUrl, setPhotoUrl] = useState(profile?.profile_image_url || '');
   const photoInputRef = useRef(null);
   const [form, setForm] = useState({
@@ -318,9 +337,44 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
         )}
       </div>
 
+      {/* Account Actions */}
+      <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+        <h3 className="text-sm font-bold text-foreground">Account</h3>
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-center gap-2 border border-border rounded-lg py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+        >
+          <LogOut size={14} /> Sign Out
+        </button>
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 border border-destructive/30 rounded-lg py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors"
+          >
+            <Trash2 size={14} /> Close My Account
+          </button>
+        ) : (
+          <div className="border border-destructive/30 rounded-xl p-4 bg-destructive/5 space-y-3">
+            <p className="text-xs text-destructive font-semibold">⚠️ This will permanently delete your provider profile and all associated data. This cannot be undone.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 border border-border rounded-lg py-2 text-xs font-medium hover:bg-muted transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="flex-1 bg-destructive text-destructive-foreground rounded-lg py-2 text-xs font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-70"
+              >
+                {deleting ? 'Closing...' : 'Yes, Close Account'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Reviews */}
       {reviews && reviews.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-card border border-border rounded-xl p-5" id="reviews-section">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-foreground">Reviews ({reviews.length})</h3>
             <div className="flex items-center gap-1.5">

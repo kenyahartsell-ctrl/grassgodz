@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.grassgodz.twa",
+      "sha256_cert_fingerprints": [
+        "FF:C8:B7:35:DC:CB:AD:FE:4F:13:80:44:A1:10:40:6E:E2:EC:CB:6D:5B:DF:41:31:5D:4B:71:86:09:9D:A2:87"
+      ]
+    }
+  }
+]

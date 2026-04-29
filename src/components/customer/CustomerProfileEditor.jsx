@@ -223,6 +223,41 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
           </button>
         )}
       </div>
+
+      {/* Account Actions */}
+      <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+        <h3 className="text-sm font-bold text-foreground">Account</h3>
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-center gap-2 border border-border rounded-lg py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+        >
+          <LogOut size={14} /> Sign Out
+        </button>
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 border border-destructive/30 rounded-lg py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors"
+          >
+            <Trash2 size={14} /> Close My Account
+          </button>
+        ) : (
+          <div className="border border-destructive/30 rounded-xl p-4 bg-destructive/5 space-y-3">
+            <p className="text-xs text-destructive font-semibold">⚠️ This will permanently delete your profile and all associated data. This cannot be undone.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 border border-border rounded-lg py-2 text-xs font-medium hover:bg-muted transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="flex-1 bg-destructive text-destructive-foreground rounded-lg py-2 text-xs font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-70"
+              >
+                {deleting ? 'Closing...' : 'Yes, Close Account'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

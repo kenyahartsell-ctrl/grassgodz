@@ -59,17 +59,26 @@ export default function HomePage() {
           <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight mb-4 tracking-tight">
             Your Lawn.<br />Local Pros.
           </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-8 max-w-md mx-auto">
-            Get matched with a local lawn care professional in your area — book in under 60 seconds.
+          <p className="text-lg md:text-xl text-white/80 mb-4 max-w-md mx-auto">
+            Request → Compare quotes from local pros → Book your favorite. Sign up in 60 seconds.
           </p>
 
-          {/* ZIP form */}
+          {/* Trust model tagline */}
+          <p className="text-sm text-white/50 mb-6 max-w-xs mx-auto">No upfront payment · Pay only after the job is done</p>
+
+          {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
             <Link
-              to="/book"
+              to="/signup/customer"
               className="flex-1 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-7 py-4 rounded-xl transition-colors whitespace-nowrap shadow-lg text-base flex items-center justify-center"
             >
-              Get Instant Quote
+              Get Matched with Pros
+            </Link>
+            <Link
+              to="/book"
+              className="flex-1 bg-white/15 hover:bg-white/25 border border-white/20 text-white font-semibold px-7 py-4 rounded-xl transition-colors whitespace-nowrap text-base flex items-center justify-center"
+            >
+              See Price Estimate
             </Link>
           </div>
 
@@ -103,9 +112,9 @@ export default function HomePage() {
             {/* Connector line (desktop only) */}
             <div className="hidden md:block absolute top-10 left-1/4 right-1/4 h-0.5 bg-border z-0" />
             {[
-              { step: '1', icon: '📍', title: 'Enter your address', desc: 'Tell us where you are and what service you need. Takes less than 30 seconds.' },
-              { step: '2', icon: '🤝', title: 'Get matched with a local pro', desc: 'We connect you with a vetted, insured lawn care professional in your area.' },
-              { step: '3', icon: '🌿', title: 'Sit back while we handle your lawn', desc: 'Your pro shows up, does the work, and you only pay when the job is done.' },
+              { step: '1', icon: '📋', title: 'Post your request', desc: 'Sign up, describe your service, and submit your request in under 60 seconds.' },
+              { step: '2', icon: '💬', title: 'Compare quotes from local pros', desc: 'Vetted local professionals send you competing quotes within 24 hours.' },
+              { step: '3', icon: '🌿', title: 'Book your favorite & relax', desc: 'Pick the best offer, schedule, and pay only after the job is done.' },
             ].map(card => (
               <div key={card.step} className="relative bg-secondary/40 rounded-2xl p-6 text-center z-10">
                 <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center mx-auto mb-3">
@@ -124,8 +133,8 @@ export default function HomePage() {
       <section className="py-16 px-4 bg-background">
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">Get an Instant Estimate</h2>
-            <p className="text-muted-foreground text-sm">No signup needed — see your price in seconds.</p>
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">See What Your Service Costs</h2>
+            <p className="text-muted-foreground text-sm">Get a free estimate — then sign up to request quotes from local pros.</p>
           </div>
           <PricingCalculator />
         </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail } from 'lucide-react';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
 import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
@@ -289,6 +290,12 @@ export default function AdminPortal() {
                     </div>
                     <StatusBadge status={j.status} />
                     {j.quoted_price && <span className="text-sm font-bold text-foreground hidden sm:block">${j.quoted_price}</span>}
+                    <Link
+                      to={`/jobs/${j.id}`}
+                      className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                    >
+                      View
+                    </Link>
                     {!['completed', 'cancelled'].includes(j.status) && (
                       <button onClick={() => handleCancelJob(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
                     )}
@@ -309,7 +316,7 @@ export default function AdminPortal() {
                 {payments.map((p, i) => (
                   <div key={p.id} className={`flex items-center gap-3 px-5 py-4 ${i < payments.length - 1 ? 'border-b border-border' : ''}`}>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">Job #{p.job_id}</p>
+                      <Link to={`/jobs/${p.job_id}`} className="text-sm font-semibold text-primary hover:underline">View Job →</Link>
                       <p className="text-xs text-muted-foreground">{new Date(p.created_date).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right mr-3 hidden sm:block">

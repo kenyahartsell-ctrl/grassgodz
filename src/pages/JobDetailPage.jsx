@@ -33,13 +33,16 @@ export default function JobDetailPage() {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
+  const isAdmin = user?.role === 'admin';
   const senderRole = user && job
-    ? (job.customer_email === user.email ? 'customer' : 'provider')
+    ? (isAdmin ? 'admin' : job.customer_email === user.email ? 'customer' : 'provider')
     : null;
 
-  const otherPartyName = senderRole === 'customer'
-    ? (job?.provider_name || 'Provider')
-    : (job?.customer_name || 'Customer');
+  const otherPartyName = isAdmin
+    ? `${job?.customer_name || 'Customer'} ↔ ${job?.provider_name || 'Provider'}`
+    : senderRole === 'customer'
+      ? (job?.provider_name || 'Provider')
+      : (job?.customer_name || 'Customer');
 
   useEffect(() => {
     async function load() {
@@ -106,7 +109,7 @@ export default function JobDetailPage() {
 
   if (!job) return null;
 
-  const showFullAddress = SHOW_FULL_ADDRESS_STATUSES.includes(job.status);
+  const showFullAddress = isAdmin || SHOW_FULL_ADDRESS_STATUSES.includes(job.status);
   const hasPhotos = job.completion_photos && Object.values(job.completion_photos).some(Boolean);
   const backPath = senderRole === 'customer' ? '/customer' : senderRole === 'provider' ? '/provider' : '/admin';
 
@@ -239,6 +242,30 @@ export default function JobDetailPage() {
         {/* DETAILS TAB */}
         {tab === 'details' && (
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Admin — both parties overview */}
+            {isAdmin && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <p className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-3">Transaction Parties</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Customer</p>
+                    <p className="text-sm font-semibold text-foreground">{job.customer_name || '—'}</p>
+                    <p className="text-xs text-muted-foreground">{job.customer_email || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Provider</p>
+                    <p className="text-sm font-semibold text-foreground">{job.provider_name || 'Unassigned'}</p>
+                    <p className="text-xs text-muted-foreground">{job.provider_email || '—'}</p>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-amber-200">
+                  <DetailRow label="Full Address" value={job.address} />
+                  <DetailRow label="ZIP Code" value={job.zip_code} />
+                  <DetailRow label="Scheduled" value={job.scheduled_date ? format(new Date(job.scheduled_date), 'EEE, MMM d, yyyy') : null} />
+                </div>
+              </div>
+            )}
+
             {/* Notes */}
             {(job.customer_notes || job.provider_notes) && (
               <div className="bg-card border border-border rounded-xl p-4">

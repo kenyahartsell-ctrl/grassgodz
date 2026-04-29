@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 // ANALYTICS HOOK: track('customer_signup_started') on mount
 // ANALYTICS HOOK: track('customer_signup_completed') after profile created
 
-const STEPS = ['Service Address', 'Your Account', 'Verify Email'];
+const STEPS = ['Service Address', 'Your Info', 'Set Password'];
 
 export default function CustomerSignupPage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -139,24 +139,25 @@ export default function CustomerSignupPage() {
               </form>
             )}
 
-            {/* Step 2: Verify / Finalize */}
+            {/* Step 2: Set Password (handoff to Base44 hosted auth) */}
             {step === 2 && (
               <form onSubmit={handleSubmit} className="space-y-5">
-                <h2 className="text-xl font-bold text-foreground">Almost there!</h2>
-                <p className="text-sm text-muted-foreground">
-                  Click below to create your account. We'll send you a sign-in link — click it and you'll land straight in your dashboard with your profile pre-filled.
-                </p>
+                <h2 className="text-xl font-bold text-foreground">One last step — set your password</h2>
                 <div className="bg-secondary/30 rounded-xl p-4 text-sm space-y-1">
                   <p><span className="text-muted-foreground">Name:</span> <span className="font-medium">{form.name}</span></p>
                   <p><span className="text-muted-foreground">Email:</span> <span className="font-medium">{form.email}</span></p>
                   <p><span className="text-muted-foreground">Address:</span> <span className="font-medium">{form.street}, {form.city}, {form.state} {form.zip}</span></p>
                 </div>
+                <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-sm text-foreground space-y-1">
+                  <p className="font-semibold text-primary">Next: Create your password</p>
+                  <p className="text-muted-foreground text-xs">Clicking below will take you to our secure sign-up page where you'll set your email and password. Your profile details above are saved and will be applied automatically after you register.</p>
+                </div>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(1)} className="flex-1 border border-border rounded-xl py-3 text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1">
                     <ArrowLeft size={14} /> Back
                   </button>
-                  <button type="submit" disabled={loading} className="flex-1 bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-70">
-                    {loading ? 'Creating...' : 'Create Account'}
+                  <button type="submit" disabled={loading} className="flex-1 bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-70 flex items-center justify-center gap-2">
+                    {loading ? 'Redirecting...' : <>Set Password <ArrowRight size={16} /></>}
                   </button>
                 </div>
               </form>

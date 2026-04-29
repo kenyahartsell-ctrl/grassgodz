@@ -7,6 +7,10 @@ import { toast } from 'sonner';
 
 const STEPS = ['Personal Info', 'Credentials', 'Service Area', 'Background Check', 'Review & Submit'];
 
+// NOTE: Provider signup uses base44.users.inviteUser() which sends an email invite.
+// The provider clicks the invite link and sets their password on Base44's hosted auth page.
+// This is the correct and only supported flow — Base44 SDK does not expose a register() API.
+
 const SERVICES_LIST = [
   { id: 's1', name: 'Lawn Mowing' },
   { id: 's2', name: 'Leaf Removal' },

@@ -30,6 +30,7 @@ import ProviderSuspendedPage from '@/pages/ProviderSuspendedPage';
 import BookingPage from '@/pages/BookingPage';
 import TestMapboxPage from '@/pages/TestMapboxPage';
 import ProviderLinksPage from '@/pages/ProviderLinksPage';
+import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 
 function CustomerApp() {
   return <CustomerPortal />;
@@ -89,6 +90,7 @@ const AuthenticatedApp = () => {
       <Route path="/jobs/:jobId" element={<JobDetailPage />} />
       <Route path="/test-mapbox" element={<TestMapboxPage />} />
       <Route path="/provider-links" element={<ProviderLinksPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

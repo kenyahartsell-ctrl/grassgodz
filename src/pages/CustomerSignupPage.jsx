@@ -138,11 +138,14 @@ export default function CustomerSignupPage() {
       toast.success('Welcome to Grassgodz! Request your first job to get started.');
       navigate('/customer');
     } catch (err) {
-      const msg = err?.message || '';
-      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists') || msg.includes('400')) {
+      const msg = err?.message || err?.data?.message || JSON.stringify(err) || '';
+      console.error('Signup error:', err);
+      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists') || msg.toLowerCase().includes('duplicate')) {
         setErrors({ email: 'An account with this email already exists. Try signing in instead.' });
+      } else if (msg.toLowerCase().includes('password') || msg.toLowerCase().includes('disabled') || msg.toLowerCase().includes('not enabled')) {
+        toast.error('Email/password signup is not enabled. Please contact support.');
       } else {
-        toast.error('Signup failed. Please try again.');
+        toast.error(`Signup failed: ${msg || 'Unknown error. Check console for details.'}`);
       }
     } finally {
       setLoading(false);

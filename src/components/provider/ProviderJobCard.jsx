@@ -1,8 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, FlaskConical } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+
+function JobMiniMap({ address }) {
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const [coords, setCoords] = useState(null);
+
+  useEffect(() => {
+    if (!address || !MAPBOX_TOKEN) return;
+    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        const feature = data.features?.[0];
+        if (feature) setCoords(feature.center); // [lng, lat]
+      })
+      .catch(() => {});
+  }, [address]);
+
+  useEffect(() => {
+    if (!coords || !containerRef.current || mapRef.current) return;
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    const map = new mapboxgl.Map({
+      container: containerRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: coords,
+      zoom: 14,
+      interactive: false,
+    });
+    new mapboxgl.Marker({ color: '#16a34a' }).setLngLat(coords).addTo(map);
+    mapRef.current = map;
+    return () => { map.remove(); mapRef.current = null; };
+  }, [coords]);
+
+  if (!MAPBOX_TOKEN || !address) return null;
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full h-32 rounded-lg overflow-hidden border border-border mt-2 mb-3"
+    />
+  );
+}
 
 export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete }) {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -53,6 +98,11 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
               )}
             </div>
           </div>
+
+          {/* Show mini map for active jobs */}
+          {['scheduled', 'in_progress', 'accepted'].includes(job.status) && job.address && (
+            <JobMiniMap address={job.address} />
+          )}
 
           {job.customer_notes && (
             <div className="bg-muted/40 rounded-lg px-3 py-2 text-xs text-muted-foreground mb-3">

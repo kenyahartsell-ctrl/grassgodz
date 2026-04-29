@@ -45,6 +45,19 @@ export default function SmartRedirect() {
           return;
         }
 
+        // Check for pending customer profile from signup flow (no-verification fallback)
+        const pendingRaw = sessionStorage.getItem('pendingCustomerProfile');
+        if (pendingRaw) {
+          sessionStorage.removeItem('pendingCustomerProfile');
+          try {
+            const pending = JSON.parse(pendingRaw);
+            const existing = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+            if (!existing || existing.length === 0) {
+              await base44.entities.CustomerProfile.create({ ...pending, user_email: user.email });
+            }
+          } catch { /* silently continue */ }
+        }
+
         // Default: customer
         navigate('/customer', { replace: true });
       } catch {

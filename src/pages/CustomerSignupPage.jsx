@@ -120,29 +120,45 @@ export default function CustomerSignupPage() {
       // Step A: Create auth account
       await base44.auth.register({ email: form.email, password: form.password });
 
-      // Step B: Log in
+      // Step B: Log in immediately (no email verification required)
       await base44.auth.loginViaEmailPassword(form.email, form.password);
 
-      // Step C: Create CustomerProfile
-      const user = await base44.auth.me();
-      await base44.entities.CustomerProfile.create({
-        user_email: user.email,
+      // Step C: Create CustomerProfile (store in sessionStorage as fallback too)
+      const profileData = {
         name: form.name,
         phone: form.phone,
         service_address: form.serviceAddress,
         billing_address: form.billingSame ? form.serviceAddress : form.billingAddress,
         zip_code: form.zip,
-      });
+      };
 
-      // Step D: Redirect
-      toast.success('Welcome to Grassgodz! Request your first job to get started.');
-      navigate('/customer');
+      let user = null;
+      try {
+        user = await base44.auth.me();
+      } catch {
+        // If me() fails, store profile data and redirect anyway — SmartRedirect will pick it up
+      }
+
+      if (user) {
+        // Create profile directly
+        const existing = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+        if (!existing || existing.length === 0) {
+          await base44.entities.CustomerProfile.create({ ...profileData, user_email: user.email });
+        }
+        toast.success('Welcome to Grassgodz! Request your first job to get started.');
+        navigate('/customer');
+      } else {
+        // Fallback: store pending profile, let SmartRedirect handle creation
+        sessionStorage.setItem('pendingCustomerProfile', JSON.stringify({ ...profileData, user_email: form.email }));
+        toast.success('Welcome to Grassgodz! Request your first job to get started.');
+        navigate('/redirect');
+      }
     } catch (err) {
       const msg = err?.message || err?.data?.message || JSON.stringify(err) || '';
       console.error('Signup error:', err);
       if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists') || msg.toLowerCase().includes('duplicate')) {
         setErrors({ email: 'An account with this email already exists. Try signing in instead.' });
-      } else if (msg.toLowerCase().includes('password') || msg.toLowerCase().includes('disabled') || msg.toLowerCase().includes('not enabled')) {
+      } else if (msg.toLowerCase().includes('disabled') || msg.toLowerCase().includes('not enabled')) {
         toast.error('Email/password signup is not enabled. Please contact support.');
       } else {
         toast.error(`Signup failed: ${msg || 'Unknown error. Check console for details.'}`);

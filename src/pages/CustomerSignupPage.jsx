@@ -53,14 +53,15 @@ export default function CustomerSignupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      // Redirect to login/signup via base44 auth
-      base44.auth.redirectToLogin(window.location.origin + '/redirect');
-      // After auth, CustomerProfile creation would happen in a post-login hook
-    } catch {
-      toast.error('Something went wrong. Please try again.');
-      setLoading(false);
-    }
+    // Save signup data so SmartRedirect can create the profile after login
+    sessionStorage.setItem('pendingCustomerProfile', JSON.stringify({
+      name: form.name,
+      phone: form.phone,
+      service_address: `${form.street}, ${form.city}, ${form.state}`,
+      zip_code: form.zip,
+      user_email: form.email,
+    }));
+    base44.auth.redirectToLogin(window.location.origin + '/redirect');
   };
 
   return (
@@ -143,7 +144,7 @@ export default function CustomerSignupPage() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <h2 className="text-xl font-bold text-foreground">Almost there!</h2>
                 <p className="text-sm text-muted-foreground">
-                  Click the button below to create your account. You'll be asked to verify your email before your first booking.
+                  Click below to create your account. We'll send you a sign-in link — click it and you'll land straight in your dashboard with your profile pre-filled.
                 </p>
                 <div className="bg-secondary/30 rounded-xl p-4 text-sm space-y-1">
                   <p><span className="text-muted-foreground">Name:</span> <span className="font-medium">{form.name}</span></p>

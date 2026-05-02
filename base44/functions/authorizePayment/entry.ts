@@ -38,10 +38,16 @@ Deno.serve(async (req) => {
     const amountCents = Math.round(job.quoted_price * 100);
     const applicationFeeCents = Math.round(amountCents * 0.25);
 
+    // If job is more than 5 days away, capture immediately (authorization would expire)
+    const daysUntilJob = job.scheduled_date
+      ? Math.ceil((new Date(job.scheduled_date) - new Date()) / (1000 * 60 * 60 * 24))
+      : 0;
+    const captureMethod = daysUntilJob > 5 ? 'automatic' : 'manual';
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: 'usd',
-      capture_method: 'manual',
+      capture_method: captureMethod,
       confirm: true,
       customer: customerProfile.stripe_customer_id,
       payment_method: payment_method_id,
@@ -55,6 +61,7 @@ Deno.serve(async (req) => {
         job_id: job.id,
         customer_id: customerProfile.id,
         provider_id: providerProfile.id,
+        capture_method: captureMethod,
       },
     });
 
@@ -67,7 +74,7 @@ Deno.serve(async (req) => {
       amount: job.quoted_price,
       platform_fee: job.quoted_price * 0.25,
       payout_amount: job.quoted_price * 0.75,
-      status: 'authorized',
+      status: captureMethod === 'automatic' ? 'captured' : 'authorized',
     });
 
     // Update job status

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Camera, User } from 'lucide-react';
+import { ArrowLeft, Loader2, Camera, User, ClipboardList, MapPin, Calendar, DollarSign, AlertCircle, CheckCircle2, Wrench, Hash } from 'lucide-react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import JobChat from '@/components/shared/JobChat';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
@@ -29,7 +29,7 @@ export default function JobDetailPage() {
   const [job, setJob] = useState(null);
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('chat');
+  const [tab, setTab] = useState('order');
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -166,7 +166,7 @@ export default function JobDetailPage() {
       {/* Tab bar */}
       <div className="flex-shrink-0 bg-card border-b border-border">
         <div className="max-w-2xl mx-auto flex">
-          {['chat', 'photos', 'details'].map(t => (
+          {['order', 'chat', 'photos', 'details'].map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -176,7 +176,7 @@ export default function JobDetailPage() {
                   : 'text-muted-foreground border-transparent hover:text-foreground'
               }`}
             >
-              {t}
+              {t === 'order' ? 'Order' : t}
             </button>
           ))}
         </div>
@@ -184,6 +184,191 @@ export default function JobDetailPage() {
 
       {/* Tab content */}
       <div className="flex-1 min-h-0 max-w-2xl mx-auto w-full flex flex-col">
+
+        {/* ORDER TAB */}
+        {tab === 'order' && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+            {/* Order Header */}
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <ClipboardList size={18} className="text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-base font-bold text-foreground">{job.service_name}</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Job #{job.id?.slice(-8).toUpperCase()}</p>
+                  <div className="mt-2">
+                    <StatusBadge status={job.status} />
+                  </div>
+                </div>
+                {job.quoted_price && (
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xl font-bold text-primary">${job.quoted_price}</p>
+                    <p className="text-xs text-muted-foreground">Total</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Schedule & Location */}
+            <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <p className="text-xs font-bold text-foreground uppercase tracking-wide">Schedule & Location</p>
+              <div className="flex items-start gap-3">
+                <Calendar size={15} className="text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Scheduled Date</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {job.scheduled_date
+                      ? format(new Date(job.scheduled_date), 'EEEE, MMMM d, yyyy')
+                      : 'Not yet scheduled'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <MapPin size={15} className="text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Service Address</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {showFullAddress ? job.address : `ZIP: ${job.zip_code}`}
+                  </p>
+                  {job.zip_code && showFullAddress && (
+                    <p className="text-xs text-muted-foreground">{job.zip_code}</p>
+                  )}
+                  {showFullAddress && job.address && (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary font-semibold hover:underline mt-1 block"
+                    >
+                      Open in Google Maps →
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* People */}
+            <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <p className="text-xs font-bold text-foreground uppercase tracking-wide">People</p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <User size={14} className="text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Customer</p>
+                  <p className="text-sm font-semibold text-foreground">{job.customer_name || '—'}</p>
+                  {isAdmin && <p className="text-xs text-muted-foreground">{job.customer_email}</p>}
+                </div>
+              </div>
+              {job.provider_name ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Wrench size={14} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Provider</p>
+                    <p className="text-sm font-semibold text-foreground">{job.provider_name}</p>
+                    {isAdmin && <p className="text-xs text-muted-foreground">{job.provider_email}</p>}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <AlertCircle size={13} />
+                  No provider assigned yet
+                </div>
+              )}
+            </div>
+
+            {/* Customer Instructions */}
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-3">
+                {senderRole === 'provider' ? '📋 Customer Instructions' : '📋 Your Instructions'}
+              </p>
+              {job.customer_notes ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm text-amber-900 leading-relaxed">{job.customer_notes}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No special instructions provided.</p>
+              )}
+              {job.provider_notes && (
+                <div className="mt-3">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Provider Notes</p>
+                  <div className="bg-muted/40 rounded-lg p-3">
+                    <p className="text-sm text-foreground leading-relaxed">{job.provider_notes}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Provider Checklist — shown only to providers */}
+            {senderRole === 'provider' && (
+              <div className="bg-card border border-border rounded-xl p-4">
+                <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-3">✅ Provider Checklist</p>
+                <div className="space-y-2">
+                  {[
+                    'Review customer instructions above before arriving',
+                    'Take before photos on arrival',
+                    'Complete the requested service thoroughly',
+                    'Take after photos once work is complete',
+                    'Mark job as complete in the portal',
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <CheckCircle2 size={14} className="text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pricing Summary */}
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-3">
+                <DollarSign size={12} className="inline mr-1" />
+                Pricing Summary
+              </p>
+              <div className="space-y-2">
+                {job.quoted_price && (
+                  <div className="flex justify-between items-center py-2 border-b border-border">
+                    <span className="text-sm text-muted-foreground">Quoted Price</span>
+                    <span className="text-sm font-bold text-foreground">${job.quoted_price}</span>
+                  </div>
+                )}
+                {job.final_price && (
+                  <div className="flex justify-between items-center py-2 border-b border-border">
+                    <span className="text-sm text-muted-foreground">Final Price</span>
+                    <span className="text-sm font-bold text-foreground">${job.final_price}</span>
+                  </div>
+                )}
+                {payment && (
+                  <>
+                    {senderRole === 'provider' && payment.payout_amount && (
+                      <div className="flex justify-between items-center py-2 border-b border-border">
+                        <span className="text-sm text-muted-foreground">Your Earnings</span>
+                        <span className="text-sm font-bold text-primary">${payment.payout_amount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-sm text-muted-foreground">Payment Status</span>
+                      <StatusBadge status={payment.status} />
+                    </div>
+                  </>
+                )}
+                {senderRole === 'provider' && job.quoted_price && !payment && (
+                  <div className="flex justify-between items-center py-2 border-b border-border">
+                    <span className="text-sm text-muted-foreground">Your Estimated Earnings</span>
+                    <span className="text-sm font-bold text-primary">${(job.quoted_price * 0.75).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        )}
+
         {/* CHAT TAB */}
         {tab === 'chat' && (
           <JobChat

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, FlaskConical } from 'lucide-react';
+import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, FlaskConical, ChevronDown, ClipboardList, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
@@ -51,6 +51,7 @@ function JobMiniMap({ address }) {
 
 export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete }) {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
 
   const handleComplete = async (job, photos) => {
     await onMarkComplete(job, photos);
@@ -104,9 +105,65 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
             <JobMiniMap address={job.address} />
           )}
 
-          {job.customer_notes && (
-            <div className="bg-muted/40 rounded-lg px-3 py-2 text-xs text-muted-foreground mb-3">
-              <span className="font-medium">Notes:</span> {job.customer_notes}
+          {/* Order Details Toggle */}
+          <button
+            onClick={e => { e.preventDefault(); e.stopPropagation(); setShowOrderDetails(v => !v); }}
+            className="w-full flex items-center justify-between px-3 py-2 bg-muted/30 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors mb-2"
+          >
+            <span className="flex items-center gap-1.5"><ClipboardList size={12} /> Order Details & Instructions</span>
+            <ChevronDown size={12} className={`transition-transform ${showOrderDetails ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showOrderDetails && (
+            <div className="bg-muted/20 border border-border rounded-lg p-3 mb-3 space-y-3 text-xs">
+              {/* Customer Instructions */}
+              <div>
+                <p className="font-bold text-foreground mb-1">📋 Customer Instructions</p>
+                {job.customer_notes ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
+                    <p className="text-amber-900 leading-relaxed">{job.customer_notes}</p>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground italic">No special instructions.</p>
+                )}
+              </div>
+
+              {/* Pricing */}
+              {job.quoted_price && (
+                <div>
+                  <p className="font-bold text-foreground mb-1">
+                    <DollarSign size={11} className="inline" /> Pricing
+                  </p>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Quoted Price</span>
+                    <span className="font-semibold text-foreground">${job.quoted_price}</span>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-muted-foreground">Your Earnings (~75%)</span>
+                    <span className="font-bold text-primary">${(job.quoted_price * 0.75).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Checklist */}
+              <div>
+                <p className="font-bold text-foreground mb-1">✅ Checklist</p>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Review instructions before arriving</li>
+                  <li>• Take before photos on arrival</li>
+                  <li>• Complete service thoroughly</li>
+                  <li>• Take after photos once done</li>
+                  <li>• Mark job complete in portal</li>
+                </ul>
+              </div>
+
+              <Link
+                to={`/jobs/${job.id}`}
+                onClick={e => e.stopPropagation()}
+                className="block text-center py-1.5 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition-colors"
+              >
+                View Full Job Details →
+              </Link>
             </div>
           )}
 

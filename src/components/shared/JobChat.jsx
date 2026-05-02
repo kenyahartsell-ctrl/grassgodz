@@ -82,13 +82,15 @@ export default function JobChat({ job, user, senderRole, otherPartyName }) {
     setOptimisticMessages(prev => [...prev, optimistic]);
 
     try {
-      await base44.entities.Message.create({
+      const newMessage = await base44.entities.Message.create({
         job_id: job.id,
         sender_id: user.email,
         sender_role: senderRole,
         body,
         read_at: null,
       });
+      // Fire-and-forget email notification — don't block on it
+      base44.functions.invoke('notifyNewMessage', { message: newMessage, job }).catch(() => {});
       setOptimisticMessages(prev => prev.filter(m => m.id !== optimistic.id));
       queryClient.invalidateQueries({ queryKey: ['messages', job.id] });
     } catch {

@@ -140,13 +140,17 @@ export default function CustomerSignupPage() {
       }
 
       if (user) {
-        // Create profile directly
-        const existing = await base44.entities.CustomerProfile.filter({ user_email: user.email });
-        if (!existing || existing.length === 0) {
-          await base44.entities.CustomerProfile.create({ ...profileData, user_email: user.email });
-        }
-        toast.success('Welcome to Grassgodz! Request your first job to get started.');
-        navigate('/customer');
+      // Create profile directly
+      const existing = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+      if (!existing || existing.length === 0) {
+        const profile = await base44.entities.CustomerProfile.create({ ...profileData, user_email: user.email });
+        await base44.functions.invoke('sendWelcomeEmail', {
+          data: profile,
+          event: { entity_name: 'CustomerProfile' },
+        });
+      }
+      toast.success('Welcome to Grassgodz! Request your first job to get started.');
+      navigate('/customer');
       } else {
         // Fallback: store pending profile, let SmartRedirect handle creation
         sessionStorage.setItem('pendingCustomerProfile', JSON.stringify({ ...profileData, user_email: form.email }));

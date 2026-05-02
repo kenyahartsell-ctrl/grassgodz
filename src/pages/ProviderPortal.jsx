@@ -134,7 +134,7 @@ export default function ProviderPortal() {
   };
 
   const handleSubmitQuote = async (job, quoteData) => {
-    await base44.entities.Quote.create({
+    const quote = await base44.entities.Quote.create({
       job_id: job.id,
       provider_id: providerProfile.id,
       provider_name: providerProfile.business_name,
@@ -143,6 +143,7 @@ export default function ProviderPortal() {
       message: quoteData.message,
       status: 'pending',
     });
+    await base44.functions.invoke('notifyCustomerNewQuote', { data: quote });
     toast.success(`Quote of $${quoteData.price} submitted for ${job.service_name}!`);
   };
 
@@ -161,6 +162,7 @@ export default function ProviderPortal() {
       const res = await base44.functions.invoke('capturePayment', { job_id: job.id, skip_photos: skipPhotos });
       if (res.data?.success) {
         const payout = res.data.payout?.toFixed(2) || ((job.quoted_price || 0) * 0.75).toFixed(2);
+        await base44.functions.invoke('notifyCustomerJobComplete', { data: { job_id: job.id } });
         await refreshJobs();
         toast.success(`Job completed! $${payout} will be transferred to your account.`);
       } else {

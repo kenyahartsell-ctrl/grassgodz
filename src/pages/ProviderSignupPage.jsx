@@ -73,7 +73,7 @@ export default function ProviderSignupPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await base44.entities.ProviderProfile.create({
+      const providerProfile = await base44.entities.ProviderProfile.create({
         user_email: form.email,
         name: form.name,
         phone: form.phone,
@@ -100,6 +100,11 @@ export default function ProviderSignupPage() {
 
       // Invite the provider so they can log in and access their portal
       await base44.users.inviteUser(form.email, 'user');
+
+      await base44.functions.invoke('sendWelcomeEmail', {
+        data: providerProfile,
+        event: { entity_name: 'ProviderProfile' },
+      });
 
       navigate('/provider/pending');
     } catch {

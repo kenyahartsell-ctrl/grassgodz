@@ -89,6 +89,7 @@ export default function CustomerPortal() {
     // Payment authorization is handled inside QuoteCard via authorizePayment backend function.
     // Here we just update the Quote record status and refresh.
     await base44.entities.Quote.update(quote.id, { status: 'accepted' });
+    await base44.functions.invoke('notifyCustomerJobAccepted', { data: { job_id: quote.job_id } });
     await refreshJobs();
     setSelectedJobForQuotes(null);
   };

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2 } from 'lucide-react';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
+import AdminAssignProviderModal from '@/components/admin/AdminAssignProviderModal';
 import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
 import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
 import AdminEmailPanel from '@/components/admin/AdminEmailPanel';
@@ -35,6 +36,7 @@ export default function AdminPortal() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddJob, setShowAddJob] = useState(false);
+  const [assigningJob, setAssigningJob] = useState(null);
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -304,6 +306,9 @@ export default function AdminPortal() {
                       View
                     </Link>
                     {!['completed', 'cancelled'].includes(j.status) && (
+                      <button onClick={() => setAssigningJob(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
+                    )}
+                    {!['completed', 'cancelled'].includes(j.status) && (
                       <button onClick={() => handleCancelJob(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
                     )}
                     <button onClick={() => handleDeleteJob(j)} className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1">
@@ -392,6 +397,17 @@ export default function AdminPortal() {
           </div>
         )}
       </main>
+
+      {assigningJob && (
+        <AdminAssignProviderModal
+          job={assigningJob}
+          onClose={() => setAssigningJob(null)}
+          onAssigned={async () => {
+            const allJobs = await base44.entities.Job.list('-created_date', 100);
+            setJobs(allJobs);
+          }}
+        />
+      )}
 
       {showAddJob && (
         <AdminAddJobModal

@@ -32,6 +32,10 @@ Deno.serve(async (req) => {
       customer: stripeCustomerId,
       payment_method_types: ['card'],
       usage: 'off_session',
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: 'never',
+      },
     });
 
     return Response.json({ client_secret: setupIntent.client_secret });

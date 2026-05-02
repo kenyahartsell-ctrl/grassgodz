@@ -47,6 +47,10 @@ Deno.serve(async (req) => {
       payment_method: payment_method_id,
       application_fee_amount: applicationFeeCents,
       transfer_data: { destination: providerProfile.stripe_connect_account_id },
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: 'never',
+      },
       metadata: {
         job_id: job.id,
         customer_id: customerProfile.id,

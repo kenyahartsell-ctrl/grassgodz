@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2 } from 'lucide-react';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
 import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
 import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
@@ -120,6 +120,13 @@ export default function AdminPortal() {
     await base44.entities.Job.update(job.id, { status: 'cancelled' });
     setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'cancelled' } : j));
     toast.success('Job cancelled.');
+  };
+
+  const handleDeleteJob = async (job) => {
+    if (!window.confirm(`Permanently delete this job (${job.service_name} for ${job.customer_name})? This cannot be undone.`)) return;
+    await base44.entities.Job.delete(job.id);
+    setJobs(prev => prev.filter(j => j.id !== job.id));
+    toast.success('Job deleted.');
   };
 
   const handleTestStripe = async () => {
@@ -299,6 +306,9 @@ export default function AdminPortal() {
                     {!['completed', 'cancelled'].includes(j.status) && (
                       <button onClick={() => handleCancelJob(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
                     )}
+                    <button onClick={() => handleDeleteJob(j)} className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1">
+                      <Trash2 size={12} /> Delete
+                    </button>
                   </div>
                 ))}
               </div>

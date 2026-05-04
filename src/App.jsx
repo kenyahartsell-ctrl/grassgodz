@@ -59,8 +59,14 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
+      // Allow public routes to render without redirecting to login
+      const publicPaths = ['/', '/pros', '/how-it-works', '/pricing', '/book', '/signup', '/signup/customer', '/signup/provider', '/become-provider', '/not-available', '/privacy', '/provider-links'];
+      const currentPath = window.location.pathname;
+      const isPublicPath = publicPaths.includes(currentPath) || currentPath.startsWith('/jobs/');
+      if (!isPublicPath) {
+        navigateToLogin();
+        return null;
+      }
     }
   }
 

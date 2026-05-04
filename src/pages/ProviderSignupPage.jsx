@@ -73,7 +73,7 @@ export default function ProviderSignupPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const providerProfile = await base44.entities.ProviderProfile.create({
+      const res = await base44.functions.invoke('createProviderProfile', {
         user_email: form.email,
         name: form.name,
         phone: form.phone,
@@ -97,6 +97,9 @@ export default function ProviderSignupPage() {
         status: 'pending_review',
         background_check_status: 'not_started',
       });
+
+      if (res.data?.error) throw new Error(res.data.error);
+      const providerProfile = res.data.profile;
 
       // Invite the provider so they can log in and access their portal
       await base44.users.inviteUser(form.email, 'user');

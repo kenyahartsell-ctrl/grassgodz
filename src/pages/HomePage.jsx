@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import PageMeta from '@/components/shared/PageMeta';
-import { Scissors, Wind, Sprout, Snowflake, CircleDot, Crop, Star, Shield, Users, ArrowRight, CheckCircle } from 'lucide-react';
+import { Scissors, Wind, Sprout, Snowflake, CircleDot, Crop, Star, Shield, Users, ArrowRight, CheckCircle, Home, Briefcase, Zap, CreditCard, MapPin, DollarSign, Calendar, ShieldCheck } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
 import PricingCalculator from '@/components/public/PricingCalculator';
@@ -40,64 +40,133 @@ export default function HomePage() {
       />
       <PublicNav />
 
-      {/* HERO */}
+      {/* HERO — Split Card Layout */}
       <section
-        className="relative min-h-[92vh] flex items-center justify-center"
+        className="relative min-h-screen flex flex-col items-center justify-center px-4 py-16"
         style={{
-          backgroundImage: `linear-gradient(160deg, rgba(14,60,32,0.93) 0%, rgba(20,83,45,0.75) 100%), url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&auto=format&fit=crop')`,
+          backgroundImage: `linear-gradient(160deg, rgba(14,60,32,0.95) 0%, rgba(20,83,45,0.80) 100%), url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&auto=format&fit=crop')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        <div className="relative z-10 max-w-2xl mx-auto px-4 text-center text-white py-16">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/90 mb-6">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            Local pros available in your area now
-          </div>
+        {/* Top badge */}
+        <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/90 mb-6">
+          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          Local pros available in your area now
+        </div>
 
-          <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight mb-4 tracking-tight">
-            Your Lawn.<br />Local Pros.
-          </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-4 max-w-md mx-auto">
-            Request → Compare quotes from local pros → Book your favorite. Sign up in 60 seconds.
-          </p>
+        <h1 className="text-4xl md:text-5xl font-display font-bold text-white text-center mb-3 tracking-tight">
+          Your Lawn. Local Pros.
+        </h1>
+        <p className="text-white/70 text-center text-sm mb-10 max-w-sm">
+          Are you a homeowner or a lawn care professional?
+        </p>
 
-          {/* Trust model tagline */}
-          <p className="text-sm text-white/50 mb-6 max-w-xs mx-auto">No upfront payment · Pay only after the job is done</p>
+        {/* Split Cards */}
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5">
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
-            <Link
-              to="/signup/customer"
-              className="flex-1 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-7 py-4 rounded-xl transition-colors whitespace-nowrap shadow-lg text-base flex items-center justify-center"
-            >
-              Get Matched with Pros
-            </Link>
-            <Link
-              to="/book"
-              className="flex-1 bg-white/15 hover:bg-white/25 border border-white/20 text-white font-semibold px-7 py-4 rounded-xl transition-colors whitespace-nowrap text-base flex items-center justify-center"
-            >
-              See Price Estimate
-            </Link>
-          </div>
-
-          {/* Secondary CTA */}
-          <a
-            href="/pros"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-white/70 hover:text-white transition-colors underline underline-offset-4"
+          {/* CUSTOMER CARD */}
+          <div
+            className="group bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-7 flex flex-col gap-5 hover:border-green-400/60 hover:shadow-2xl hover:shadow-green-900/40 transition-all duration-300 cursor-pointer"
+            style={{ borderLeftColor: '#2D6A2D', borderLeftWidth: '3px' }}
           >
-            Become a Provider <ArrowRight size={14} />
-          </a>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#2D6A2D' }}>
+                <Home size={22} className="text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-green-300 uppercase tracking-wider">For Homeowners</p>
+                <h2 className="text-xl font-display font-bold text-white leading-tight">I Need Lawn Care</h2>
+              </div>
+            </div>
 
-          {/* Trust bar */}
-          <div className="mt-10 flex items-center justify-center gap-6 flex-wrap text-xs text-white/60">
-            <span>⭐ 4.8 avg rating</span>
-            <span>·</span>
-            <span>1,200+ jobs done</span>
-            <span>·</span>
-            <span>Pay only after completion</span>
+            <ul className="space-y-2.5">
+              {[
+                { icon: Zap, text: 'Instant quotes from local pros' },
+                { icon: CreditCard, text: 'Secure payment — pay after completion' },
+                { icon: MapPin, text: 'Real-time job tracking' },
+              ].map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-2.5 text-white/85 text-sm">
+                  <Icon size={15} className="text-green-400 flex-shrink-0" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex flex-col gap-2 mt-auto pt-2">
+              <Link
+                to="/signup/customer"
+                className="w-full text-center font-bold py-3 rounded-xl transition-colors text-sm"
+                style={{ backgroundColor: '#2D6A2D', color: '#fff' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#3a8a3a'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2D6A2D'}
+              >
+                Get Started as Customer
+              </Link>
+              <button
+                onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')}
+                className="w-full text-center font-semibold py-3 rounded-xl border border-white/25 text-white/80 hover:bg-white/10 transition-colors text-sm"
+              >
+                Customer Sign In
+              </button>
+            </div>
           </div>
+
+          {/* PROVIDER CARD */}
+          <div
+            className="group bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-7 flex flex-col gap-5 hover:border-green-300/60 hover:shadow-2xl hover:shadow-green-900/40 transition-all duration-300 cursor-pointer"
+            style={{ borderLeftColor: '#1C411C', borderLeftWidth: '3px' }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#1C411C' }}>
+                <Briefcase size={22} className="text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-green-300 uppercase tracking-wider">For Professionals</p>
+                <h2 className="text-xl font-display font-bold text-white leading-tight">I Provide Lawn Care</h2>
+              </div>
+            </div>
+
+            <ul className="space-y-2.5">
+              {[
+                { icon: Calendar, text: 'Steady stream of local jobs' },
+                { icon: DollarSign, text: 'Keep 75% — weekly payouts' },
+                { icon: ShieldCheck, text: 'Platform handles payments & admin' },
+              ].map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-2.5 text-white/85 text-sm">
+                  <Icon size={15} className="text-green-400 flex-shrink-0" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex flex-col gap-2 mt-auto pt-2">
+              <Link
+                to="/signup/provider"
+                className="w-full text-center font-bold py-3 rounded-xl transition-colors text-sm"
+                style={{ backgroundColor: '#1C411C', color: '#fff' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#2a5c2a'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#1C411C'}
+              >
+                Get Started as Provider
+              </Link>
+              <button
+                onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')}
+                className="w-full text-center font-semibold py-3 rounded-xl border border-white/25 text-white/80 hover:bg-white/10 transition-colors text-sm"
+              >
+                Provider Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust indicators */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-5 text-xs text-white/60">
+          <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-green-400" /> All providers insured</span>
+          <span className="w-px h-3 bg-white/20" />
+          <span className="flex items-center gap-1.5"><CreditCard size={13} className="text-green-400" /> Secure payments</span>
+          <span className="w-px h-3 bg-white/20" />
+          <span className="flex items-center gap-1.5"><MapPin size={13} className="text-green-400" /> 30-mile DC metro coverage</span>
         </div>
       </section>
 

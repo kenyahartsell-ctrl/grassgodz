@@ -29,22 +29,11 @@
     "rating"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.customer_id": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {
       "$or": [
         {
-          "data.customer_id": "{{user.email}}"
+          "data.customer_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -56,7 +45,7 @@
     "update": {
       "$or": [
         {
-          "data.customer_id": "{{user.email}}"
+          "data.customer_id": "{{user.id}}"
         },
         {
           "user_condition": {

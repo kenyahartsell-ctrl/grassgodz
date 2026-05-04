@@ -102,7 +102,7 @@ export default function ProviderSignupPage() {
       const providerProfile = res.data.profile;
 
       // Invite the provider so they can log in and access their portal
-      await base44.users.inviteUser(form.email, 'user');
+      await base44.users.inviteUser(form.email, 'provider');
 
       await base44.functions.invoke('sendWelcomeEmail', {
         data: providerProfile,

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import PageMeta from '@/components/shared/PageMeta';
 import { Scissors, Wind, Sprout, Snowflake, CircleDot, Crop, Star, Shield, Users, ArrowRight, CheckCircle, Home, Briefcase, Zap, CreditCard, MapPin, DollarSign, Calendar, ShieldCheck } from 'lucide-react';
@@ -27,9 +28,13 @@ const TESTIMONIALS = [
 ];
 
 export default function HomePage() {
+  const navigate = useNavigate();
 
-
-
+  useEffect(() => {
+    base44.auth.isAuthenticated().then(authed => {
+      if (authed) navigate('/redirect', { replace: true });
+    });
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-background">

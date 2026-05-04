@@ -18,18 +18,7 @@
     "zip_code"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "data.email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "create": {},
     "read": {
       "user_condition": {
         "role": "admin"

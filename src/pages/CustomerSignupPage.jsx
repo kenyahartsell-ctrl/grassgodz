@@ -140,12 +140,11 @@ export default function CustomerSignupPage() {
       }
 
       if (user) {
-      // Create profile directly
-      const existing = await base44.entities.CustomerProfile.filter({ user_email: user.email });
-      if (!existing || existing.length === 0) {
-        const profile = await base44.entities.CustomerProfile.create({ ...profileData, user_email: user.email });
+      // Create profile via backend function (bypasses RLS for new users)
+      const res = await base44.functions.invoke('createCustomerProfile', profileData);
+      if (res.data?.created) {
         await base44.functions.invoke('sendWelcomeEmail', {
-          data: profile,
+          data: res.data.profile,
           event: { entity_name: 'CustomerProfile' },
         });
       }

@@ -51,10 +51,7 @@ export default function SmartRedirect() {
           sessionStorage.removeItem('pendingCustomerProfile');
           try {
             const pending = JSON.parse(pendingRaw);
-            const existing = await base44.entities.CustomerProfile.filter({ user_email: user.email });
-            if (!existing || existing.length === 0) {
-              await base44.entities.CustomerProfile.create({ ...pending, user_email: user.email });
-            }
+            await base44.functions.invoke('createCustomerProfile', pending);
           } catch { /* silently continue */ }
         }
 

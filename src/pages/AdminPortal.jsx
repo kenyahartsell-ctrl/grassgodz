@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2 } from 'lucide-react';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
+import AdminAddProviderModal from '@/components/admin/AdminAddProviderModal';
 import AdminAssignProviderModal from '@/components/admin/AdminAssignProviderModal';
 import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
 import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
@@ -36,6 +37,7 @@ export default function AdminPortal() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddJob, setShowAddJob] = useState(false);
+  const [showAddProvider, setShowAddProvider] = useState(false);
   const [assigningJob, setAssigningJob] = useState(null);
 
   useEffect(() => {
@@ -263,7 +265,12 @@ export default function AdminPortal() {
 
         {tab === 'providers' && (
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">Providers</h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-foreground">Providers</h2>
+              <Button size="sm" onClick={() => setShowAddProvider(true)} className="flex items-center gap-2">
+                <Plus size={14} /> Add Provider
+              </Button>
+            </div>
             {providers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-10">No providers yet.</p>
             ) : (
@@ -405,6 +412,16 @@ export default function AdminPortal() {
           onAssigned={async () => {
             const allJobs = await base44.entities.Job.list('-created_date', 100);
             setJobs(allJobs);
+          }}
+        />
+      )}
+
+      {showAddProvider && (
+        <AdminAddProviderModal
+          onClose={() => setShowAddProvider(false)}
+          onAdded={async () => {
+            const allProviders = await base44.entities.ProviderProfile.list();
+            setProviders(allProviders);
           }}
         />
       )}

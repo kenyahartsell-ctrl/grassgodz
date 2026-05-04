@@ -28,11 +28,12 @@ export default function SmartRedirect() {
           return;
         }
 
-        // Check if this user has a provider profile
+        // Check if this user has a provider profile (via backend to bypass RLS issues)
         setStatus('Loading your profile...');
-        const profiles = await base44.entities.ProviderProfile.filter({ user_email: user.email });
+        const res = await base44.functions.invoke('getMyProviderProfile', {});
+        const profiles = res.data?.profile ? [res.data.profile] : [];
 
-        if (profiles && profiles.length > 0) {
+        if (profiles.length > 0) {
           const profile = profiles[0];
           if (profile.status === 'suspended' || profile.status === 'rejected') {
             navigate('/provider/suspended', { replace: true });

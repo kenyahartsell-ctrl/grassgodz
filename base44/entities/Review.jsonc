@@ -29,11 +29,16 @@
     "rating"
   ],
   "rls": {
-    "create": {},
+    "create": {
+      "data.customer_id": "{{user.id}}"
+    },
     "read": {
       "$or": [
         {
           "data.customer_id": "{{user.id}}"
+        },
+        {
+          "data.provider_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -43,16 +48,7 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "data.customer_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "data.customer_id": "{{user.id}}"
     },
     "delete": {
       "user_condition": {

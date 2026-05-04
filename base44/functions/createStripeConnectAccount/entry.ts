@@ -58,6 +58,9 @@ Deno.serve(async (req) => {
 
     return Response.json({ url: accountLink.url, account_id: accountId });
   } catch (error) {
+    console.error('ERROR:',error.message,error.code,error.type);
+    return Response.json({error:error.message},{status:500});
+  
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

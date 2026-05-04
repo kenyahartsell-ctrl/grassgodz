@@ -37,11 +37,8 @@ export default function ProviderPortal() {
         const me = await base44.auth.me();
         setUser(me);
 
-        const [profiles] = await Promise.all([
-          base44.entities.ProviderProfile.filter({ user_email: me.email }),
-        ]);
-
-        const profile = profiles[0] || null;
+        const res = await base44.functions.invoke('getMyProviderProfile', {});
+        const profile = res.data?.profile || null;
         setProviderProfile(profile);
 
         if (profile) {
@@ -484,8 +481,8 @@ export default function ProviderPortal() {
               avgRating={avgRating}
               reviews={reviews}
               onProfileUpdated={async () => {
-                const profiles = await base44.entities.ProviderProfile.filter({ user_email: user.email });
-                setProviderProfile(profiles[0] || null);
+                const r = await base44.functions.invoke('getMyProviderProfile', {});
+                setProviderProfile(r.data?.profile || null);
               }}
             />
           </div>

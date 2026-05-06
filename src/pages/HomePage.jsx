@@ -135,7 +135,7 @@ export default function HomePage() {
             <ul className="space-y-2.5">
               {[
                 { icon: Calendar, text: 'Steady stream of local jobs' },
-                { icon: DollarSign, text: 'Keep 75% — weekly payouts' },
+                { icon: DollarSign, text: 'Competitive pay — weekly payouts' },
                 { icon: ShieldCheck, text: 'Platform handles payments & admin' },
               ].map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-center gap-2.5 text-white/85 text-sm">

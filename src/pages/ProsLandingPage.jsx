@@ -20,9 +20,8 @@ export default function ProsLandingPage() {
   const [jobsPerDay, setJobsPerDay] = useState(3);
 
   const avgJobPrice = 55;
-  const providerCut = 0.75;
   const workDays = Math.ceil(hours / (jobsPerDay * 2)); // ~2 hrs per job
-  const weeklyEst = Math.round(jobsPerDay * workDays * avgJobPrice * providerCut);
+  const weeklyEst = Math.round(jobsPerDay * workDays * avgJobPrice);
 
   return (
     <div className="min-h-screen bg-background">
@@ -145,7 +144,7 @@ export default function ProsLandingPage() {
             <div className="bg-white rounded-xl p-5 text-center border border-border">
               <p className="text-sm text-muted-foreground mb-1">Estimated weekly earnings</p>
               <p className="text-4xl font-display font-bold text-primary">${weeklyEst.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-2">Based on avg $55/job × provider share</p>
+              <p className="text-xs text-muted-foreground mt-2">Based on avg $55/job</p>
             </div>
 
             <p className="text-xs text-muted-foreground text-center">Estimate based on average pricing. Actual earnings vary by service area, season, and job mix.</p>

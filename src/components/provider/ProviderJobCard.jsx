@@ -72,7 +72,7 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
             {job.quoted_price && (
               <div className="text-right">
                 <p className="text-lg font-bold text-foreground">${job.quoted_price}</p>
-                <p className="text-xs text-primary font-medium">You earn ${(job.quoted_price * 0.75).toFixed(2)}</p>
+
               </div>
             )}
           </div>
@@ -138,10 +138,7 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
                     <span className="text-muted-foreground">Quoted Price</span>
                     <span className="font-semibold text-foreground">${job.quoted_price}</span>
                   </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-muted-foreground">Your Earnings (~75%)</span>
-                    <span className="font-bold text-primary">${(job.quoted_price * 0.75).toFixed(2)}</span>
-                  </div>
+
                 </div>
               )}
 

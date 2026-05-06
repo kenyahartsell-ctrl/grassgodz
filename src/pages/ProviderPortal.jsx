@@ -158,7 +158,7 @@ export default function ProviderPortal() {
     try {
       const res = await base44.functions.invoke('capturePayment', { job_id: job.id, skip_photos: skipPhotos });
       if (res.data?.success) {
-        const payout = res.data.payout?.toFixed(2) || ((job.quoted_price || 0) * 0.75).toFixed(2);
+        const payout = res.data.payout?.toFixed(2) || (job.quoted_price || 0).toFixed(2);
         await base44.functions.invoke('notifyCustomerJobComplete', { data: { job_id: job.id } });
         await refreshJobs();
         toast.success(`Job completed! $${payout} will be transferred to your account.`);
@@ -435,20 +435,7 @@ export default function ProviderPortal() {
               <MetricCard title="Pending Payout" value="$0.00" icon={TrendingUp} color="text-blue-600" bgColor="bg-blue-100" />
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-5 mb-5">
-              <h3 className="text-sm font-bold text-foreground mb-1">Pay Structure</h3>
-              <p className="text-xs text-muted-foreground mb-3">Grassgodz takes 25% platform fee on each job.</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-primary/5 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground">You receive</p>
-                  <p className="text-xl font-bold text-primary">75%</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground">Platform fee</p>
-                  <p className="text-xl font-bold text-muted-foreground">25%</p>
-                </div>
-              </div>
-            </div>
+
 
             <h3 className="text-sm font-semibold text-foreground mb-3">Payment History</h3>
             {completed.length === 0 ? (
@@ -463,7 +450,7 @@ export default function ProviderPortal() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-primary">+${j.provider_payout?.toFixed(2) || '—'}</p>
-                      <p className="text-xs text-muted-foreground">of ${j.final_price}</p>
+
                     </div>
                   </div>
                 ))}

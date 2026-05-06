@@ -2,7 +2,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    // Use service role only — no user auth required (public signup endpoint)
     const base44 = createClientFromRequest(req);
     const profileData = await req.json();
 

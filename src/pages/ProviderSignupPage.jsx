@@ -101,13 +101,16 @@ export default function ProviderSignupPage() {
       if (res.data?.error) throw new Error(res.data.error);
       const providerProfile = res.data.profile;
 
-      // Invite the provider so they can log in and access their portal
-      await base44.users.inviteUser(form.email, 'user');
+      // Invite the provider so they can log in and access their portal (non-critical)
+      try { await base44.users.inviteUser(form.email, 'user'); } catch { /* already invited or error — continue */ }
 
-      await base44.functions.invoke('sendWelcomeEmail', {
-        data: providerProfile,
-        event: { entity_name: 'ProviderProfile' },
-      });
+      // Send welcome email (non-critical)
+      try {
+        await base44.functions.invoke('sendWelcomeEmail', {
+          data: providerProfile,
+          event: { entity_name: 'ProviderProfile' },
+        });
+      } catch { /* email failure shouldn't block signup */ }
 
       navigate('/provider/pending');
     } catch {

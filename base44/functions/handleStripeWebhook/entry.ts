@@ -20,6 +20,53 @@ Deno.serve(async (req) => {
 
   try {
     switch (event.type) {
+      case 'checkout.session.completed': {
+        // Fired when a customer pays via a Payment Link
+        const session = event.data.object;
+        const jobId = session.metadata?.job_id;
+        if (jobId) {
+          const payments = await base44.asServiceRole.entities.Payment.filter({ job_id: jobId });
+          const payment = payments[0];
+          if (payment) {
+            await base44.asServiceRole.entities.Payment.update(payment.id, {
+              status: 'captured',
+              stripe_payment_intent_id: session.payment_intent || '',
+            });
+          }
+
+          // Fetch job to get provider info
+          const jobs = await base44.asServiceRole.entities.Job.filter({ id: jobId });
+          const job = jobs[0];
+          if (job?.provider_email) {
+            const amount = payment?.amount || job.final_price || job.quoted_price || 0;
+            const payout = amount * 0.75;
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: job.provider_email,
+              subject: `Payment received — your payout of $${payout.toFixed(2)} is being processed`,
+              body: `
+<p>Hi ${job.provider_name || 'there'},</p>
+
+<p>Great news! The customer has completed payment for your <strong>${job.service_name}</strong> job.</p>
+
+<p><strong>Job Summary:</strong></p>
+<ul>
+  <li>Service: ${job.service_name}</li>
+  <li>Customer: ${job.customer_name}</li>
+  <li>Total Charged: $${amount.toFixed(2)}</li>
+  <li>Your Payout: $${payout.toFixed(2)}</li>
+</ul>
+
+<p>Your payout is being processed and will be deposited to your bank account on your next weekly pay cycle.</p>
+
+<p>Thank you for being a Grassgodz pro!</p>
+<p>The Grassgodz Team</p>
+              `.trim(),
+            });
+          }
+        }
+        break;
+      }
+
       case 'payment_intent.succeeded': {
         const pi = event.data.object;
         const jobId = pi.metadata?.job_id;

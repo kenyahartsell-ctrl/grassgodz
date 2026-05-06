@@ -1,7 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import Stripe from 'npm:stripe@16.0.0';
-
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
 const MIN_PHOTO_COUNT = 4;
 
@@ -24,7 +21,7 @@ Deno.serve(async (req) => {
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
     if (job.provider_id !== providerProfile.id) return Response.json({ error: 'Forbidden' }, { status: 403 });
-    if (job.status !== 'in_progress') return Response.json({ error: 'Job must be in_progress to capture payment' }, { status: 400 });
+    if (job.status !== 'in_progress') return Response.json({ error: 'Job must be in_progress to complete' }, { status: 400 });
 
     // Verify minimum 4 photos present (skip_photos=true bypasses for testing)
     if (!skip_photos) {
@@ -35,23 +32,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Use final_price from body, or fall back to quoted_price on the job
     const price = final_price || job.quoted_price;
     const now = new Date().toISOString();
     const providerPayout = price ? price * 0.75 : 0;
     const platformFee = price ? price * 0.25 : 0;
 
-    // Find payment record
-    const payments = await base44.asServiceRole.entities.Payment.filter({ job_id });
-    const payment = payments[0];
-
-    if (payment?.stripe_payment_intent_id) {
-      // Capture the Stripe PaymentIntent
-      await stripe.paymentIntents.capture(payment.stripe_payment_intent_id);
-      await base44.asServiceRole.entities.Payment.update(payment.id, { status: 'captured' });
-    }
-    // If no payment record (e.g. job was direct-assigned without quote flow), just mark complete
-
+    // Mark job as completed
     await base44.asServiceRole.entities.Job.update(job.id, {
       status: 'completed',
       completed_at: now,
@@ -59,6 +45,9 @@ Deno.serve(async (req) => {
       provider_payout: providerPayout,
       platform_fee: platformFee,
     });
+
+    // Trigger payment link flow: creates Payment record + sends customer email
+    await base44.asServiceRole.functions.invoke('jobCompletedPaymentFlow', { job_id });
 
     return Response.json({ success: true, payout: providerPayout });
   } catch (error) {

@@ -9,6 +9,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { Toaster as Sonner } from 'sonner';
 
 import JobDetailPage from '@/pages/JobDetailPage';
+import ProSchedulePage from '@/pages/ProSchedulePage';
 
 // Portals
 import CustomerPortal from '@/pages/CustomerPortal';
@@ -78,6 +79,7 @@ const AuthenticatedApp = () => {
       {/* Role-specific portals */}
       <Route path="/customer/*" element={<CustomerApp />} />
       <Route path="/provider/pending" element={<ProviderPendingPage />} />
+      <Route path="/pros/schedule" element={<ProSchedulePage />} />
       <Route path="/provider/suspended" element={<ProviderSuspendedPage />} />
       <Route path="/provider/*" element={<ProviderApp />} />
       <Route path="/admin/*" element={<AdminApp />} />

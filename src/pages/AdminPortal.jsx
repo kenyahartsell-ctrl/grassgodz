@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera } from 'lucide-react';
+import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
 import AdminAddProviderModal from '@/components/admin/AdminAddProviderModal';
 import AdminAssignProviderModal from '@/components/admin/AdminAssignProviderModal';
@@ -39,6 +40,7 @@ export default function AdminPortal() {
   const [showAddJob, setShowAddJob] = useState(false);
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [assigningJob, setAssigningJob] = useState(null);
+  const [viewingPhotos, setViewingPhotos] = useState(null);
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -306,6 +308,14 @@ export default function AdminPortal() {
                     </div>
                     <StatusBadge status={j.status} />
                     {j.quoted_price && <span className="text-sm font-bold text-foreground hidden sm:block">${j.quoted_price}</span>}
+                    {j.status === 'completed' && j.completion_photos && Object.keys(j.completion_photos).length > 0 && (
+                      <button
+                        onClick={() => setViewingPhotos(j.completion_photos)}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        <Camera size={12} /> Photos
+                      </button>
+                    )}
                     <Link
                       to={`/jobs/${j.id}`}
                       className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
@@ -424,6 +434,10 @@ export default function AdminPortal() {
             setProviders(allProviders);
           }}
         />
+      )}
+
+      {viewingPhotos && (
+        <PhotoLightbox photos={viewingPhotos} onClose={() => setViewingPhotos(null)} />
       )}
 
       {showAddJob && (

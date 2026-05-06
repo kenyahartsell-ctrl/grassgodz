@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2 } from 'lucide-react';
+import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText } from 'lucide-react';
 import ServiceCard from '../components/customer/ServiceCard';
 import RequestJobModal from '../components/customer/RequestJobModal';
 import JobCard from '../components/customer/JobCard';
 import QuotesModal from '../components/customer/QuotesModal';
 import ReviewModal from '../components/customer/ReviewModal';
 import BookingModal from '../components/customer/BookingModal';
+import ProfileCompletionChecklist from '@/components/customer/ProfileCompletionChecklist';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import CustomerProfileEditor from '@/components/customer/CustomerProfileEditor';
@@ -14,6 +15,7 @@ const NAV = [
   { key: 'home', label: 'Home', icon: Home },
   { key: 'book', label: 'Book', icon: CalendarPlus },
   { key: 'jobs', label: 'My Jobs', icon: Briefcase },
+  { key: 'quotes', label: 'Quotes', icon: FileText },
   { key: 'profile', label: 'Account', icon: User },
 ];
 
@@ -73,15 +75,22 @@ export default function CustomerPortal() {
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
 
   const handleRequestJob = async (data) => {
-    await base44.entities.Job.create({
+    const job = await base44.entities.Job.create({
       customer_id: customerProfile?.id || user.email,
       customer_name: user.full_name,
       customer_email: user.email,
       status: 'requested',
       ...data,
     });
+    // Send confirmation notification
+    base44.functions.invoke('notifyQuoteSubmitted', {
+      job_id: job.id,
+      customer_email: user.email,
+      customer_name: user.full_name,
+      service_name: data.service_name,
+    }).catch(() => {});
     await refreshJobs();
-    setTab('jobs');
+    setTab('quotes');
     toast.success('Quote request submitted! Providers in your area will respond shortly.');
   };
 
@@ -149,6 +158,9 @@ export default function CustomerPortal() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {tab === 'home' && (
           <div>
+            {/* Profile completion checklist */}
+            <ProfileCompletionChecklist profile={customerProfile} onGoToProfile={() => setTab('profile')} />
+
             {/* Hero */}
             <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full" />
@@ -266,6 +278,63 @@ export default function CustomerPortal() {
                 <Briefcase className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground font-medium">No jobs yet</p>
                 <p className="text-sm text-muted-foreground mt-1">Request a service from the Home tab to get started.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'quotes' && (
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-2">My Quotes</h2>
+            <p className="text-sm text-muted-foreground mb-4">Track the status of your submitted quote requests.</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 text-xs text-amber-800 leading-relaxed">
+              <strong>Note:</strong> Quotes are not guaranteed prices. Lawn care professionals in your area will review your request and respond with their availability and final pricing.
+            </div>
+            {jobs.length === 0 ? (
+              <div className="text-center py-16">
+                <FileText className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+                <p className="text-muted-foreground font-medium">No quotes yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Request a service from the Home tab to get started.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {jobs.map(job => {
+                  const statusMap = {
+                    requested:   { label: 'Pending', badge: 'bg-amber-100 text-amber-800' },
+                    quoted:      { label: 'Provider Responded', badge: 'bg-blue-100 text-blue-800' },
+                    accepted:    { label: 'Booked', badge: 'bg-indigo-100 text-indigo-800' },
+                    scheduled:   { label: 'Booked', badge: 'bg-indigo-100 text-indigo-800' },
+                    in_progress: { label: 'In Progress', badge: 'bg-orange-100 text-orange-800' },
+                    completed:   { label: 'Completed', badge: 'bg-green-100 text-green-800' },
+                    cancelled:   { label: 'Cancelled', badge: 'bg-gray-100 text-gray-600' },
+                  };
+                  const cfg = statusMap[job.status] || statusMap.requested;
+                  return (
+                    <div key={job.id} className="bg-card border border-border rounded-xl p-4">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground text-sm">{job.service_name || 'Service Request'}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{job.address || '—'}</p>
+                        </div>
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.badge}`}>
+                          {cfg.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
+                        {job.scheduled_date && <span>Date: {new Date(job.scheduled_date).toLocaleDateString()}</span>}
+                        {job.quoted_price && <span className="font-semibold text-primary">Quoted: ${job.quoted_price}</span>}
+                      </div>
+                      {job.status === 'quoted' && (
+                        <button
+                          onClick={() => { setSelectedJobForQuotes(job); setTab('jobs'); }}
+                          className="mt-3 w-full bg-primary text-primary-foreground text-xs font-semibold py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                        >
+                          View & Accept Quote →
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

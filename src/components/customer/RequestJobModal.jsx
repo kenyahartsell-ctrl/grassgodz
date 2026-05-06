@@ -75,7 +75,11 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
               className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
-          <div className="flex gap-3 pt-2">
+          {/* Quote disclaimer */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800 leading-relaxed">
+            <strong>Please note:</strong> This quote is not a guaranteed price. It allows lawn care professionals in your area to review your request and respond with their availability and final pricing.
+          </div>
+          <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 border border-border rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
               Cancel
             </button>

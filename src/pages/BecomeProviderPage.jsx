@@ -34,14 +34,27 @@ export default function BecomeProviderPage() {
 
     setLoading(true);
     try {
-      // Create ProviderProfile with pending status
-      await base44.entities.ProviderProfile.create({
+      const res = await base44.functions.invoke('createProviderProfile', {
         user_email: form.email,
         name: form.name,
         phone: form.phone,
         service_zip_codes: form.serviceArea.split(',').map(z => z.trim()).filter(Boolean),
-        status: 'pending_approval',
+        has_equipment: form.equipment === 'yes',
+        status: 'pending_review',
       });
+      if (res.data?.error) throw new Error(res.data.error);
+
+      // Notify admin (non-critical)
+      try {
+        await base44.functions.invoke('sendWelcomeEmail', {
+          data: res.data.profile,
+          event: { entity_name: 'ProviderProfile' },
+        });
+      } catch { /* email failure shouldn't block signup */ }
+
+      // Invite user so they can log in (non-critical)
+      try { await base44.users.inviteUser(form.email, 'user'); } catch { /* already invited or error — continue */ }
+
       toast.success('Application submitted! Check your email for next steps.');
       navigate('/provider/pending');
     } catch (err) {

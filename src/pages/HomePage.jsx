@@ -12,12 +12,12 @@ import { base44 } from '@/api/base44Client';
 // ANALYTICS HOOK: track('zip_submitted', { zip }) on CTA click
 
 const SERVICES = [
-  { name: 'Lawn Mowing', icon: Scissors, price: 45, desc: 'Full mowing, edging, and cleanup' },
-  { name: 'Leaf Removal', icon: Wind, price: 80, desc: 'Blowing, raking, and hauling' },
-  { name: 'Hedge Trimming', icon: Crop, price: 65, desc: 'Precision shrub and hedge shaping' },
-  { name: 'Fertilization', icon: Sprout, price: 90, desc: 'Lawn treatment and weed control' },
-  { name: 'Aeration', icon: CircleDot, price: 110, desc: 'Core aeration for healthier grass' },
-  { name: 'Snow Removal', icon: Snowflake, price: 75, desc: 'Driveway and walkway clearing' },
+  { name: 'Lawn Mowing', icon: Scissors, price: 47, desc: 'Full mowing, edging, and cleanup' },
+  { name: 'Leaf Removal', icon: Wind, price: 84, desc: 'Blowing, raking, and hauling' },
+  { name: 'Hedge Trimming', icon: Crop, price: 68, desc: 'Precision shrub and hedge shaping' },
+  { name: 'Fertilization', icon: Sprout, price: 95, desc: 'Lawn treatment and weed control' },
+  { name: 'Aeration', icon: CircleDot, price: 116, desc: 'Core aeration for healthier grass' },
+  { name: 'Snow Removal', icon: Snowflake, price: 79, desc: 'Driveway and walkway clearing' },
 ];
 
 // PLACEHOLDER TESTIMONIALS — replace with real reviews after launch

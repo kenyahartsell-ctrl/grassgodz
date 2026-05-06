@@ -19,7 +19,7 @@ export default function ProsLandingPage() {
   const [hours, setHours] = useState(20);
   const [jobsPerDay, setJobsPerDay] = useState(3);
 
-  const avgJobPrice = 55;
+  const avgJobPrice = 58;
   const workDays = Math.ceil(hours / (jobsPerDay * 2)); // ~2 hrs per job
   const weeklyEst = Math.round(jobsPerDay * workDays * avgJobPrice);
 

@@ -3,26 +3,26 @@ import { CheckCircle, Scissors, ArrowRight } from 'lucide-react';
 import GuestBookingModal from './GuestBookingModal';
 
 const PROPERTY_SIZES = [
-  { label: 'Small', sublabel: 'Up to ¼ acre', price: 40 },
-  { label: 'Medium', sublabel: '¼ – ½ acre', price: 60 },
-  { label: 'Large', sublabel: '½ acre+', price: 80 },
+  { label: 'Small', sublabel: 'Up to ¼ acre', price: 42 },
+  { label: 'Medium', sublabel: '¼ – ½ acre', price: 63 },
+  { label: 'Large', sublabel: '½ acre+', price: 84 },
 ];
 
 const GRASS_HEIGHTS = [
   { label: 'Short', sublabel: 'Under 4"', extra: 0 },
-  { label: 'Medium', sublabel: '4" – 8"', extra: 10 },
-  { label: 'Overgrown', sublabel: 'Over 8"', extra: 25 },
+  { label: 'Medium', sublabel: '4" – 8"', extra: 11 },
+  { label: 'Overgrown', sublabel: 'Over 8"', extra: 26 },
 ];
 
 const SERVICE_TYPES = [
   { label: 'Mowing', sublabel: 'Cut & collect', extra: 0 },
-  { label: 'Mowing + Edging', sublabel: 'Clean borders', extra: 10 },
-  { label: 'Full Service', sublabel: 'Mow, edge & blow', extra: 25 },
+  { label: 'Mowing + Edging', sublabel: 'Clean borders', extra: 11 },
+  { label: 'Full Service', sublabel: 'Mow, edge & blow', extra: 26 },
 ];
 
 const ADDONS = [
-  { key: 'hedge', label: 'Hedge Trimming', price: 20 },
-  { key: 'leaf', label: 'Leaf Cleanup', price: 30 },
+  { key: 'hedge', label: 'Hedge Trimming', price: 21 },
+  { key: 'leaf', label: 'Leaf Cleanup', price: 32 },
 ];
 
 const FREQUENCIES = [

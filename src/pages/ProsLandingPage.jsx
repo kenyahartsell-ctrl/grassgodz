@@ -69,6 +69,7 @@ export default function ProsLandingPage() {
               { icon: Users, title: 'Steady customers', desc: 'No marketing, no cold calls. We deliver qualified job requests directly to you in your service area.' },
               { icon: MapPin, title: 'Your area, your schedule', desc: 'Set the zip codes you serve and the days you work. Accept only the jobs that fit your calendar.' },
               { icon: DollarSign, title: 'Get paid weekly', desc: 'Automatic direct deposit every week. No chasing invoices, no awkward cash conversations.' },
+
               { icon: Shield, title: 'Support included', desc: 'Dedicated pro support, dispute resolution, and resources to help grow your business and reputation.' },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex gap-4 p-5 bg-secondary/30 rounded-2xl">

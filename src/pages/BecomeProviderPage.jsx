@@ -7,7 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 const BENEFITS = [
-  { icon: DollarSign, text: 'Keep 90–95% of every job', color: 'text-green-600', bgColor: 'bg-green-100' },
+  { icon: DollarSign, text: 'Competitive pay — weekly payouts', color: 'text-green-600', bgColor: 'bg-green-100' },
   { icon: Users, text: 'We bring you customers', color: 'text-blue-600', bgColor: 'bg-blue-100' },
   { icon: Zap, text: 'Get paid fast', color: 'text-amber-600', bgColor: 'bg-amber-100' },
 ];
@@ -191,7 +191,7 @@ export default function BecomeProviderPage() {
             <div className="space-y-4">
               {[
                 { title: 'No Marketing Needed', desc: 'We bring customers to you. Focus on the work you love.' },
-                { title: 'Keep More Money', desc: 'You keep 90–95% of every job. Fair pricing, no hidden fees.' },
+                { title: 'Competitive Pay', desc: 'Fair and transparent pay structure with weekly direct deposits.' },
                 { title: 'Quick Payouts', desc: 'Get paid weekly directly to your bank account.' },
                 { title: 'Your Schedule', desc: "Accept jobs that fit your availability. You're in control." },
               ].map((item, i) => (

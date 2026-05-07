@@ -10,6 +10,7 @@ import MetricCard from '../components/shared/MetricCard';
 import { base44 } from '@/api/base44Client';
 import ProviderProfileEditor from '@/components/provider/ProviderProfileEditor';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const NAV = [
@@ -411,7 +412,12 @@ export default function ProviderPortal() {
 
         {tab === 'earnings' && (
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">Earnings</h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-foreground">Earnings</h2>
+              <Link to="/provider/financials" className="text-xs font-semibold text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary/5 transition-colors">
+                Full Financial Summary →
+              </Link>
+            </div>
 
             {/* Monthly Summary Card */}
             <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 mb-5 text-white">

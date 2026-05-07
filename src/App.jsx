@@ -33,6 +33,7 @@ import BookingPage from '@/pages/BookingPage';
 import ProviderLinksPage from '@/pages/ProviderLinksPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import ProviderOnboardingPage from '@/pages/ProviderOnboardingPage';
+import ProviderFinancialsPage from '@/pages/ProviderFinancialsPage';
 
 function CustomerApp() {
   return <CustomerPortal />;
@@ -100,6 +101,7 @@ const AuthenticatedApp = () => {
       <Route path="/jobs/:jobId" element={<JobDetailPage />} />
       <Route path="/provider-links" element={<ProviderLinksPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/provider/financials" element={<ProviderFinancialsPage />} />
       <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
 
       <Route path="*" element={<PageNotFound />} />

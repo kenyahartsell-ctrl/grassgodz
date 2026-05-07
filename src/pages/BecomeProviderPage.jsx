@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { DollarSign, Users, Zap, ArrowRight } from 'lucide-react';
+import { DollarSign, Users, Zap, ArrowRight, CheckCircle, Mail, KeyRound } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
 import { base44 } from '@/api/base44Client';
@@ -14,6 +13,7 @@ const BENEFITS = [
 
 export default function BecomeProviderPage() {
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     name: '',
     phone: '',
@@ -21,7 +21,6 @@ export default function BecomeProviderPage() {
     serviceArea: '',
     equipment: 'yes',
   });
-  const navigate = useNavigate();
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
 
@@ -52,11 +51,10 @@ export default function BecomeProviderPage() {
         });
       } catch { /* email failure shouldn't block signup */ }
 
-      // Invite user so they can log in (non-critical)
-      try { await base44.users.inviteUser(form.email, 'user'); } catch { /* already invited or error — continue */ }
+      // Invite user — sends one-click account activation email
+      try { await base44.users.inviteUser(form.email, 'user'); } catch { /* already invited — continue */ }
 
-      toast.success('Application submitted! Check your email for next steps.');
-      navigate('/provider/pending');
+      setSubmitted(true);
     } catch (err) {
       toast.error('Submission failed. Please try again.');
     } finally {
@@ -93,10 +91,52 @@ export default function BecomeProviderPage() {
         </div>
       </section>
 
-      {/* FORM */}
+      {/* FORM / CONFIRMATION */}
       <section className="py-16 px-4 flex-1">
         <div className="max-w-lg mx-auto">
           <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
+
+            {submitted ? (
+              <div className="space-y-6 text-center py-2">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle size={32} className="text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Application submitted!</h2>
+                  <p className="text-sm text-muted-foreground mt-1">One last step — activate your login</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-left space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Mail size={18} className="text-blue-600 flex-shrink-0" />
+                    <p className="text-sm font-bold text-blue-800">Check your email: <span className="font-mono">{form.email}</span></p>
+                  </div>
+                  <p className="text-sm text-blue-700 leading-relaxed">
+                    We sent you an <strong>account activation email</strong>. Click the link to set your password — it takes less than 30 seconds.
+                  </p>
+                  <div className="bg-blue-100 rounded-xl p-3 flex items-start gap-2">
+                    <KeyRound size={14} className="text-blue-700 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-800">
+                      <strong>That single email link IS your account setup.</strong> You'll set your password there — no second form, no redirect back here.
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-muted/30 rounded-xl p-4 text-left space-y-3">
+                  <p className="text-xs font-bold text-foreground uppercase tracking-wide">What happens next</p>
+                  {[
+                    { s: '1', text: 'Click the link in your email to set your password' },
+                    { s: '2', text: 'Our team reviews your application (1–2 business days)' },
+                    { s: '3', text: "Once approved, sign in and start accepting jobs" },
+                  ].map(({ s, text }) => (
+                    <div key={s} className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{s}</div>
+                      <p className="text-sm text-foreground">{text}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Didn't get the email? Check your spam or email <a href="mailto:pros@grassgodz.com" className="text-primary font-semibold">pros@grassgodz.com</a></p>
+              </div>
+            ) : (
+            <>
             <h2 className="text-2xl font-bold text-foreground mb-1">Quick Application</h2>
             <p className="text-sm text-muted-foreground mb-6">Takes 2 minutes. No credit card required.</p>
 
@@ -183,6 +223,8 @@ export default function BecomeProviderPage() {
                 We'll review your application and get back to you within 24 hours.
               </p>
             </form>
+            </>
+            )}
           </div>
 
           {/* Why GrassGodz */}

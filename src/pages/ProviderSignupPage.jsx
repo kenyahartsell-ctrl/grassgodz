@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, CheckCircle, ShieldAlert } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle, ShieldAlert, Mail, KeyRound } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-const STEPS = ['Personal Info', 'Credentials', 'Service Area', 'Background Check', 'Review & Submit'];
+const STEPS = ['Personal Info', 'Credentials', 'Service Area', 'Background Check', 'Review & Submit', 'Activate Account'];
 
 // NOTE: Provider signup uses base44.users.inviteUser() which sends an email invite.
 // The provider clicks the invite link and sets their password on Base44's hosted auth page.
@@ -101,18 +101,19 @@ export default function ProviderSignupPage() {
       if (res.data?.error) throw new Error(res.data.error);
       const providerProfile = res.data.profile;
 
-      // Invite the provider so they can log in and access their portal (non-critical)
-      try { await base44.users.inviteUser(form.email, 'user'); } catch { /* already invited or error — continue */ }
+      // Invite the provider — sends a one-click account activation email
+      try { await base44.users.inviteUser(form.email, 'user'); } catch { /* already invited — continue */ }
 
-      // Send welcome email (non-critical)
+      // Send welcome email
       try {
         await base44.functions.invoke('sendWelcomeEmail', {
           data: providerProfile,
           event: { entity_name: 'ProviderProfile' },
         });
-      } catch { /* email failure shouldn't block signup */ }
+      } catch { /* non-critical */ }
 
-      navigate('/provider/pending');
+      // Advance to the "Check your email" confirmation step
+      setStep(5);
     } catch {
       toast.error('Submission failed. Please try again.');
     } finally {
@@ -385,11 +386,58 @@ export default function ProviderSignupPage() {
                 </div>
               </form>
             )}
+            {/* ── Step 5: Account Activation ── */}
+            {step === 5 && (
+              <div className="space-y-6 text-center py-2">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle size={32} className="text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Application submitted!</h2>
+                  <p className="text-sm text-muted-foreground mt-1">One last step — activate your login</p>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-left space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Mail size={18} className="text-blue-600 flex-shrink-0" />
+                    <p className="text-sm font-bold text-blue-800">Check your email: <span className="font-mono">{form.email}</span></p>
+                  </div>
+                  <p className="text-sm text-blue-700 leading-relaxed">
+                    We just sent you an <strong>account activation email</strong>. Click the link inside to set your password and complete your Grassgodz account — it takes less than 30 seconds.
+                  </p>
+                  <div className="bg-blue-100 rounded-xl p-3 flex items-start gap-2">
+                    <KeyRound size={14} className="text-blue-700 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-800">
+                      <strong>That single email link IS your account setup.</strong> You'll set your password there — no second form, no redirect back here. Once done, you can sign in at any time.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-card border border-border rounded-xl p-4 text-left space-y-3">
+                  <p className="text-xs font-bold text-foreground uppercase tracking-wide">What happens next</p>
+                  {[
+                    { step: '1', text: 'Click the link in your email to set your password' },
+                    { step: '2', text: 'Our team reviews your application (1–2 business days)' },
+                    { step: '3', text: "Once approved, sign in and you're ready to accept jobs" },
+                  ].map(({ step: s, text }) => (
+                    <div key={s} className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{s}</div>
+                      <p className="text-sm text-foreground">{text}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-xs text-muted-foreground">Didn't get the email? Check your spam folder or email us at <a href="mailto:pros@grassgodz.com" className="text-primary font-semibold">pros@grassgodz.com</a></p>
+              </div>
+            )}
+
           </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-5">
-            Already have an account? <Link to="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
-          </p>
+          {step < 5 && (
+            <p className="text-center text-sm text-muted-foreground mt-5">
+              Already have an account? <Link to="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
+            </p>
+          )}
         </div>
       </main>
     </div>

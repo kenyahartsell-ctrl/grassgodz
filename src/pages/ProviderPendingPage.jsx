@@ -1,4 +1,4 @@
-import { Clock, CheckCircle, Mail } from 'lucide-react';
+import { Clock, CheckCircle, Mail, KeyRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import PublicNav from '@/components/public/PublicNav';
@@ -51,11 +51,17 @@ export default function ProviderPendingPage() {
         <p className="text-muted-foreground mb-4 leading-relaxed text-sm">
           Thanks for applying! Our team is reviewing your application. You'll hear back within <strong>1–2 business days</strong> — most pros are approved within 24 hours.
         </p>
-        <div className="w-full bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-start gap-3 text-left">
-          <Mail size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-bold text-blue-800">Check your email</p>
-            <p className="text-xs text-blue-700 mt-0.5">We sent you an invite to create your Grassgodz account. You'll need to log in to complete Stripe onboarding and access your provider portal once approved.</p>
+        <div className="w-full bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 text-left space-y-3">
+          <div className="flex items-center gap-2">
+            <Mail size={18} className="text-blue-600 flex-shrink-0" />
+            <p className="text-sm font-bold text-blue-800">Activate your account via email</p>
+          </div>
+          <p className="text-xs text-blue-700 leading-relaxed">
+            We sent you an activation email. <strong>Click the link inside to set your password</strong> — that's it. No second form, no redirect. Once done, you can sign in and access your portal when approved.
+          </p>
+          <div className="bg-blue-100 rounded-lg p-2.5 flex items-start gap-2">
+            <KeyRound size={13} className="text-blue-700 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-800">Didn't get it? Check your spam folder or email <a href="mailto:pros@grassgodz.com" className="text-primary font-semibold">pros@grassgodz.com</a></p>
           </div>
         </div>
 

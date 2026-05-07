@@ -95,6 +95,7 @@ export default function ProviderPortal() {
   };
 
   const scheduled = myJobs.filter(j => ['scheduled', 'accepted'].includes(j.status));
+
   const inProgress = myJobs.filter(j => j.status === 'in_progress');
   const completed = myJobs.filter(j => j.status === 'completed');
   const totalEarnings = completed.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
@@ -151,23 +152,25 @@ export default function ProviderPortal() {
   };
 
   const handleMarkComplete = async (job, photos = {}, skipPhotos = false) => {
-    // First save photos, then capture payment via Stripe
+    // Save photos and mark job completed
     if (!skipPhotos) {
       await base44.entities.Job.update(job.id, { completion_photos: photos });
     }
+    await base44.entities.Job.update(job.id, { status: 'completed', completed_at: new Date().toISOString() });
+    // Attempt payment capture — if Stripe not set up, job is still marked complete
     try {
       const res = await base44.functions.invoke('capturePayment', { job_id: job.id, skip_photos: skipPhotos });
       if (res.data?.success) {
-        const payout = res.data.payout?.toFixed(2) || (job.quoted_price || 0).toFixed(2);
-        await base44.functions.invoke('notifyCustomerJobComplete', { data: { job_id: job.id } });
+        const payout = res.data.payout?.toFixed(2) || ((job.quoted_price || 0) * 0.75).toFixed(2);
+        await base44.functions.invoke('notifyCustomerJobComplete', { data: { job_id: job.id } }).catch(() => {});
         await refreshJobs();
         toast.success(`Job completed! $${payout} will be transferred to your account.`);
-      } else {
-        toast.error(res.data?.error || 'Payment capture failed. Please contact support.');
+        return;
       }
-    } catch (err) {
-      toast.error('Payment capture failed. Please contact support.');
-    }
+    } catch { /* Stripe not configured — continue */ }
+    await refreshJobs();
+    const expectedPayout = ((job.quoted_price || 0) * 0.75).toFixed(2);
+    toast.success(`Job completed! $${expectedPayout} payout pending once payment setup is complete.`);
   };
 
   if (loading) {
@@ -199,13 +202,13 @@ export default function ProviderPortal() {
       </header>
 
       <main className="flex-1 overflow-y-auto max-w-3xl mx-auto w-full px-4 py-6">
-        {/* Onboarding Banner */}
-        {tab !== 'available' && providerProfile && providerProfile.status === 'active' && !providerProfile?.onboarding_complete && (
+        {/* Stripe Onboarding Banner — persistent but non-blocking */}
+        {providerProfile && !providerProfile?.onboarding_complete && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
             <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-800">Connect Your Bank Account</p>
-              <p className="text-xs text-amber-700 mt-0.5">Set up Stripe to receive weekly payouts for completed jobs.</p>
+              <p className="text-sm font-semibold text-amber-800">Complete your payment setup to receive payouts</p>
+              <p className="text-xs text-amber-700 mt-0.5">You can still accept and complete jobs — set up your bank account to get paid when jobs are completed.</p>
               <button
                 onClick={async () => {
                   try {
@@ -222,7 +225,7 @@ export default function ProviderPortal() {
                 }}
                 className="mt-2 text-xs font-semibold text-amber-800 underline hover:text-amber-900"
               >
-                Start Stripe Onboarding →
+                Set Up Stripe Payouts →
               </button>
             </div>
           </div>
@@ -362,7 +365,7 @@ export default function ProviderPortal() {
             ) : (
               <div className="space-y-3">
                 {availableJobs.map(job => (
-                  <AvailableJobCard key={job.id} job={job} onSubmitQuote={handleSubmitQuote} />
+                  <AvailableJobCard key={job.id} job={job} onSubmitQuote={handleSubmitQuote} onboardingComplete={providerProfile?.onboarding_complete} />
                 ))}
               </div>
             )}

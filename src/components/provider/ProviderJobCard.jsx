@@ -164,7 +164,21 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
             </div>
           )}
 
-          {job.status === 'completed' && job.completion_photos && (
+          {job.status === 'completed' && (
+            <div className={`flex items-center gap-1.5 text-xs mb-3 rounded-lg px-3 py-2 ${
+              job.provider_payout
+                ? 'text-green-600 bg-green-50 border border-green-200'
+                : 'text-amber-700 bg-amber-50 border border-amber-200'
+            }`}>
+              {job.provider_payout ? (
+                <><Image size={12} /><span>Paid out ${job.provider_payout.toFixed(2)}</span></>
+              ) : (
+                <><DollarSign size={12} /><span>Pending payment — expected ${((job.quoted_price || 0) * 0.75).toFixed(2)}</span></>
+              )}
+            </div>
+          )}
+
+          {job.status === 'completed' && job.completion_photos && Object.keys(job.completion_photos).length > 0 && (
             <div className="flex items-center gap-1.5 text-xs text-green-600 mb-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
               <Image size={12} />
               <span>Completion photos submitted</span>
@@ -172,7 +186,7 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
           )}
 
           <div className="flex gap-2" onClick={e => e.preventDefault()}>
-            {job.status === 'scheduled' && onMarkInProgress && (
+            {['scheduled', 'accepted'].includes(job.status) && onMarkInProgress && (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMarkInProgress(job); }}
                 className="flex-1 flex items-center justify-center gap-1.5 bg-orange-500 text-white rounded-lg py-2 text-xs font-semibold hover:bg-orange-600 transition-colors"

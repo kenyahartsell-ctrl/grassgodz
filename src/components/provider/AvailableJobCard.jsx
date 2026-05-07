@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Calendar, MapPin, FileText, DollarSign, ChevronDown, ChevronUp, Send } from 'lucide-react';
+import { Calendar, MapPin, FileText, DollarSign, ChevronDown, ChevronUp, Send, AlertCircle } from 'lucide-react';
 
-export default function AvailableJobCard({ job, onSubmitQuote }) {
+export default function AvailableJobCard({ job, onSubmitQuote, onboardingComplete = true }) {
   const [expanded, setExpanded] = useState(false);
   const [quoteForm, setQuoteForm] = useState({ price: '', message: '' });
   const [showForm, setShowForm] = useState(false);
@@ -40,6 +40,13 @@ export default function AvailableJobCard({ job, onSubmitQuote }) {
             <div className="flex gap-2 text-xs text-muted-foreground bg-muted/40 rounded-lg p-2.5">
               <FileText size={12} className="flex-shrink-0 mt-0.5" />
               <span>{job.customer_notes}</span>
+            </div>
+          )}
+
+          {!onboardingComplete && (
+            <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2">
+              <AlertCircle size={12} className="flex-shrink-0" />
+              <span>Complete your payment setup to receive payouts</span>
             </div>
           )}
 

@@ -35,7 +35,6 @@ Deno.serve(async (req) => {
           email: user.email,
           first_name: profile.name?.split(' ')[0] || '',
           last_name: profile.name?.split(' ').slice(1).join(' ') || '',
-          phone: profile.phone || undefined,
         },
         metadata: {
           grassgodz_provider_id: profile.id,

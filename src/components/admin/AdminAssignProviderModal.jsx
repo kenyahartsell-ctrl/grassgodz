@@ -23,7 +23,7 @@ export default function AdminAssignProviderModal({ job, onClose, onAssigned }) {
       provider_id: provider.id,
       provider_email: provider.user_email,
       provider_name: provider.name || provider.business_name,
-      status: job.status === 'requested' ? 'accepted' : job.status,
+      status: ['completed', 'cancelled', 'in_progress'].includes(job.status) ? job.status : 'accepted',
     });
 
     // Send notification email to provider

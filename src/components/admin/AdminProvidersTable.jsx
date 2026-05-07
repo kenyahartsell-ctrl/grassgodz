@@ -44,6 +44,14 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
     try {
       await base44.entities.ProviderProfile.update(provider.id, { status: newStatus });
       toast.success(`${provider.name || provider.user_email} → ${newStatus}`);
+      if (newStatus === 'active') {
+        try {
+          await base44.functions.invoke('notifyProviderApproved', { provider_id: provider.id });
+          toast.success('Approval email sent to provider.');
+        } catch {
+          toast.error('Provider approved but approval email failed to send.');
+        }
+      }
       onRefresh?.();
     } catch {
       toast.error('Failed to update status.');

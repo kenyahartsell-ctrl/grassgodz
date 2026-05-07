@@ -394,31 +394,16 @@ export default function ProviderSignupPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-foreground">Application submitted!</h2>
-                  <p className="text-sm text-muted-foreground mt-1">One last step — activate your login</p>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-left space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Mail size={18} className="text-blue-600 flex-shrink-0" />
-                    <p className="text-sm font-bold text-blue-800">Check your email: <span className="font-mono">{form.email}</span></p>
-                  </div>
-                  <p className="text-sm text-blue-700 leading-relaxed">
-                    We just sent you an <strong>account activation email</strong>. Click the link inside to set your password and complete your Grassgodz account — it takes less than 30 seconds.
-                  </p>
-                  <div className="bg-blue-100 rounded-xl p-3 flex items-start gap-2">
-                    <KeyRound size={14} className="text-blue-700 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-800">
-                      <strong>That single email link IS your account setup.</strong> You'll set your password there — no second form, no redirect back here. Once done, you can sign in at any time.
-                    </p>
-                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">We've received your application and will be in touch soon.</p>
                 </div>
 
                 <div className="bg-card border border-border rounded-xl p-4 text-left space-y-3">
                   <p className="text-xs font-bold text-foreground uppercase tracking-wide">What happens next</p>
                   {[
-                    { step: '1', text: 'Click the link in your email to set your password' },
-                    { step: '2', text: 'Our team reviews your application (1–2 business days)' },
-                    { step: '3', text: "Once approved, sign in and you're ready to accept jobs" },
+                    { step: '1', text: 'Our team reviews your application (1–2 business days)' },
+                    { step: '2', text: "You'll receive an approval email at " + form.email + " when you're accepted" },
+                    { step: '3', text: "The approval email will include a link to set your password and sign in" },
+                    { step: '4', text: "Once signed in, you'll be ready to accept jobs and earn" },
                   ].map(({ step: s, text }) => (
                     <div key={s} className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{s}</div>
@@ -427,7 +412,7 @@ export default function ProviderSignupPage() {
                   ))}
                 </div>
 
-                <p className="text-xs text-muted-foreground">Didn't get the email? Check your spam folder or email us at <a href="mailto:pros@grassgodz.com" className="text-primary font-semibold">pros@grassgodz.com</a></p>
+                <p className="text-xs text-muted-foreground">Questions? Email us at <a href="mailto:pros@grassgodz.com" className="text-primary font-semibold">pros@grassgodz.com</a></p>
               </div>
             )}
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DollarSign, Users, Zap, ArrowRight, CheckCircle, Mail, KeyRound } from 'lucide-react';
+import { DollarSign, Users, Zap, ArrowRight, CheckCircle } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import PublicFooter from '@/components/public/PublicFooter';
 import { base44 } from '@/api/base44Client';
@@ -103,29 +103,15 @@ export default function BecomeProviderPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-foreground">Application submitted!</h2>
-                  <p className="text-sm text-muted-foreground mt-1">One last step — activate your login</p>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-left space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Mail size={18} className="text-blue-600 flex-shrink-0" />
-                    <p className="text-sm font-bold text-blue-800">Check your email: <span className="font-mono">{form.email}</span></p>
-                  </div>
-                  <p className="text-sm text-blue-700 leading-relaxed">
-                    We sent you an <strong>account activation email</strong>. Click the link to set your password — it takes less than 30 seconds.
-                  </p>
-                  <div className="bg-blue-100 rounded-xl p-3 flex items-start gap-2">
-                    <KeyRound size={14} className="text-blue-700 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-800">
-                      <strong>That single email link IS your account setup.</strong> You'll set your password there — no second form, no redirect back here.
-                    </p>
-                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">We've received your application and will be in touch soon.</p>
                 </div>
                 <div className="bg-muted/30 rounded-xl p-4 text-left space-y-3">
                   <p className="text-xs font-bold text-foreground uppercase tracking-wide">What happens next</p>
                   {[
-                    { s: '1', text: 'Click the link in your email to set your password' },
-                    { s: '2', text: 'Our team reviews your application (1–2 business days)' },
-                    { s: '3', text: "Once approved, sign in and start accepting jobs" },
+                    { s: '1', text: 'Our team reviews your application (1–2 business days)' },
+                    { s: '2', text: `You'll receive an approval email at ${form.email} when accepted` },
+                    { s: '3', text: "The approval email includes a link to set your password and sign in" },
+                    { s: '4', text: "Once signed in, start accepting jobs and earning" },
                   ].map(({ s, text }) => (
                     <div key={s} className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{s}</div>
@@ -133,7 +119,7 @@ export default function BecomeProviderPage() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">Didn't get the email? Check your spam or email <a href="mailto:pros@grassgodz.com" className="text-primary font-semibold">pros@grassgodz.com</a></p>
+                <p className="text-xs text-muted-foreground">Questions? Email <a href="mailto:pros@grassgodz.com" className="text-primary font-semibold">pros@grassgodz.com</a></p>
               </div>
             ) : (
             <>

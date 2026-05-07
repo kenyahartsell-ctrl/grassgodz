@@ -30,7 +30,6 @@ import NotAvailablePage from '@/pages/NotAvailablePage';
 import ProviderPendingPage from '@/pages/ProviderPendingPage';
 import ProviderSuspendedPage from '@/pages/ProviderSuspendedPage';
 import BookingPage from '@/pages/BookingPage';
-import TestMapboxPage from '@/pages/TestMapboxPage';
 import ProviderLinksPage from '@/pages/ProviderLinksPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import ProviderOnboardingPage from '@/pages/ProviderOnboardingPage';
@@ -99,7 +98,6 @@ const AuthenticatedApp = () => {
       <Route path="/signup/provider" element={<ProviderSignupPage />} />
       <Route path="/not-available" element={<NotAvailablePage />} />
       <Route path="/jobs/:jobId" element={<JobDetailPage />} />
-      <Route path="/test-mapbox" element={<TestMapboxPage />} />
       <Route path="/provider-links" element={<ProviderLinksPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
       <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />

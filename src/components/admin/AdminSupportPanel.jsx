@@ -49,7 +49,7 @@ export default function AdminSupportPanel({ jobs }) {
       await base44.entities.Message.create({
         job_id: selectedJob.id,
         sender_id: 'admin',
-        sender_role: 'provider', // admin sends as support
+        sender_role: 'provider',
         body: `[Admin Support] ${newMessage.trim()}`,
       });
       setNewMessage('');
@@ -61,9 +61,9 @@ export default function AdminSupportPanel({ jobs }) {
     }
   };
 
-  const JobList = (
-    <div className="flex flex-col bg-card border border-border rounded-xl overflow-hidden h-full">
-      <div className="p-3 border-b border-border">
+  const JobList = () => (
+    <div className="flex flex-col bg-card border border-border rounded-xl overflow-hidden h-[calc(100vh-220px)] min-h-[400px]">
+      <div className="p-3 border-b border-border flex-shrink-0">
         <input
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
@@ -94,95 +94,98 @@ export default function AdminSupportPanel({ jobs }) {
     </div>
   );
 
-  const MessageThread = (
-    <div className="flex-1 flex flex-col bg-card border border-border rounded-xl overflow-hidden">
-      {!selectedJob ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-          <MessageSquare className="w-12 h-12 text-muted-foreground/20 mb-3" />
-          <p className="text-sm font-medium text-muted-foreground">Select a job to view messages</p>
-          <p className="text-xs text-muted-foreground mt-1">You can read the full conversation and send admin support messages.</p>
+  const MessageThread = () => (
+    <div className="flex flex-col bg-card border border-border rounded-xl overflow-hidden h-[calc(100vh-220px)] min-h-[400px]">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-border flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSelectedJob(null)}
+            className="md:hidden p-1 rounded-lg hover:bg-muted transition-colors"
+          >
+            <ArrowLeft size={18} className="text-foreground" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">{selectedJob.service_name}</p>
+            <p className="text-xs text-muted-foreground truncate">{selectedJob.customer_name} ↔ {selectedJob.provider_name || 'Unassigned'} · {selectedJob.address}</p>
+          </div>
+          <StatusBadge status={selectedJob.status} />
         </div>
-      ) : (
-        <>
-          <div className="px-4 py-3 border-b border-border flex-shrink-0">
-            <div className="flex items-center gap-3">
-              {/* Back button — mobile only */}
-              <button className="md:hidden p-1 -ml-1 text-muted-foreground hover:text-foreground" onClick={() => setSelectedJob(null)}>
-                <ArrowLeft size={18} />
-              </button>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-foreground">{selectedJob.service_name}</p>
-                <p className="text-xs text-muted-foreground truncate">{selectedJob.customer_name} ↔ {selectedJob.provider_name || 'Unassigned'} · {selectedJob.address}</p>
-              </div>
-              <StatusBadge status={selectedJob.status} />
-            </div>
-          </div>
+      </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {loadingMessages ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <p className="text-sm text-muted-foreground">No messages yet for this job.</p>
-              </div>
-            ) : (
-              messages.map(m => {
-                const isAdmin = m.sender_id === 'admin';
-                const isProvider = m.sender_role === 'provider' && !isAdmin;
-                return (
-                  <div key={m.id} className={`flex ${isProvider || isAdmin ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm ${
-                      isAdmin ? 'bg-purple-100 text-purple-900' : isProvider ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
-                    }`}>
-                      <p className="text-xs font-semibold mb-0.5 opacity-70">
-                        {isAdmin ? '🛡 Admin' : isProvider ? 'Provider' : 'Customer'}
-                      </p>
-                      <p>{m.body}</p>
-                      <p className="text-xs opacity-50 mt-1">{new Date(m.created_date).toLocaleString()}</p>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            <div ref={messagesEndRef} />
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {loadingMessages ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
           </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <p className="text-sm text-muted-foreground">No messages yet for this job.</p>
+          </div>
+        ) : (
+          messages.map(m => {
+            const isAdmin = m.sender_id === 'admin';
+            const isProvider = m.sender_role === 'provider' && !isAdmin;
+            return (
+              <div key={m.id} className={`flex ${isProvider || isAdmin ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm ${
+                  isAdmin ? 'bg-purple-100 text-purple-900' : isProvider ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
+                }`}>
+                  <p className="text-xs font-semibold mb-0.5 opacity-70">
+                    {isAdmin ? '🛡 Admin' : isProvider ? 'Provider' : 'Customer'}
+                  </p>
+                  <p>{m.body}</p>
+                  <p className="text-xs opacity-50 mt-1">{new Date(m.created_date).toLocaleString()}</p>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-          <div className="p-3 border-t border-border flex gap-2 flex-shrink-0">
-            <input
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              placeholder="Send a support message..."
-              className="flex-1 border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!newMessage.trim() || sending}
-              className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-1.5"
-            >
-              {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            </button>
-          </div>
-        </>
-      )}
+      {/* Input */}
+      <div className="p-3 border-t border-border flex gap-2 flex-shrink-0">
+        <input
+          value={newMessage}
+          onChange={e => setNewMessage(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+          placeholder="Send a support message..."
+          className="flex-1 border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button
+          onClick={handleSend}
+          disabled={!newMessage.trim() || sending}
+          className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+        >
+          {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+        </button>
+      </div>
     </div>
   );
 
   return (
     <>
-      {/* Mobile: show list or thread, not both */}
-      <div className="md:hidden h-[calc(100vh-220px)] min-h-[400px]">
-        {selectedJob ? MessageThread : JobList}
+      {/* Mobile: show job list OR message thread */}
+      <div className="md:hidden">
+        {selectedJob ? <MessageThread /> : <JobList />}
       </div>
 
       {/* Desktop: side-by-side */}
       <div className="hidden md:flex gap-4 h-[calc(100vh-220px)] min-h-[400px]">
-        <div className="w-72 flex-shrink-0 h-full">
-          {JobList}
+        <div className="w-72 flex-shrink-0">
+          <JobList />
         </div>
-        {MessageThread}
+        <div className="flex-1">
+          {selectedJob ? <MessageThread /> : (
+            <div className="flex flex-col items-center justify-center h-full bg-card border border-border rounded-xl text-center p-8">
+              <MessageSquare className="w-12 h-12 text-muted-foreground/20 mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">Select a job to view messages</p>
+              <p className="text-xs text-muted-foreground mt-1">You can read the full conversation and send admin support messages.</p>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

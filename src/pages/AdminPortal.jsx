@@ -300,37 +300,43 @@ export default function AdminPortal() {
             ) : (
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 {jobs.map((j, i) => (
-                  <div key={j.id} className={`flex items-center gap-3 px-5 py-4 ${i < jobs.length - 1 ? 'border-b border-border' : ''}`}>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{j.service_name}</p>
-                      <p className="text-xs text-muted-foreground">{j.customer_name} → {j.provider_name || 'Unassigned'}</p>
-                      <p className="text-xs text-muted-foreground">{j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString() : '—'} · {j.zip_code}</p>
-                    </div>
-                    <StatusBadge status={j.status} />
-                    {j.quoted_price && <span className="text-sm font-bold text-foreground hidden sm:block">${j.quoted_price}</span>}
-                    {j.status === 'completed' && j.completion_photos && Object.keys(j.completion_photos).length > 0 && (
-                      <button
-                        onClick={() => setViewingPhotos(j.completion_photos)}
-                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                  <div key={j.id} className={`px-5 py-4 flex flex-col gap-2 ${i < jobs.length - 1 ? 'border-b border-border' : ''}`}>
+                    {/* Service type */}
+                    <p className="text-sm font-bold text-foreground">{j.service_name}</p>
+                    {/* Customer name */}
+                    <p className="text-xs text-muted-foreground">{j.customer_name}</p>
+                    {/* Status badge */}
+                    <div><StatusBadge status={j.status} /></div>
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        to={`/jobs/${j.id}`}
+                        className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
                       >
-                        <Camera size={12} /> Photos
+                        View
+                      </Link>
+                      {!['completed', 'cancelled'].includes(j.status) && (
+                        <button onClick={() => setAssigningJob(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
+                      )}
+                      {!['completed', 'cancelled'].includes(j.status) && (
+                        <button onClick={() => handleCancelJob(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
+                      )}
+                      <button onClick={() => handleDeleteJob(j)} className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1">
+                        <Trash2 size={12} /> Delete
                       </button>
-                    )}
-                    <Link
-                      to={`/jobs/${j.id}`}
-                      className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
-                    >
-                      View
-                    </Link>
-                    {!['completed', 'cancelled'].includes(j.status) && (
-                      <button onClick={() => setAssigningJob(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
-                    )}
-                    {!['completed', 'cancelled'].includes(j.status) && (
-                      <button onClick={() => handleCancelJob(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
-                    )}
-                    <button onClick={() => handleDeleteJob(j)} className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1">
-                      <Trash2 size={12} /> Delete
-                    </button>
+                      {j.status === 'completed' && j.completion_photos && Object.keys(j.completion_photos).length > 0 && (
+                        <button
+                          onClick={() => setViewingPhotos(j.completion_photos)}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                        >
+                          <Camera size={12} /> Photos
+                        </button>
+                      )}
+                    </div>
+                    {/* Provider, date, zip */}
+                    <p className="text-xs text-muted-foreground">
+                      {j.provider_name || 'Unassigned'} · {j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString() : '—'} · {j.zip_code || '—'}
+                    </p>
                   </div>
                 ))}
               </div>

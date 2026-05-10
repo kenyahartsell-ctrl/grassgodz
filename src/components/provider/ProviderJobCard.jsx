@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, FlaskConical, ChevronDown, ClipboardList, DollarSign } from 'lucide-react';
+import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
@@ -171,9 +171,11 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
                 : 'text-amber-700 bg-amber-50 border border-amber-200'
             }`}>
               {job.provider_payout ? (
-                <><Image size={12} /><span>Paid out ${job.provider_payout.toFixed(2)}</span></>
+                <><DollarSign size={12} /><span>Paid out ${job.provider_payout.toFixed(2)}</span></>
+              ) : job.quoted_price ? (
+                <><DollarSign size={12} /><span>Pending payment — expected ${(job.quoted_price * 0.75).toFixed(2)}</span></>
               ) : (
-                <><DollarSign size={12} /><span>Pending payment — expected ${((job.quoted_price || 0) * 0.75).toFixed(2)}</span></>
+                <><DollarSign size={12} /><span>Payment pending — contact admin for payout details</span></>
               )}
             </div>
           )}
@@ -195,22 +197,14 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
                 Mark In Progress
               </button>
             )}
-            {job.status === 'in_progress' && onMarkComplete && (
+            {['in_progress', 'accepted', 'scheduled'].includes(job.status) && onMarkComplete && (
               <>
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPhotoModal(true); }}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-primary-foreground rounded-lg py-2 text-xs font-semibold hover:bg-primary/90 transition-colors"
+                  className="flex items-center justify-center gap-1.5 border border-primary bg-primary/10 text-primary rounded-lg px-3 py-2 text-xs font-semibold hover:bg-primary/20 transition-colors"
                 >
-                  <CheckCircle size={13} />
-                  Complete & Submit Photos
-                </button>
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMarkComplete(job, {}, true); }}
-                  title="Skip photos for testing"
-                  className="flex items-center justify-center gap-1.5 border border-amber-300 bg-amber-50 text-amber-700 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-amber-100 transition-colors"
-                >
-                  <FlaskConical size={13} />
-                  Test
+                  <Image size={13} />
+                  Photos & Complete
                 </button>
               </>
             )}

@@ -55,20 +55,29 @@ export default function ProviderPortal() {
             } catch {}
           }
 
-          const [mine, available, myReviews] = await Promise.all([
+          const [byId, byEmail, available, myReviews] = await Promise.all([
+            base44.entities.Job.filter({ provider_id: profile.id }),
             base44.entities.Job.filter({ provider_email: me.email }),
             base44.entities.Job.filter({ status: 'requested' }),
             base44.entities.Review.filter({ provider_id: profile.id }),
           ]);
 
-          const bookings = available.filter(j =>
+          // Merge by provider_id and provider_email, deduplicate by job id
+          const seen = new Set();
+          const allMyJobs = [];
+          for (const j of [...byId, ...byEmail]) {
+            if (!seen.has(j.id)) { seen.add(j.id); allMyJobs.push(j); }
+          }
+
+          const unassigned = available.filter(j => !j.provider_id);
+          const bookings = unassigned.filter(j =>
             j.scheduled_date && Array.isArray(profile.service_zip_codes) &&
             profile.service_zip_codes.includes(j.zip_code)
           );
 
-          setMyJobs(mine);
-          setAvailableJobs(available.filter(j => !j.provider_id));
-          setBookingRequests(bookings.filter(j => !j.provider_id));
+          setMyJobs(allMyJobs);
+          setAvailableJobs(unassigned);
+          setBookingRequests(bookings);
           setReviews(myReviews);
         }
       } catch (err) {
@@ -81,15 +90,24 @@ export default function ProviderPortal() {
   }, []);
 
   const refreshJobs = async () => {
-    if (!user) return;
-    const [mine, available] = await Promise.all([
+    if (!user || !providerProfile) return;
+    const [byId, byEmail, available] = await Promise.all([
+      base44.entities.Job.filter({ provider_id: providerProfile.id }),
       base44.entities.Job.filter({ provider_email: user.email }),
       base44.entities.Job.filter({ status: 'requested' }),
     ]);
-    setMyJobs(mine);
-    setAvailableJobs(available.filter(j => !j.provider_id));
-    setBookingRequests(available.filter(j =>
-      !j.provider_id && j.scheduled_date &&
+
+    const seen = new Set();
+    const allMyJobs = [];
+    for (const j of [...byId, ...byEmail]) {
+      if (!seen.has(j.id)) { seen.add(j.id); allMyJobs.push(j); }
+    }
+
+    const unassigned = available.filter(j => !j.provider_id);
+    setMyJobs(allMyJobs);
+    setAvailableJobs(unassigned);
+    setBookingRequests(unassigned.filter(j =>
+      j.scheduled_date &&
       Array.isArray(providerProfile?.service_zip_codes) &&
       providerProfile.service_zip_codes.includes(j.zip_code)
     ));

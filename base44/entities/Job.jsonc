@@ -181,6 +181,12 @@
           "provider_email": "{{user.email}}"
         },
         {
+          "provider_id": "{{user.id}}"
+        },
+        {
+          "status": "requested"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
@@ -194,6 +200,9 @@
         },
         {
           "provider_email": "{{user.email}}"
+        },
+        {
+          "provider_id": "{{user.id}}"
         },
         {
           "user_condition": {

@@ -42,6 +42,11 @@ export default function ProviderPortal() {
         const profile = res.data?.profile || null;
         setProviderProfile(profile);
 
+        // Always fetch available (requested, unassigned) jobs — visible to all providers via RLS
+        const availableRes = await base44.entities.Job.filter({ status: 'requested' });
+        const unassigned = availableRes.filter(j => !j.provider_id);
+        setAvailableJobs(unassigned);
+
         if (profile) {
           // Check if Stripe onboarding was just completed (e.g. returning from Stripe)
           if (profile.stripe_connect_account_id && !profile.onboarding_complete) {
@@ -55,10 +60,9 @@ export default function ProviderPortal() {
             } catch {}
           }
 
-          const [byId, byEmail, available, myReviews] = await Promise.all([
+          const [byId, byEmail, myReviews] = await Promise.all([
             base44.entities.Job.filter({ provider_id: profile.id }),
             base44.entities.Job.filter({ provider_email: me.email }),
-            base44.entities.Job.filter({ status: 'requested' }),
             base44.entities.Review.filter({ provider_id: profile.id }),
           ]);
 
@@ -69,14 +73,12 @@ export default function ProviderPortal() {
             if (!seen.has(j.id)) { seen.add(j.id); allMyJobs.push(j); }
           }
 
-          const unassigned = available.filter(j => !j.provider_id);
           const bookings = unassigned.filter(j =>
             j.scheduled_date && Array.isArray(profile.service_zip_codes) &&
             profile.service_zip_codes.includes(j.zip_code)
           );
 
           setMyJobs(allMyJobs);
-          setAvailableJobs(unassigned);
           setBookingRequests(bookings);
           setReviews(myReviews);
         }
@@ -90,22 +92,22 @@ export default function ProviderPortal() {
   }, []);
 
   const refreshJobs = async () => {
-    if (!user || !providerProfile) return;
-    const [byId, byEmail, available] = await Promise.all([
+    if (!user) return;
+    const availableRes = await base44.entities.Job.filter({ status: 'requested' });
+    const unassigned = availableRes.filter(j => !j.provider_id);
+    setAvailableJobs(unassigned);
+
+    if (!providerProfile) return;
+    const [byId, byEmail] = await Promise.all([
       base44.entities.Job.filter({ provider_id: providerProfile.id }),
       base44.entities.Job.filter({ provider_email: user.email }),
-      base44.entities.Job.filter({ status: 'requested' }),
     ]);
-
     const seen = new Set();
     const allMyJobs = [];
     for (const j of [...byId, ...byEmail]) {
       if (!seen.has(j.id)) { seen.add(j.id); allMyJobs.push(j); }
     }
-
-    const unassigned = available.filter(j => !j.provider_id);
     setMyJobs(allMyJobs);
-    setAvailableJobs(unassigned);
     setBookingRequests(unassigned.filter(j =>
       j.scheduled_date &&
       Array.isArray(providerProfile?.service_zip_codes) &&

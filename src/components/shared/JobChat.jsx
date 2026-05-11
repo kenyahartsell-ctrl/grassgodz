@@ -46,6 +46,8 @@ export default function JobChat({ job, user, senderRole, otherPartyName }) {
     queryFn: () => base44.entities.Message.filter({ job_id: job.id }),
     enabled: chatEnabled,
     refetchInterval: 15000,
+    refetchIntervalInBackground: false,
+    notifyOnChangeProps: ['data'],
     select: (msgs) => [...msgs].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)),
   });
 

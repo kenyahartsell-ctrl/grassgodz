@@ -4,6 +4,7 @@ import ServiceCard from '../components/customer/ServiceCard';
 import RequestJobModal from '../components/customer/RequestJobModal';
 import JobCard from '../components/customer/JobCard';
 import QuotesModal from '../components/customer/QuotesModal';
+import JobQuotesPanel from '../components/customer/JobQuotesPanel';
 import ReviewModal from '../components/customer/ReviewModal';
 import BookingModal from '../components/customer/BookingModal';
 import ProfileCompletionChecklist from '@/components/customer/ProfileCompletionChecklist';
@@ -286,32 +287,28 @@ export default function CustomerPortal() {
         {tab === 'quotes' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-2">My Quotes</h2>
-            <p className="text-sm text-muted-foreground mb-4">Track the status of your submitted quote requests.</p>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 text-xs text-amber-800 leading-relaxed">
-              <strong>Note:</strong> Quotes are not guaranteed prices. Lawn care professionals in your area will review your request and respond with their availability and final pricing.
-            </div>
-            {jobs.length === 0 ? (
+            <p className="text-sm text-muted-foreground mb-4">View provider quotes on your service requests.</p>
+
+            {jobs.filter(j => !['completed','cancelled'].includes(j.status)).length === 0 ? (
               <div className="text-center py-16">
                 <FileText className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
-                <p className="text-muted-foreground font-medium">No quotes yet</p>
+                <p className="text-muted-foreground font-medium">No active requests</p>
                 <p className="text-sm text-muted-foreground mt-1">Request a service from the Home tab to get started.</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {jobs.map(job => {
+              <div className="space-y-4">
+                {jobs.filter(j => !['completed','cancelled'].includes(j.status)).map(job => {
                   const statusMap = {
-                    requested:   { label: 'Pending', badge: 'bg-amber-100 text-amber-800' },
-                    quoted:      { label: 'Provider Responded', badge: 'bg-blue-100 text-blue-800' },
-                    accepted:    { label: 'Booked', badge: 'bg-indigo-100 text-indigo-800' },
-                    scheduled:   { label: 'Booked', badge: 'bg-indigo-100 text-indigo-800' },
+                    requested:   { label: 'Waiting for quotes', badge: 'bg-amber-100 text-amber-800' },
+                    quoted:      { label: 'Quote received!', badge: 'bg-blue-100 text-blue-800' },
+                    accepted:    { label: 'Accepted', badge: 'bg-indigo-100 text-indigo-800' },
+                    scheduled:   { label: 'Scheduled', badge: 'bg-indigo-100 text-indigo-800' },
                     in_progress: { label: 'In Progress', badge: 'bg-orange-100 text-orange-800' },
-                    completed:   { label: 'Completed', badge: 'bg-green-100 text-green-800' },
-                    cancelled:   { label: 'Cancelled', badge: 'bg-gray-100 text-gray-600' },
                   };
                   const cfg = statusMap[job.status] || statusMap.requested;
                   return (
-                    <div key={job.id} className="bg-card border border-border rounded-xl p-4">
-                      <div className="flex items-start justify-between gap-3 mb-2">
+                    <div key={job.id} className={`bg-card border rounded-xl p-4 ${job.status === 'quoted' ? 'border-blue-300 shadow-sm' : 'border-border'}`}>
+                      <div className="flex items-start justify-between gap-3 mb-1">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-foreground text-sm">{job.service_name || 'Service Request'}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">{job.address || '—'}</p>
@@ -320,18 +317,16 @@ export default function CustomerPortal() {
                           {cfg.label}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-                        {job.scheduled_date && <span>Date: {new Date(job.scheduled_date).toLocaleDateString()}</span>}
-                        {job.quoted_price && <span className="font-semibold text-primary">Quoted: ${job.quoted_price}</span>}
-                      </div>
-                      {job.status === 'quoted' && (
-                        <button
-                          onClick={() => { setSelectedJobForQuotes(job); setTab('jobs'); }}
-                          className="mt-3 w-full bg-primary text-primary-foreground text-xs font-semibold py-2 rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                          View & Accept Quote →
-                        </button>
+                      {job.scheduled_date && (
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Date: {new Date(job.scheduled_date).toLocaleDateString()}
+                        </p>
                       )}
+                      <JobQuotesPanel
+                        job={job}
+                        customerProfile={customerProfile}
+                        onAcceptQuote={handleAcceptQuote}
+                      />
                     </div>
                   );
                 })}

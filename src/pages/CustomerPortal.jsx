@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import BottomTabBar from '../components/shared/BottomTabBar';
+import PullToRefresh from '../components/shared/PullToRefresh';
 import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText } from 'lucide-react';
 import ServiceCard from '../components/customer/ServiceCard';
 import RequestJobModal from '../components/customer/RequestJobModal';
@@ -139,9 +141,9 @@ export default function CustomerPortal() {
   const displayAddress = customerProfile?.service_address || '';
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-30">
+      <header className="bg-card border-b border-border sticky top-0 z-30 select-none" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
@@ -155,7 +157,8 @@ export default function CustomerPortal() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
+      <PullToRefresh onRefresh={refreshJobs} className="max-w-3xl mx-auto w-full">
+      <main className="px-4 py-6">
         {tab === 'home' && (
           <div>
             {/* Profile completion checklist */}
@@ -354,24 +357,9 @@ export default function CustomerPortal() {
           </div>
         )}
       </main>
+      </PullToRefresh>
 
-      {/* Bottom Nav */}
-      <nav className="bg-card border-t border-border sticky bottom-0 z-30">
-        <div className="max-w-3xl mx-auto flex">
-          {NAV.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Icon size={18} />
-              {label}
-            </button>
-          ))}
-        </div>
-      </nav>
+      <BottomTabBar tabs={NAV} activeTab={tab} onTabChange={setTab} />
 
       {/* Modals */}
       {selectedService && (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2 } from 'lucide-react';
 import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
@@ -6,6 +6,8 @@ import BookingRequestCard from '../components/provider/BookingRequestCard';
 import ProviderJobMap from '../components/provider/ProviderJobMap';
 import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
+import BottomTabBar from '../components/shared/BottomTabBar';
+import PullToRefresh from '../components/shared/PullToRefresh';
 
 import { base44 } from '@/api/base44Client';
 import ProviderProfileEditor from '@/components/provider/ProviderProfileEditor';
@@ -206,9 +208,9 @@ export default function ProviderPortal() {
   const businessName = providerProfile?.business_name || displayName;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-30 flex-shrink-0">
+      <header className="bg-card border-b border-border sticky top-0 z-30 flex-shrink-0 select-none" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
@@ -222,7 +224,8 @@ export default function ProviderPortal() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto max-w-3xl mx-auto w-full px-4 py-6">
+      <PullToRefresh onRefresh={refreshJobs} className="max-w-3xl mx-auto w-full">
+      <main className="px-4 py-6">
         {/* Stripe Onboarding Banner — persistent but non-blocking */}
         {providerProfile && !providerProfile?.onboarding_complete && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
@@ -504,24 +507,14 @@ export default function ProviderPortal() {
           </div>
         )}
       </main>
+      </PullToRefresh>
 
-      {/* Bottom Nav */}
-      <nav className="bg-card border-t border-border sticky bottom-0 z-30">
-        <div className="max-w-3xl mx-auto flex">
-          {NAV.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Icon size={18} />
-              <span className="hidden sm:block">{label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+      <BottomTabBar
+        tabs={NAV}
+        activeTab={tab}
+        onTabChange={setTab}
+        badge={{ bookings: bookingRequests.length }}
+      />
     </div>
   );
 }

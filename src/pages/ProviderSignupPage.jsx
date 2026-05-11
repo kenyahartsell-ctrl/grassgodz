@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import NativeSelect from '@/components/shared/NativeSelect';
 import { ArrowRight, ArrowLeft, CheckCircle, ShieldAlert, Mail, KeyRound } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import { base44 } from '@/api/base44Client';
@@ -195,10 +196,12 @@ export default function ProviderSignupPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelClass}>Driver's License State *</label>
-                    <select required value={form.dlState} onChange={e => set('dlState', e.target.value)} className={inputClass}>
-                      <option value="">Select state</option>
-                      {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <NativeSelect
+                      value={form.dlState}
+                      onChange={v => set('dlState', v)}
+                      placeholder="Select state"
+                      options={US_STATES.map(s => ({ value: s, label: s }))}
+                    />
                   </div>
                   <div>
                     <label className={labelClass}>Driver's License # *</label>
@@ -208,19 +211,21 @@ export default function ProviderSignupPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelClass}>Vehicle Available? *</label>
-                    <select required value={form.hasVehicle} onChange={e => set('hasVehicle', e.target.value)} className={inputClass}>
-                      <option value="">Select</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
+                    <NativeSelect
+                      value={form.hasVehicle}
+                      onChange={v => set('hasVehicle', v)}
+                      placeholder="Select"
+                      options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]}
+                    />
                   </div>
                   <div>
                     <label className={labelClass}>Equipment Available? *</label>
-                    <select required value={form.hasEquipment} onChange={e => set('hasEquipment', e.target.value)} className={inputClass}>
-                      <option value="">Select</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
+                    <NativeSelect
+                      value={form.hasEquipment}
+                      onChange={v => set('hasEquipment', v)}
+                      placeholder="Select"
+                      options={[{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]}
+                    />
                   </div>
                 </div>
                 <div>

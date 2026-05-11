@@ -38,14 +38,19 @@ export default function ProviderPortal() {
         const me = await base44.auth.me();
         setUser(me);
 
-        const res = await base44.functions.invoke('getMyProviderProfile', {});
-        const profile = res.data?.profile || null;
-        setProviderProfile(profile);
+        // Fetch provider's own jobs + profile, and available jobs in parallel
+        const [myJobsRes, availableRes] = await Promise.all([
+          base44.functions.invoke('getMyProviderJobs', {}),
+          base44.functions.invoke('getAvailableJobs', {}),
+        ]);
 
-        // Always fetch available (requested, unassigned) jobs via service role backend
-        const availableRes = await base44.functions.invoke('getAvailableJobs', {});
+        const profile = myJobsRes.data?.profile || null;
+        const allMyJobs = myJobsRes.data?.jobs || [];
         const unassigned = availableRes.data?.jobs || [];
+
+        setProviderProfile(profile);
         setAvailableJobs(unassigned);
+        setMyJobs(allMyJobs);
 
         if (profile) {
           // Check if Stripe onboarding was just completed (e.g. returning from Stripe)
@@ -60,26 +65,13 @@ export default function ProviderPortal() {
             } catch {}
           }
 
-          const [byId, byEmail, myReviews] = await Promise.all([
-            base44.entities.Job.filter({ provider_id: profile.id }),
-            base44.entities.Job.filter({ provider_email: me.email }),
-            base44.entities.Review.filter({ provider_id: profile.id }),
-          ]);
-
-          // Merge by provider_id and provider_email, deduplicate by job id
-          const seen = new Set();
-          const allMyJobs = [];
-          for (const j of [...byId, ...byEmail]) {
-            if (!seen.has(j.id)) { seen.add(j.id); allMyJobs.push(j); }
-          }
-
           const bookings = unassigned.filter(j =>
             j.scheduled_date && Array.isArray(profile.service_zip_codes) &&
             profile.service_zip_codes.includes(j.zip_code)
           );
-
-          setMyJobs(allMyJobs);
           setBookingRequests(bookings);
+
+          const myReviews = await base44.entities.Review.filter({ provider_id: profile.id });
           setReviews(myReviews);
         }
       } catch (err) {
@@ -93,26 +85,21 @@ export default function ProviderPortal() {
 
   const refreshJobs = async () => {
     if (!user) return;
-    const availableRes = await base44.functions.invoke('getAvailableJobs', {});
-    const unassigned = availableRes.data?.jobs || [];
-    setAvailableJobs(unassigned);
-
-    if (!providerProfile) return;
-    const [byId, byEmail] = await Promise.all([
-      base44.entities.Job.filter({ provider_id: providerProfile.id }),
-      base44.entities.Job.filter({ provider_email: user.email }),
+    const [myJobsRes, availableRes] = await Promise.all([
+      base44.functions.invoke('getMyProviderJobs', {}),
+      base44.functions.invoke('getAvailableJobs', {}),
     ]);
-    const seen = new Set();
-    const allMyJobs = [];
-    for (const j of [...byId, ...byEmail]) {
-      if (!seen.has(j.id)) { seen.add(j.id); allMyJobs.push(j); }
-    }
+    const allMyJobs = myJobsRes.data?.jobs || [];
+    const unassigned = availableRes.data?.jobs || [];
     setMyJobs(allMyJobs);
-    setBookingRequests(unassigned.filter(j =>
-      j.scheduled_date &&
-      Array.isArray(providerProfile?.service_zip_codes) &&
-      providerProfile.service_zip_codes.includes(j.zip_code)
-    ));
+    setAvailableJobs(unassigned);
+    if (providerProfile) {
+      setBookingRequests(unassigned.filter(j =>
+        j.scheduled_date &&
+        Array.isArray(providerProfile?.service_zip_codes) &&
+        providerProfile.service_zip_codes.includes(j.zip_code)
+      ));
+    }
   };
 
   const scheduled = myJobs.filter(j => ['scheduled', 'accepted'].includes(j.status));

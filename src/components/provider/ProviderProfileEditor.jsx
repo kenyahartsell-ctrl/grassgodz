@@ -78,7 +78,7 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setPhotoUrl(file_url);
       if (profile?.id) {
-        await base44.entities.ProviderProfile.update(profile.id, { profile_image_url: file_url });
+        await base44.functions.invoke('updateMyProviderProfile', { profile_id: profile.id, profile_image_url: file_url });
       }
       toast.success('Profile photo updated!');
       onProfileUpdated();
@@ -114,7 +114,8 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
         notify_promotions: form.notify_promotions,
       };
       if (profile?.id) {
-        await base44.entities.ProviderProfile.update(profile.id, payload);
+        const res = await base44.functions.invoke('updateMyProviderProfile', { profile_id: profile.id, ...payload });
+        if (res.data?.error) throw new Error(res.data.error);
       }
       toast.success('Profile updated successfully.');
       setEditing(false);
@@ -314,12 +315,14 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
               setSaving(true);
               try {
                 if (profile?.id) {
-                  await base44.entities.ProviderProfile.update(profile.id, {
+                  const res = await base44.functions.invoke('updateMyProviderProfile', {
+                    profile_id: profile.id,
                     notify_new_booking: form.notify_new_booking,
                     notify_job_updates: form.notify_job_updates,
                     notify_payment_received: form.notify_payment_received,
                     notify_promotions: form.notify_promotions,
                   });
+                  if (res.data?.error) throw new Error(res.data.error);
                 }
                 toast.success('Notification preferences saved.');
                 onProfileUpdated();

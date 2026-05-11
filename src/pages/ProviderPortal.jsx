@@ -42,9 +42,9 @@ export default function ProviderPortal() {
         const profile = res.data?.profile || null;
         setProviderProfile(profile);
 
-        // Always fetch available (requested, unassigned) jobs — visible to all providers via RLS
-        const availableRes = await base44.entities.Job.filter({ status: 'requested' });
-        const unassigned = availableRes.filter(j => !j.provider_id);
+        // Always fetch available (requested, unassigned) jobs via service role backend
+        const availableRes = await base44.functions.invoke('getAvailableJobs', {});
+        const unassigned = availableRes.data?.jobs || [];
         setAvailableJobs(unassigned);
 
         if (profile) {
@@ -93,8 +93,8 @@ export default function ProviderPortal() {
 
   const refreshJobs = async () => {
     if (!user) return;
-    const availableRes = await base44.entities.Job.filter({ status: 'requested' });
-    const unassigned = availableRes.filter(j => !j.provider_id);
+    const availableRes = await base44.functions.invoke('getAvailableJobs', {});
+    const unassigned = availableRes.data?.jobs || [];
     setAvailableJobs(unassigned);
 
     if (!providerProfile) return;

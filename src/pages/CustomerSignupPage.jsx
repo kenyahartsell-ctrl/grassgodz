@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle2, XCircle, Users } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, XCircle, Users, Mail } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -44,6 +44,8 @@ export default function CustomerSignupPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [prosCount, setProsCount] = useState(null);
@@ -120,42 +122,20 @@ export default function CustomerSignupPage() {
       // Step A: Create auth account
       await base44.auth.register({ email: form.email, password: form.password });
 
-      // Step B: Log in immediately (no email verification required)
-      await base44.auth.loginViaEmailPassword(form.email, form.password);
-
-      // Step C: Create CustomerProfile (store in sessionStorage as fallback too)
+      // Step B: Store profile data so SmartRedirect creates it after email verification + login
       const profileData = {
         name: form.name,
         phone: form.phone,
         service_address: form.serviceAddress,
         billing_address: form.billingSame ? form.serviceAddress : form.billingAddress,
         zip_code: form.zip,
+        user_email: form.email,
       };
+      sessionStorage.setItem('pendingCustomerProfile', JSON.stringify(profileData));
 
-      let user = null;
-      try {
-        user = await base44.auth.me();
-      } catch {
-        // If me() fails, store profile data and redirect anyway — SmartRedirect will pick it up
-      }
-
-      if (user) {
-      // Create profile via backend function (bypasses RLS for new users)
-      const res = await base44.functions.invoke('createCustomerProfile', profileData);
-      if (res.data?.created) {
-        await base44.functions.invoke('sendWelcomeEmail', {
-          data: res.data.profile,
-          event: { entity_name: 'CustomerProfile' },
-        });
-      }
-      toast.success('Welcome to Grassgodz! Request your first job to get started.');
-      navigate('/customer');
-      } else {
-        // Fallback: store pending profile, let SmartRedirect handle creation
-        sessionStorage.setItem('pendingCustomerProfile', JSON.stringify({ ...profileData, user_email: form.email }));
-        toast.success('Welcome to Grassgodz! Request your first job to get started.');
-        navigate('/redirect');
-      }
+      // Step C: Show success screen — Base44 requires email verification before login
+      setRegisteredEmail(form.email);
+      setRegistered(true);
     } catch (err) {
       const msg = err?.message || err?.data?.message || JSON.stringify(err) || '';
       console.error('Signup error:', err);
@@ -175,6 +155,49 @@ export default function CustomerSignupPage() {
     `w-full border rounded-xl px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-colors ${
       errors[field] ? 'border-destructive' : 'border-input'
     }`;
+
+  if (registered) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <PublicNav />
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+          <div className="w-full max-w-md text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail size={28} className="text-green-600" />
+            </div>
+            <h1 className="text-2xl font-display font-bold text-foreground mb-2">Check your email!</h1>
+            <p className="text-sm text-muted-foreground mb-1">
+              We sent a verification link to:
+            </p>
+            <p className="text-base font-semibold text-foreground mb-4">{registeredEmail}</p>
+            <div className="bg-card border border-border rounded-2xl p-5 text-left space-y-3 mb-6">
+              <p className="text-xs font-bold text-foreground uppercase tracking-wide">Next steps</p>
+              {[
+                'Check your inbox for an email from Grassgodz',
+                'Click the verification link in the email',
+                'You\'ll be signed in and taken to your dashboard automatically',
+              ].map((step, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</div>
+                  <p className="text-sm text-foreground">{step}</p>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')}
+              className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors"
+            >
+              Go to Sign In
+            </button>
+            <p className="text-xs text-muted-foreground mt-4">
+              Didn't get the email? Check your spam folder or{' '}
+              <button onClick={() => setRegistered(false)} className="text-primary font-semibold hover:underline">try again</button>.
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

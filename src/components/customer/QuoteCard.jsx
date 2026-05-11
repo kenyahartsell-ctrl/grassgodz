@@ -5,7 +5,7 @@ import SaveCardModal from './SaveCardModal';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function QuoteCard({ quote, onAccept, customerProfile }) {
+export default function QuoteCard({ quote, onAccept, onDecline, decliningId, customerProfile }) {
   const [showCardModal, setShowCardModal] = useState(false);
   const [authorizing, setAuthorizing] = useState(false);
 
@@ -87,21 +87,34 @@ export default function QuoteCard({ quote, onAccept, customerProfile }) {
           </div>
         </div>
 
-        {quote.status === 'pending' && onAccept && (
+        {quote.status === 'pending' && (
           <div className="mt-3 space-y-2">
-            <button
-              onClick={handleAccept}
-              disabled={authorizing}
-              className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {authorizing ? (
-                <><Loader2 size={15} className="animate-spin" /> Authorizing...</>
-              ) : hasPaymentMethod ? (
-                <><CheckCircle size={15} /> Accept & Authorize Payment</>
-              ) : (
-                <><CreditCard size={15} /> Accept & Add Payment Method</>
+            <div className="flex gap-2">
+              {onDecline && (
+                <button
+                  onClick={() => onDecline(quote)}
+                  disabled={decliningId === quote.id}
+                  className="flex-1 border border-border rounded-lg py-2.5 text-sm font-medium text-muted-foreground hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
+                >
+                  {decliningId === quote.id ? <Loader2 size={14} className="animate-spin" /> : 'Decline'}
+                </button>
               )}
-            </button>
+              {onAccept && (
+                <button
+                  onClick={handleAccept}
+                  disabled={authorizing}
+                  className="flex-1 bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {authorizing ? (
+                    <><Loader2 size={15} className="animate-spin" /> Authorizing...</>
+                  ) : hasPaymentMethod ? (
+                    <><CheckCircle size={15} /> Accept & Pay</>
+                  ) : (
+                    <><CreditCard size={15} /> Accept & Add Card</>
+                  )}
+                </button>
+              )}
+            </div>
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Lock size={10} />
               <span>Card authorized now, charged only after job completion</span>

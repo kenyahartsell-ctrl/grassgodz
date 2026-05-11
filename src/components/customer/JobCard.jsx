@@ -56,20 +56,16 @@ export default function JobCard({ job, onViewQuotes, onReview, reviewed }) {
       </div>
 
       <div className="mt-3 flex gap-2">
-        {job.status === 'requested' && onViewQuotes && (
+        {['requested', 'quoted'].includes(job.status) && onViewQuotes && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onViewQuotes(job); }}
-            className="text-xs font-medium text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary/5 transition-colors"
+            className={`text-xs font-semibold rounded-lg px-3 py-1.5 transition-colors ${
+              job.status === 'quoted'
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'text-primary border border-primary/30 hover:bg-primary/5'
+            }`}
           >
-            View Quotes
-          </button>
-        )}
-        {job.status === 'quoted' && onViewQuotes && (
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onViewQuotes(job); }}
-            className="text-xs font-semibold bg-primary text-primary-foreground rounded-lg px-3 py-1.5 hover:bg-primary/90 transition-colors"
-          >
-            Review Quotes
+            {job.status === 'quoted' ? 'Review & Accept Quote →' : 'View Quotes'}
           </button>
         )}
         {job.status === 'completed' && !reviewed && onReview && (

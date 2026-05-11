@@ -150,7 +150,13 @@ export default function ProviderPortal() {
       status: 'pending',
     });
     // Update job status to 'quoted' so the customer sees the provider responded
-    await base44.functions.invoke('updateJobToQuoted', { job_id: job.id });
+    await base44.functions.invoke('updateJobToQuoted', {
+      job_id: job.id,
+      quoted_price: quoteData.price,
+      provider_email: user.email,
+      provider_id: providerProfile.id,
+      provider_name: providerProfile.business_name || providerProfile.name,
+    });
     await base44.functions.invoke('notifyCustomerNewQuote', { data: quote }).catch(() => {});
     await refreshJobs();
     toast.success(`Quote of $${quoteData.price} submitted for ${job.service_name}!`);

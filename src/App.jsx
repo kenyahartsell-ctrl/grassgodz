@@ -13,8 +13,8 @@ import ProSchedulePage from '@/pages/ProSchedulePage';
 import MyQuotesPage from '@/pages/MyQuotesPage';
 
 // Portals
-import CustomerPortal from '@/pages/CustomerPortal';
-import ProviderPortal from '@/pages/ProviderPortal';
+import CustomerPortal from '@/pages/CustomerPortal.jsx';
+import ProviderPortal from '@/pages/ProviderPortal.jsx';
 import AdminPortal from '@/pages/AdminPortal';
 import SmartRedirect from '@/pages/SmartRedirect';
 
@@ -80,10 +80,6 @@ const AuthenticatedApp = () => {
 
       {/* Role-specific portals */}
       <Route path="/customer/*" element={<CustomerApp />} />
-      <Route path="/provider/pending" element={<ProviderPendingPage />} />
-      <Route path="/pros/schedule" element={<ProSchedulePage />} />
-      <Route path="/quotes" element={<MyQuotesPage />} />
-      <Route path="/provider/suspended" element={<ProviderSuspendedPage />} />
       <Route path="/provider/*" element={<ProviderApp />} />
       <Route path="/admin/*" element={<AdminApp />} />
 
@@ -101,8 +97,11 @@ const AuthenticatedApp = () => {
       <Route path="/jobs/:jobId" element={<JobDetailPage />} />
       <Route path="/provider-links" element={<ProviderLinksPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      {/* These must stay here (outside /provider/*) so they render the standalone pages, not the portal */}
       <Route path="/provider/financials" element={<ProviderFinancialsPage />} />
       <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
+      <Route path="/provider/pending" element={<ProviderPendingPage />} />
+      <Route path="/provider/suspended" element={<ProviderSuspendedPage />} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRole } from '@/lib/RoleContext';
-import CustomerPortal from './CustomerPortal';
-import ProviderPortal from './ProviderPortal';
+import CustomerPortal from './CustomerPortal.jsx';
+import ProviderPortal from './ProviderPortal.jsx';
 import AdminPortal from './AdminPortal';
 
 export default function Home() {

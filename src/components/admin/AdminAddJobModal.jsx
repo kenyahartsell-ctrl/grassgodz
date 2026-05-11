@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import NativeSelect from '@/components/shared/NativeSelect';
 
 export default function AdminAddJobModal({ onClose, onJobAdded }) {
   const [services, setServices] = useState([]);
@@ -80,12 +79,17 @@ export default function AdminAddJobModal({ onClose, onJobAdded }) {
 
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1 block">Service</label>
-            <NativeSelect
+            <select
+              required
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
               value={form.service_id}
-              onChange={id => handleServiceChange(id)}
-              placeholder="Select a service..."
-              options={services.map(s => ({ value: s.id, label: s.name }))}
-            />
+              onChange={e => handleServiceChange(e.target.value)}
+            >
+              <option value="">Select a service...</option>
+              {services.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -136,15 +140,15 @@ export default function AdminAddJobModal({ onClose, onJobAdded }) {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Status</label>
-              <NativeSelect
+              <select
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                 value={form.status}
-                onChange={v => setForm(f => ({ ...f, status: v }))}
-                options={[
-                  { value: 'requested',   label: 'Requested' },
-                  { value: 'scheduled',   label: 'Scheduled' },
-                  { value: 'in_progress', label: 'In Progress' },
-                ]}
-              />
+                onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+              >
+                <option value="requested">Requested</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="in_progress">In Progress</option>
+              </select>
             </div>
           </div>
 

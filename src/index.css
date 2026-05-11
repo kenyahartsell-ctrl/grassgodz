@@ -65,26 +65,6 @@
   }
   body {
     @apply bg-background text-foreground font-inter;
-    overscroll-behavior: none;
-    -webkit-overflow-scrolling: touch;
-    /* Safe area padding for notched devices */
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-  /* Disable text selection on interactive UI elements */
-  button, nav, header, [role="tab"] {
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  /* Allow selection in content/text areas */
-  p, span, h1, h2, h3, h4, h5, h6, textarea, input {
-    user-select: auto;
-    -webkit-user-select: auto;
-  }
-  /* Prevent callout on long-press for buttons/images */
-  button, img {
-    -webkit-touch-callout: none;
   }
 }
 

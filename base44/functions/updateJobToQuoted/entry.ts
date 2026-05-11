@@ -9,15 +9,16 @@ Deno.serve(async (req) => {
     const { job_id } = await req.json();
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
 
-    // Verify the customer owns this job by querying their jobs
-    const customerJobs = await base44.asServiceRole.entities.Job.filter({ customer_email: user.email });
-    const job = customerJobs.find(j => j.id === job_id);
-    if (!job) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    // Only update if currently 'requested' — don't override accepted/scheduled/etc.
+    const jobs = await base44.asServiceRole.entities.Job.filter({ id: job_id });
+    const job = jobs[0];
+    if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
+
+    if (job.status === 'requested') {
+      await base44.asServiceRole.entities.Job.update(job_id, { status: 'quoted' });
     }
 
-    const quotes = await base44.asServiceRole.entities.Quote.filter({ job_id });
-    return Response.json({ quotes });
+    return Response.json({ success: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

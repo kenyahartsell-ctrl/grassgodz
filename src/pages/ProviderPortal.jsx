@@ -143,13 +143,16 @@ export default function ProviderPortal() {
     const quote = await base44.entities.Quote.create({
       job_id: job.id,
       provider_id: providerProfile.id,
-      provider_name: providerProfile.business_name,
+      provider_name: providerProfile.business_name || providerProfile.name,
       provider_email: user.email,
       price: quoteData.price,
       message: quoteData.message,
       status: 'pending',
     });
-    await base44.functions.invoke('notifyCustomerNewQuote', { data: quote });
+    // Update job status to 'quoted' so the customer sees the provider responded
+    await base44.functions.invoke('updateJobToQuoted', { job_id: job.id });
+    await base44.functions.invoke('notifyCustomerNewQuote', { data: quote }).catch(() => {});
+    await refreshJobs();
     toast.success(`Quote of $${quoteData.price} submitted for ${job.service_name}!`);
   };
 

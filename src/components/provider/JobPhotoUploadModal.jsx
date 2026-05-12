@@ -90,12 +90,14 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
     try {
       let finalFile = file;
       try {
-        finalFile = await imageCompression(file, {
+        const compressed = await imageCompression(file, {
           maxSizeMB: 1,
           maxWidthOrHeight: 1600,
           useWebWorker: true,
           fileType: 'image/jpeg',
         });
+        // Ensure we have a proper File object (imageCompression may return a Blob)
+        finalFile = new File([compressed], file.name || 'photo.jpg', { type: 'image/jpeg' });
       } catch (compressionError) {
         console.warn('Image compression failed, uploading original:', compressionError);
       }

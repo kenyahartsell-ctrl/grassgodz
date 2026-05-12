@@ -111,13 +111,20 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
 
   const handleSubmit = async () => {
     if (!allRequired) {
-      toast.error('Please upload at least 4 photos before completing the job.');
+      toast.error(`Please upload at least ${MIN_PHOTOS} photo${MIN_PHOTOS !== 1 ? 's' : ''}.`);
       return;
     }
     setSubmitting(true);
     try {
-      await onComplete(job, photos);
-      onClose();
+      if (isAlreadyCompleted) {
+        // Job already done — just save photos, don't re-trigger completion flow
+        await base44.entities.Job.update(job.id, { completion_photos: { ...(job.completion_photos || {}), ...photos } });
+        toast.success('Photos saved successfully!');
+        onClose();
+      } else {
+        await onComplete(job, photos);
+        onClose();
+      }
     } catch {
       toast.error('Failed to submit. Please try again.');
     } finally {

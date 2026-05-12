@@ -46,9 +46,13 @@
     "read": {
       "$or": [
         {
-          "job_id": {
-            "$in": []
-          }
+          "data.sender_id": "{{user.email}}"
+        },
+        {
+          "data.job.customer_email": "{{user.email}}"
+        },
+        {
+          "data.job.provider_email": "{{user.email}}"
         },
         {
           "user_condition": {
@@ -60,9 +64,13 @@
     "update": {
       "$or": [
         {
-          "job_id": {
-            "$in": []
-          }
+          "data.sender_id": "{{user.email}}"
+        },
+        {
+          "data.job.customer_email": "{{user.email}}"
+        },
+        {
+          "data.job.provider_email": "{{user.email}}"
         },
         {
           "user_condition": {

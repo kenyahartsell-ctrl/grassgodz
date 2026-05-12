@@ -27,16 +27,16 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
   const doAuthorize = async (paymentMethodId) => {
     setAuthorizing(true);
     try {
-      // FIRST: Update the Job with accepted quote details
-      await base44.entities.Job.update(quote.job_id, {
+      // Update job via backend function (customers can't write Job directly via RLS)
+      await base44.functions.invoke('updateJobToQuoted', {
+        job_id: quote.job_id,
         quoted_price: quote.price,
         provider_id: quote.provider_id,
         provider_email: quote.provider_email,
         provider_name: quote.provider_name,
-        status: 'quoted',
       });
 
-      // THEN: Authorize payment
+      // Authorize payment
       const res = await base44.functions.invoke('authorizePayment', {
         job_id: quote.job_id,
         payment_method_id: paymentMethodId,

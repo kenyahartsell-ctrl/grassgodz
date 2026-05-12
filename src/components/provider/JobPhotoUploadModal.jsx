@@ -89,7 +89,7 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
     try {
       let finalFile = file;
       try {
-        finalFile = await imageCompression.imageCompression(file, {
+        finalFile = await imageCompression(file, {
           maxSizeMB: 1,
           maxWidthOrHeight: 1600,
           useWebWorker: true,
@@ -97,7 +97,6 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
         });
       } catch (compressionError) {
         console.warn('Image compression failed, uploading original:', compressionError);
-        // Fall back to original file
       }
       setUploading(u => ({ ...u, [key]: 'uploading' }));
       const { file_url } = await base44.integrations.Core.UploadFile({ file: finalFile });

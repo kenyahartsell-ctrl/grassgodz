@@ -90,7 +90,7 @@ export default function CustomerPortal() {
       customer_name: user.full_name,
       service_name: data.service_name,
     }).catch(() => {});
-    await refreshJobs();
+    setJobs(prev => [...prev, { ...job, _providerProfile: null }]);
     setTab('quotes');
     toast.success('Quote request submitted! Providers in your area will respond shortly.');
   };
@@ -105,14 +105,14 @@ export default function CustomerPortal() {
   };
 
   const handleBooking = async (data) => {
-    await base44.entities.Job.create({
+    const newJob = await base44.entities.Job.create({
       customer_id: customerProfile?.id || user.email,
       customer_name: user.full_name,
       customer_email: user.email,
       status: 'requested',
       ...data,
     });
-    await refreshJobs();
+    setJobs(prev => [...prev, { ...newJob, _providerProfile: null }]);
     setTab('jobs');
     toast.success('Booking request sent! Providers in your area will respond shortly.');
   };

@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { X, Camera, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import imageCompression from 'browser-image-compression';
 
 const PHOTO_SLOTS = [
   { key: 'front_before', label: 'Front Yard', timing: 'Before', required: true },
@@ -49,10 +48,10 @@ function PhotoSlot({ slot, url, onUpload, uploading }) {
          ) : (
            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
              {uploading ? (
-               <>
-                 <Loader2 size={20} className="text-primary animate-spin" />
-                 <span className="text-xs text-muted-foreground">{uploading === 'compressing' ? 'Compressing...' : 'Uploading...'}</span>
-               </>
+              <>
+                <Loader2 size={20} className="text-primary animate-spin" />
+                <span className="text-xs text-muted-foreground">Uploading...</span>
+              </>
              ) : (
                <>
                  <Camera size={20} className="text-muted-foreground/50" />
@@ -86,23 +85,9 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
   const handleUpload = async (key, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(u => ({ ...u, [key]: 'compressing' }));
+    setUploading(u => ({ ...u, [key]: 'uploading' }));
     try {
-      let finalFile = file;
-      try {
-        const compressed = await imageCompression(file, {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1600,
-          useWebWorker: true,
-          fileType: 'image/jpeg',
-        });
-        // Ensure we have a proper File object (imageCompression may return a Blob)
-        finalFile = new File([compressed], file.name || 'photo.jpg', { type: 'image/jpeg' });
-      } catch (compressionError) {
-        console.warn('Image compression failed, uploading original:', compressionError);
-      }
-      setUploading(u => ({ ...u, [key]: 'uploading' }));
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: finalFile });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setPhotos(p => ({ ...p, [key]: file_url }));
     } catch {
       toast.error('Photo upload failed. Please try again.');

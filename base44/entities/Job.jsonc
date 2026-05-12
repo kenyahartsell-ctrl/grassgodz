@@ -171,20 +171,22 @@
     "zip_code"
   ],
   "rls": {
-    "create": {},
+    "create": {
+      "created_by": "{{user.email}}"
+    },
     "read": {
       "$or": [
         {
-          "customer_email": "{{user.email}}"
+          "data.customer_email": "{{user.email}}"
         },
         {
-          "provider_email": "{{user.email}}"
+          "data.provider_email": "{{user.email}}"
         },
         {
-          "provider_id": "{{user.id}}"
+          "data.provider_id": "{{user.id}}"
         },
         {
-          "status": "requested"
+          "data.status": "requested"
         },
         {
           "user_condition": {
@@ -196,13 +198,13 @@
     "update": {
       "$or": [
         {
-          "customer_email": "{{user.email}}"
+          "data.customer_email": "{{user.email}}"
         },
         {
-          "provider_email": "{{user.email}}"
+          "data.provider_email": "{{user.email}}"
         },
         {
-          "provider_id": "{{user.id}}"
+          "data.provider_id": "{{user.id}}"
         },
         {
           "user_condition": {

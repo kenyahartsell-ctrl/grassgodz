@@ -107,6 +107,10 @@ export default function JobDetailPage() {
       setShowPhotoModal(false);
       return;
     }
+    // Save photos to job record first, then capture payment
+    if (photos && Object.keys(photos).length > 0) {
+      await base44.entities.Job.update(j.id, { completion_photos: { ...(j.completion_photos || {}), ...photos } });
+    }
     const res = await base44.functions.invoke('capturePayment', {
       job_id: j.id,
       skip_photos: false,

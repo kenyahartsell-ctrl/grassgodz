@@ -401,7 +401,7 @@ export default function ProviderPortal() {
               <div className="mb-5">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Scheduled</h3>
                 <div className="space-y-3">
-                  {scheduled.map(j => <ProviderJobCard key={j.id} job={j} onMarkInProgress={handleMarkInProgress} />)}
+                  {scheduled.map(j => <ProviderJobCard key={j.id} job={j} onMarkInProgress={handleMarkInProgress} onMarkComplete={handleMarkComplete} />)}
                 </div>
               </div>
             )}

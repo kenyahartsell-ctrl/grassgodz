@@ -59,6 +59,9 @@
           "data.provider_email": "{{user.email}}"
         },
         {
+          "data.job.customer_email": "{{user.email}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }
@@ -69,6 +72,9 @@
       "$or": [
         {
           "data.provider_email": "{{user.email}}"
+        },
+        {
+          "data.job.customer_email": "{{user.email}}"
         },
         {
           "user_condition": {

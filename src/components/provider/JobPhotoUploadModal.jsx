@@ -79,7 +79,8 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
   const [uploading, setUploading] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
-  const MIN_PHOTOS = 4;
+  const isAlreadyCompleted = job?.status === 'completed';
+  const MIN_PHOTOS = isAlreadyCompleted ? 1 : 4;
   const allRequired = Object.keys(photos).length >= MIN_PHOTOS;
 
   const handleUpload = async (key, e) => {

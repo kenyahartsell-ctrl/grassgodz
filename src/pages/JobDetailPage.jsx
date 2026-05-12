@@ -37,6 +37,7 @@ export default function JobDetailPage() {
   const senderRole = user && job
     ? (isAdmin ? 'admin' : job.customer_email === user.email ? 'customer' : 'provider')
     : null;
+  // providerProfileId is set in the load effect via fallback lookup — stored on the job object itself for use in access logic
 
   const otherPartyName = isAdmin
     ? `${job?.customer_name || 'Customer'} ↔ ${job?.provider_name || 'Provider'}`
@@ -50,8 +51,20 @@ export default function JobDetailPage() {
         const me = await base44.auth.me();
         setUser(me);
 
+        // Try user-scoped fetch first; fall back to provider jobs lookup (RLS may block provider access)
+        let foundJob = null;
+        let providerProfileId = null;
         const jobs = await base44.entities.Job.filter({ id: jobId });
-        const foundJob = jobs[0];
+        foundJob = jobs[0] || null;
+
+        // If not found via RLS, check if user is a provider and fetch via backend (bypasses RLS)
+        if (!foundJob && me.role !== 'admin') {
+          const provRes = await base44.functions.invoke('getMyProviderJobs', {});
+          const providerJobs = provRes.data?.jobs || [];
+          providerProfileId = provRes.data?.profile?.id || null;
+          foundJob = providerJobs.find(j => j.id === jobId) || null;
+        }
+
         if (!foundJob) {
           toast.error('Job not found.');
           navigate('/');
@@ -60,7 +73,7 @@ export default function JobDetailPage() {
 
         // Access control
         const isCustomer = foundJob.customer_email === me.email;
-        const isProvider = foundJob.provider_email === me.email;
+        const isProvider = foundJob.provider_email === me.email || (providerProfileId && foundJob.provider_id === providerProfileId);
         const isAdmin = me.role === 'admin';
 
         if (!isCustomer && !isProvider && !isAdmin) {

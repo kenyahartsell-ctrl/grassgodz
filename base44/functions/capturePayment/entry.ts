@@ -20,8 +20,16 @@ Deno.serve(async (req) => {
     const jobs = await base44.asServiceRole.entities.Job.filter({ id: job_id });
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
-    if (job.provider_id !== providerProfile.id) return Response.json({ error: 'Forbidden' }, { status: 403 });
-    if (job.status !== 'in_progress') return Response.json({ error: 'Job must be in_progress to complete' }, { status: 400 });
+
+    // Check provider ownership via email OR id (since updateJobToQuoted may set either)
+    const isOwner = job.provider_id === providerProfile.id || job.provider_email === user.email;
+    if (!isOwner) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+    // Allow completing from in_progress, accepted, or scheduled statuses
+    const completableStatuses = ['in_progress', 'accepted', 'scheduled'];
+    if (!completableStatuses.includes(job.status)) {
+      return Response.json({ error: `Job cannot be completed from status: ${job.status}` }, { status: 400 });
+    }
 
     // Verify minimum 4 photos present (skip_photos=true bypasses for testing)
     if (!skip_photos) {
@@ -47,7 +55,29 @@ Deno.serve(async (req) => {
     });
 
     // Trigger payment link flow: creates Payment record + sends customer email
-    await base44.asServiceRole.functions.invoke('jobCompletedPaymentFlow', { job_id });
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: job.customer_email,
+        subject: `Your ${job.service_name || 'Lawn Service'} is Complete — Payment Required`,
+        body: `
+<p>Hi ${job.customer_name || 'there'},</p>
+
+<p>Great news! Your lawn service has been completed by ${job.provider_name || 'your provider'}.</p>
+
+<p>Your quoted price: <strong>$${(price || 0).toFixed(2)}</strong></p>
+
+<p>Please log in to your Grassgodz account to review and process payment.</p>
+
+<p><a href="https://grassgodz.com/customer" style="background:#2d6a2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">View My Jobs</a></p>
+
+<p>Thank you for choosing Grassgodz!</p>
+
+<p>The Grassgodz Team</p>
+        `.trim(),
+      });
+    } catch (emailErr) {
+      console.warn('Email notification failed:', emailErr.message);
+    }
 
     return Response.json({ success: true, payout: providerPayout });
   } catch (error) {

@@ -169,25 +169,22 @@ export default function ProviderPortal() {
   };
 
   const handleMarkComplete = async (job, photos = {}, skipPhotos = false) => {
-    // Save photos and mark job completed
-    if (!skipPhotos) {
+    // Save completion photos first
+    if (!skipPhotos && Object.keys(photos).length > 0) {
       await base44.entities.Job.update(job.id, { completion_photos: photos });
     }
-    await base44.entities.Job.update(job.id, { status: 'completed', completed_at: new Date().toISOString() });
-    // Attempt payment capture — if Stripe not set up, job is still marked complete
-    try {
-      const res = await base44.functions.invoke('capturePayment', { job_id: job.id, skip_photos: skipPhotos });
-      if (res.data?.success) {
-        const payout = res.data.payout?.toFixed(2) || ((job.quoted_price || 0) * 0.75).toFixed(2);
-        await base44.functions.invoke('notifyCustomerJobComplete', { data: { job_id: job.id } }).catch(() => {});
-        await refreshJobs();
-        toast.success(`Job completed! $${payout} will be transferred to your account.`);
-        return;
-      }
-    } catch { /* Stripe not configured — continue */ }
-    await refreshJobs();
-    const expectedPayout = ((job.quoted_price || 0) * 0.75).toFixed(2);
-    toast.success(`Job completed! $${expectedPayout} payout pending once payment setup is complete.`);
+    // capturePayment handles marking completed, calculating payout, and notifying customer
+    const res = await base44.functions.invoke('capturePayment', {
+      job_id: job.id,
+      skip_photos: skipPhotos,
+    });
+    if (res.data?.success) {
+      const payout = res.data.payout != null ? Number(res.data.payout).toFixed(2) : ((job.quoted_price || 0) * 0.75).toFixed(2);
+      await refreshJobs();
+      toast.success(`Job completed! $${payout} payout — customer has been notified.`);
+    } else {
+      toast.error(res.data?.error || 'Failed to complete job. Please try again.');
+    }
   };
 
   if (loading) {

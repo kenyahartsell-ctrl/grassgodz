@@ -30,15 +30,12 @@
   ],
   "rls": {
     "create": {
-      "data.customer_id": "{{user.id}}"
+      "data.customer_id": "{{user.email}}"
     },
     "read": {
       "$or": [
         {
-          "data.customer_id": "{{user.id}}"
-        },
-        {
-          "data.provider_id": "{{user.id}}"
+          "data.customer_id": "{{user.email}}"
         },
         {
           "user_condition": {
@@ -48,7 +45,7 @@
       ]
     },
     "update": {
-      "data.customer_id": "{{user.id}}"
+      "data.customer_id": "{{user.email}}"
     },
     "delete": {
       "user_condition": {

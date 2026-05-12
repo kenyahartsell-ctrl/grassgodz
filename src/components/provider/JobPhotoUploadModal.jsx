@@ -161,7 +161,9 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
         {/* Photo grid */}
         <div className="flex-1 overflow-y-auto p-5">
           <p className="text-xs text-muted-foreground mb-4 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            A minimum of 4 photos are required to complete the job and release payment.
+            {isAlreadyCompleted
+              ? 'Upload photos to document this completed job. They will be saved to the job record.'
+              : 'A minimum of 4 photos are required to complete the job and release payment.'}
           </p>
 
           {/* Group by area */}
@@ -195,6 +197,8 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
           >
             {submitting ? (
               <><Loader2 size={16} className="animate-spin" /> Submitting...</>
+            ) : isAlreadyCompleted ? (
+              <><CheckCircle size={16} /> Save Photos</>
             ) : (
               <><CheckCircle size={16} /> Complete Job & Get Paid <ArrowRight size={14} /></>
             )}

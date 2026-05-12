@@ -98,6 +98,15 @@ export default function JobDetailPage() {
   }, [jobId]);
 
   const handleMarkComplete = async (j, photos) => {
+    if (j.status === 'completed') {
+      // Retrospective photo save only — job already done
+      await base44.entities.Job.update(j.id, { completion_photos: { ...(j.completion_photos || {}), ...photos } });
+      toast.success('Photos saved!');
+      const jobs = await base44.entities.Job.filter({ id: jobId });
+      setJob(jobs[0]);
+      setShowPhotoModal(false);
+      return;
+    }
     const res = await base44.functions.invoke('capturePayment', {
       job_id: j.id,
       skip_photos: false,
@@ -395,7 +404,7 @@ export default function JobDetailPage() {
         {/* PHOTOS TAB */}
         {tab === 'photos' && (
           <div className="flex-1 overflow-y-auto p-4">
-            {senderRole === 'provider' && ['in_progress', 'scheduled', 'accepted'].includes(job.status) && (
+            {senderRole === 'provider' && ['in_progress', 'scheduled', 'accepted', 'completed'].includes(job.status) && (
               <button
                 onClick={() => setShowPhotoModal(true)}
                 className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 text-sm font-medium text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors mb-4"

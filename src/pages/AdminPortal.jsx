@@ -174,7 +174,7 @@ export default function AdminPortal() {
             <span className="text-sm font-medium text-foreground hidden sm:block">Super Admin</span>
             <button
               onClick={() => base44.auth.logout()}
-              className="ml-2 px-3 py-1.5 text-xs font-semibold text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+              className="ml-2 px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
             >
               Logout
             </button>

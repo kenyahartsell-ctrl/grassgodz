@@ -165,16 +165,16 @@ export default function AdminPortal() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="bg-card border-b border-border sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-          <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
-          <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
-          <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full ml-1">Admin</span>
-          <div className="ml-auto flex items-center gap-2">
-            <Shield size={16} className="text-purple-600" />
-            <span className="text-sm font-medium text-foreground hidden sm:block">Super Admin</span>
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-2">
+          <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-8 w-8 object-contain flex-shrink-0" />
+          <span className="font-display font-bold text-base text-foreground">Grassgodz</span>
+          <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full">Admin</span>
+          <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+            <Shield size={14} className="text-purple-600 hidden sm:block" />
+            <span className="text-xs font-medium text-foreground hidden sm:block">Super Admin</span>
             <button
               onClick={() => base44.auth.logout()}
-              className="ml-2 px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+              className="px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors whitespace-nowrap"
             >
               Logout
             </button>

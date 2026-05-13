@@ -171,7 +171,13 @@ export default function AdminPortal() {
           <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full ml-1">Admin</span>
           <div className="ml-auto flex items-center gap-2">
             <Shield size={16} className="text-purple-600" />
-            <span className="text-sm font-medium text-foreground">Super Admin</span>
+            <span className="text-sm font-medium text-foreground hidden sm:block">Super Admin</span>
+            <button
+              onClick={() => base44.auth.logout()}
+              className="ml-2 px-3 py-1.5 text-xs font-semibold text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </header>
@@ -366,7 +372,16 @@ export default function AdminPortal() {
                     <span className="text-sm font-bold text-foreground">${p.amount?.toFixed(2)}</span>
                     <StatusBadge status={p.status} />
                     <button
-                      onClick={() => setAdjustingPayment({ payment: p, job: jobs.find(j => j.id === p.job_id) || null })}
+                      onClick={async () => {
+                        let matchedJob = jobs.find(j => j.id === p.job_id) || null;
+                        if (!matchedJob && p.job_id) {
+                          try {
+                            const fetched = await base44.entities.Job.list();
+                            matchedJob = fetched.find(j => j.id === p.job_id) || null;
+                          } catch {}
+                        }
+                        setAdjustingPayment({ payment: p, job: matchedJob });
+                      }}
                       className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors"
                       title="Adjust final price"
                     >

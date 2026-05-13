@@ -170,9 +170,9 @@ export default function ProviderPortal() {
   };
 
   const handleMarkComplete = async (job, photos = {}, skipPhotos = false) => {
-    // Save completion photos first
+    // Save completion photos via backend function (bypasses RLS)
     if (!skipPhotos && Object.keys(photos).length > 0) {
-      await base44.entities.Job.update(job.id, { completion_photos: photos });
+      await base44.functions.invoke('submitJobPhoto', { job_id: job.id, photos });
     }
     // capturePayment handles marking completed, calculating payout, and notifying customer
     const res = await base44.functions.invoke('capturePayment', {

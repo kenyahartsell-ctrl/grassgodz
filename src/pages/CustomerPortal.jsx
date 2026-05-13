@@ -220,7 +220,7 @@ export default function CustomerPortal() {
                 <h2 className="text-base font-bold text-foreground mb-3">Upcoming Jobs</h2>
                 <div className="space-y-3">
                   {upcomingJobs.slice(0, 2).map(j => (
-                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} />
+                    <JobCard key={j.id} job={j} customerProfile={customerProfile} onAcceptQuote={handleAcceptQuote} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} />
                   ))}
                 </div>
                 {upcomingJobs.length > 2 && (
@@ -273,7 +273,7 @@ export default function CustomerPortal() {
                 </div>
                 <div className="space-y-3">
                   {upcomingJobs.map(j => (
-                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} />
+                    <JobCard key={j.id} job={j} customerProfile={customerProfile} onAcceptQuote={handleAcceptQuote} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} />
                   ))}
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function CustomerPortal() {
                 </div>
                 <div className="space-y-3">
                   {pastJobs.map(j => (
-                    <JobCard key={j.id} job={j} onViewQuotes={setSelectedJobForQuotes} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} reviewed={reviewedJobIds.has(j.id)} />
+                    <JobCard key={j.id} job={j} customerProfile={customerProfile} onAcceptQuote={handleAcceptQuote} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} reviewed={reviewedJobIds.has(j.id)} />
                   ))}
                 </div>
               </div>

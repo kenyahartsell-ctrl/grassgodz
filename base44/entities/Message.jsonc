@@ -43,24 +43,7 @@
         }
       ]
     },
-    "read": {
-      "$or": [
-        {
-          "data.sender_id": "{{user.email}}"
-        },
-        {
-          "data.job_customer_email": "{{user.email}}"
-        },
-        {
-          "data.job_provider_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "read": null,
     "update": {
       "user_condition": {
         "role": "admin"

@@ -171,7 +171,18 @@
     "zip_code"
   ],
   "rls": {
-    "create": {},
+    "create": {
+      "$or": [
+        {
+          "data.customer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "read": {
       "$or": [
         {
@@ -179,6 +190,9 @@
         },
         {
           "data.provider_email": "{{user.email}}"
+        },
+        {
+          "status": "requested"
         },
         {
           "user_condition": {

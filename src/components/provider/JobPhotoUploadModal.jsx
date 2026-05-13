@@ -104,8 +104,8 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
     setSubmitting(true);
     try {
       if (isAlreadyCompleted) {
-        // Job already done — just save photos, don't re-trigger completion flow
-        await base44.entities.Job.update(job.id, { completion_photos: { ...(job.completion_photos || {}), ...photos } });
+        // Job already done — just save photos via backend function (bypasses RLS)
+        await base44.functions.invoke('submitJobPhoto', { job_id: job.id, photos });
         toast.success('Photos saved successfully!');
         onClose();
       } else {

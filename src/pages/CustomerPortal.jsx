@@ -16,7 +16,7 @@ const NAV = [
   { key: 'home', label: 'Home', icon: Home },
   { key: 'book', label: 'Book', icon: CalendarPlus },
   { key: 'jobs', label: 'My Jobs', icon: Briefcase },
-  { key: 'quotes', label: 'Quotes', icon: FileText },
+  { key: 'quotes', label: 'Quotes', icon: FileText, badge: true },
   { key: 'profile', label: 'Account', icon: User },
 ];
 
@@ -159,6 +159,25 @@ export default function CustomerPortal() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {tab === 'home' && (
           <div>
+            {/* Pending quotes alert */}
+            {jobs.filter(j => j.status === 'quoted').length > 0 && (
+              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
+                <FileText size={18} className="text-blue-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-blue-800">
+                    You have {jobs.filter(j => j.status === 'quoted').length} quote{jobs.filter(j => j.status === 'quoted').length > 1 ? 's' : ''} waiting for your response!
+                  </p>
+                  <p className="text-xs text-blue-700 mt-0.5">A provider has submitted a price — review and accept to book your service.</p>
+                </div>
+                <button
+                  onClick={() => setTab('quotes')}
+                  className="flex-shrink-0 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Review
+                </button>
+              </div>
+            )}
+
             {/* Profile completion checklist */}
             <ProfileCompletionChecklist profile={customerProfile} onGoToProfile={() => setTab('profile')} />
 
@@ -353,18 +372,26 @@ export default function CustomerPortal() {
       {/* Bottom Nav */}
       <nav className="bg-card border-t border-border sticky bottom-0 z-30">
         <div className="max-w-3xl mx-auto flex">
-          {NAV.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Icon size={18} />
-              {label}
-            </button>
-          ))}
+          {NAV.map(({ key, label, icon: Icon, badge }) => {
+            const showBadge = badge && jobs.some(j => j.status === 'quoted');
+            return (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
+                  tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <div className="relative">
+                  <Icon size={18} />
+                  {showBadge && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border border-background" />
+                  )}
+                </div>
+                {label}
+              </button>
+            );
+          })}
         </div>
       </nav>
 

@@ -6,7 +6,8 @@ import QuoteCard from './QuoteCard';
 import { toast } from 'sonner';
 
 export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) {
-  const [open, setOpen] = useState(true);
+  // Auto-expand when there are quotes pending response
+  const [open, setOpen] = useState(job?.status === 'quoted' || job?.status === 'requested');
   const queryClient = useQueryClient();
   const [declining, setDeclining] = useState(null);
 

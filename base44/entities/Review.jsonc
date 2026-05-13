@@ -38,6 +38,9 @@
           "data.customer_id": "{{user.email}}"
         },
         {
+          "data.provider_id": "{{user.id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
           }

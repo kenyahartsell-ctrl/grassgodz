@@ -49,10 +49,7 @@
           "data.sender_id": "{{user.email}}"
         },
         {
-          "data.job.customer_email": "{{user.email}}"
-        },
-        {
-          "data.job.provider_email": "{{user.email}}"
+          "data.recipient_id": "{{user.email}}"
         },
         {
           "user_condition": {
@@ -62,22 +59,9 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "data.sender_id": "{{user.email}}"
-        },
-        {
-          "data.job.customer_email": "{{user.email}}"
-        },
-        {
-          "data.job.provider_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {

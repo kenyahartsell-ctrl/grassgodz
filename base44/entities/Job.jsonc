@@ -171,9 +171,7 @@
     "zip_code"
   ],
   "rls": {
-    "create": {
-      "created_by": "{{user.email}}"
-    },
+    "create": {},
     "read": {
       "$or": [
         {
@@ -181,12 +179,6 @@
         },
         {
           "data.provider_email": "{{user.email}}"
-        },
-        {
-          "data.provider_id": "{{user.id}}"
-        },
-        {
-          "data.status": "requested"
         },
         {
           "user_condition": {
@@ -202,9 +194,6 @@
         },
         {
           "data.provider_email": "{{user.email}}"
-        },
-        {
-          "data.provider_id": "{{user.id}}"
         },
         {
           "user_condition": {

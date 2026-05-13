@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal } from 'lucide-react';
+import AdminPriceAdjustModal from '@/components/admin/AdminPriceAdjustModal';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
 import AdminAddProviderModal from '@/components/admin/AdminAddProviderModal';
@@ -41,6 +42,7 @@ export default function AdminPortal() {
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [assigningJob, setAssigningJob] = useState(null);
   const [viewingPhotos, setViewingPhotos] = useState(null);
+  const [adjustingPayment, setAdjustingPayment] = useState(null); // { payment, job }
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -363,6 +365,13 @@ export default function AdminPortal() {
                     </div>
                     <span className="text-sm font-bold text-foreground">${p.amount?.toFixed(2)}</span>
                     <StatusBadge status={p.status} />
+                    <button
+                      onClick={() => setAdjustingPayment({ payment: p, job: jobs.find(j => j.id === p.job_id) || null })}
+                      className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors"
+                      title="Adjust final price"
+                    >
+                      <SlidersHorizontal size={11} /> Adjust
+                    </button>
                     {p.status === 'captured' && (
                       <button onClick={() => handleRefund(p)} className="px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">Refund</button>
                     )}
@@ -444,6 +453,26 @@ export default function AdminPortal() {
 
       {viewingPhotos && (
         <PhotoLightbox photos={viewingPhotos} onClose={() => setViewingPhotos(null)} />
+      )}
+
+      {adjustingPayment && (
+        <AdminPriceAdjustModal
+          payment={adjustingPayment.payment}
+          job={adjustingPayment.job}
+          onClose={() => setAdjustingPayment(null)}
+          onSaved={({ price, platform_fee, provider_payout }) => {
+            setPayments(prev => prev.map(p =>
+              p.id === adjustingPayment.payment.id
+                ? { ...p, amount: price, platform_fee, payout_amount: provider_payout }
+                : p
+            ));
+            setJobs(prev => prev.map(j =>
+              j.id === adjustingPayment.payment.job_id
+                ? { ...j, final_price: price, quoted_price: price, platform_fee, provider_payout }
+                : j
+            ));
+          }}
+        />
       )}
 
       {showAddJob && (

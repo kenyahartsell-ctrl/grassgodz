@@ -38,7 +38,7 @@ export default function AdminJobsTable({ jobs, onUpdateStatus }) {
               <TableCell><StatusBadge status={job.status} /></TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  {job.status === 'completed' && job.completion_photos && (
+                  {job.completion_photos && Object.keys(job.completion_photos).length > 0 && (
                     <Button
                       size="sm"
                       variant="ghost"

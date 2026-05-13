@@ -1,12 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
+  if (req.method !== 'POST') {
+    return new Response('Method Not Allowed', { status: 405 });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { job_id, photos } = await req.json();
+    const body = await req.json();
+    const { job_id, photos } = body;
     if (!job_id || !photos) return Response.json({ error: 'job_id and photos required' }, { status: 400 });
 
     // Verify the requesting user is the assigned provider on this job

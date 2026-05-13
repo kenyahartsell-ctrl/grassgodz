@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2, FileText } from 'lucide-react';
 import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
 import BookingRequestCard from '../components/provider/BookingRequestCard';
 import ProviderJobMap from '../components/provider/ProviderJobMap';
 import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
+import MyQuotesPanel from '@/components/provider/MyQuotesPanel';
 
 import { base44 } from '@/api/base44Client';
 import ProviderProfileEditor from '@/components/provider/ProviderProfileEditor';
@@ -15,8 +16,8 @@ import { toast } from 'sonner';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'bookings', label: 'Bookings', icon: Bell },
   { key: 'available', label: 'Available', icon: Search },
+  { key: 'quotes', label: 'Quotes', icon: FileText },
   { key: 'myjobs', label: 'My Jobs', icon: CalendarDays },
   { key: 'earnings', label: 'Earnings', icon: DollarSign },
   { key: 'profile', label: 'Profile', icon: User },
@@ -383,6 +384,16 @@ export default function ProviderPortal() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'quotes' && (
+          <div>
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-foreground">My Quotes</h2>
+              <p className="text-sm text-muted-foreground">Track quotes you've submitted and their status.</p>
+            </div>
+            <MyQuotesPanel providerProfile={providerProfile} />
           </div>
         )}
 

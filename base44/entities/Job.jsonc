@@ -172,16 +172,7 @@
   ],
   "rls": {
     "create": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "data.customer_id": "{{user.id}}"
     },
     "read": {
       "$or": [
@@ -190,6 +181,9 @@
         },
         {
           "data.provider_email": "{{user.email}}"
+        },
+        {
+          "data.provider_id": "{{user.id}}"
         },
         {
           "user_condition": {
@@ -205,6 +199,9 @@
         },
         {
           "data.provider_email": "{{user.email}}"
+        },
+        {
+          "data.provider_id": "{{user.id}}"
         },
         {
           "user_condition": {

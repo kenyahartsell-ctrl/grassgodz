@@ -23,10 +23,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Job or customer email not found' }, { status: 404 });
     }
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: job.customer_email,
-      subject: `New quote received for your ${job.service_name} request 💬`,
-      body: `
+    const emailBody = `
 Hi ${job.customer_name || 'there'},
 
 You have a new quote for your <strong>${job.service_name}</strong> request!
@@ -42,8 +39,34 @@ Log in to your Grassgodz account to review and accept this quote. Quotes are tim
 
 Thanks,<br/>
 The Grassgodz Team
-      `.trim(),
+    `.trim();
+
+    // Notify the customer
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      to: job.customer_email,
+      subject: `New quote received for your ${job.service_name} request 💬`,
+      body: emailBody,
     });
+
+    // Also notify admin
+    const adminUsers = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
+    for (const admin of adminUsers) {
+      if (admin.email) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: admin.email,
+          subject: `[Admin] New quote submitted — ${job.service_name} for ${job.customer_name || job.customer_email}`,
+          body: `
+<strong>New quote submitted</strong><br/><br/>
+<strong>Job:</strong> ${job.service_name}<br/>
+<strong>Customer:</strong> ${job.customer_name || job.customer_email}<br/>
+<strong>Provider:</strong> ${provider_name}<br/>
+<strong>Price:</strong> $${price}<br/>
+${message ? `<strong>Message:</strong> "${message}"<br/>` : ''}
+<strong>Job ID:</strong> ${job_id}
+          `.trim(),
+        });
+      }
+    }
 
     return Response.json({ success: true, sent_to: job.customer_email });
   } catch (error) {

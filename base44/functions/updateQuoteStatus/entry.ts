@@ -9,15 +9,21 @@ Deno.serve(async (req) => {
     const { quote_id, status } = await req.json();
     if (!quote_id || !status) return Response.json({ error: 'quote_id and status required' }, { status: 400 });
 
-    // Fetch the quote to verify the customer owns the related job
+    // Fetch the quote
     const quotes = await base44.asServiceRole.entities.Quote.filter({ id: quote_id });
     const quote = quotes[0];
     if (!quote) return Response.json({ error: 'Quote not found' }, { status: 404 });
 
-    // Verify this customer owns the job
+    // Verify this customer owns the job — match by customer_email OR customer_id
     const jobs = await base44.asServiceRole.entities.Job.filter({ id: quote.job_id });
     const job = jobs[0];
-    if (!job || job.customer_email !== user.email) {
+    if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
+
+    const ownsJob =
+      (job.customer_email && job.customer_email === user.email) ||
+      (job.customer_id && (job.customer_id === user.id || job.customer_id === user.email));
+
+    if (!ownsJob) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

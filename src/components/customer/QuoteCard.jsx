@@ -76,10 +76,12 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
             {quote.message && (
               <p className="text-xs text-muted-foreground mt-2 italic">"{quote.message}"</p>
             )}
-            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-              <Clock size={11} />
-              <span>Expires {new Date(quote.expires_at).toLocaleDateString()}</span>
-            </div>
+            {quote.expires_at && (
+              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                <Clock size={11} />
+                <span>Expires {new Date(quote.expires_at).toLocaleDateString()}</span>
+              </div>
+            )}
           </div>
           <div className="text-right flex-shrink-0">
             <p className="text-xl font-bold text-foreground">${quote.price}</p>

@@ -35,6 +35,9 @@ import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import ProviderOnboardingPage from '@/pages/ProviderOnboardingPage';
 import ProviderFinancialsPage from '@/pages/ProviderFinancialsPage';
 import WashingtonDCPage from '@/pages/city/WashingtonDCPage';
+import SitemapPage from '@/pages/SitemapPage';
+import RobotsPage from '@/pages/RobotsPage';
+import LlmsPage from '@/pages/LlmsPage';
 import ArlingtonVAPage from '@/pages/city/ArlingtonVAPage';
 import AlexandriaVAPage from '@/pages/city/AlexandriaVAPage';
 import SilverSpringMDPage from '@/pages/city/SilverSpringMDPage';
@@ -115,6 +118,11 @@ const AuthenticatedApp = () => {
       <Route path="/lawn-care/alexandria-va" element={<AlexandriaVAPage />} />
       <Route path="/lawn-care/silver-spring-md" element={<SilverSpringMDPage />} />
       <Route path="/lawn-care/bethesda-md" element={<BethesdaMDPage />} />
+
+      {/* SEO / crawler files */}
+      <Route path="/sitemap.xml" element={<SitemapPage />} />
+      <Route path="/robots.txt" element={<RobotsPage />} />
+      <Route path="/llms.txt" element={<LlmsPage />} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

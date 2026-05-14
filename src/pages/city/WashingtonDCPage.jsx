@@ -4,14 +4,14 @@ const city = {
   name: 'Washington',
   state: 'DC',
   slug: 'washington-dc',
-  metaTitle: 'Lawn Care Washington DC | Local Pros, Instant Quotes — Grassgodz',
+  metaTitle: 'Lawn Care Washington DC | Local Pros, Instant Quotes - Grassgodz',
   metaDescription: 'Book vetted lawn care pros in Washington DC. Get competing quotes for mowing, leaf removal, hedge trimming & more. Pay only after the job is done.',
-  h1: 'Lawn Care in Washington, DC — Local Pros, Honest Prices',
-  intro: 'Get competing quotes from vetted DC-area lawn care professionals. No contracts, no surprises — just a great-looking yard.',
+  h1: 'Lawn Care in Washington, DC - Local Pros, Honest Prices',
+  intro: 'Get competing quotes from vetted DC-area lawn care professionals. No contracts, no surprises - just a great-looking yard.',
   bodyParagraphs: [
-    'Washington, DC homeowners know that maintaining a lawn in the District comes with unique challenges — from the hot, humid summers to the unpredictable winters. Whether you live in Capitol Hill, Dupont Circle, or Petworth, Grassgodz connects you with insured, background-checked lawn care pros who know the DC landscape inside and out.',
-    'Our marketplace model means you post one request and local pros compete for your business. That translates to better pricing and higher quality work. Most DC homeowners receive 2–4 quotes within 24 hours of posting.',
-    'From weekly mowing subscriptions to one-time leaf cleanups before winter, Grassgodz handles every service your DC yard needs — all managed through a single app, with payment held until the job meets your standards.',
+    'Washington, DC homeowners know that maintaining a lawn in the District comes with unique challenges - from the hot, humid summers to the unpredictable winters. Whether you live in Capitol Hill, Dupont Circle, or Petworth, Grassgodz connects you with insured, background-checked lawn care pros who know the DC landscape inside and out.',
+    'Our marketplace model means you post one request and local pros compete for your business. That translates to better pricing and higher quality work. Most DC homeowners receive 2-4 quotes within 24 hours of posting.',
+    'From weekly mowing subscriptions to one-time leaf cleanups before winter, Grassgodz handles every service your DC yard needs - all managed through a single app, with payment held until the job meets your standards.',
   ],
   neighborhoods: [
     'Capitol Hill', 'Dupont Circle', 'Georgetown', 'Petworth', 'Columbia Heights',
@@ -37,7 +37,7 @@ const city = {
     '@graph': [
       {
         '@type': 'LocalBusiness',
-        name: 'Grassgodz — Lawn Care Washington DC',
+        name: 'Grassgodz - Lawn Care Washington DC',
         description: 'Lawn care marketplace connecting Washington DC homeowners with vetted local pros.',
         url: 'https://grassgodz.com/lawn-care/washington-dc',
         areaServed: { '@type': 'City', name: 'Washington', addressRegion: 'DC' },

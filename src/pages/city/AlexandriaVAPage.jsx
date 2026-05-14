@@ -4,9 +4,9 @@ const city = {
   name: 'Alexandria',
   state: 'VA',
   slug: 'alexandria-va',
-  metaTitle: 'Lawn Care Alexandria VA | Local Pros, Instant Quotes — Grassgodz',
+  metaTitle: 'Lawn Care Alexandria VA | Local Pros, Instant Quotes - Grassgodz',
   metaDescription: 'Book insured lawn care pros in Alexandria, Virginia. Get competing quotes for mowing, hedges, leaf removal & more. Pay after the job is done.',
-  h1: 'Lawn Care in Alexandria, VA — Vetted Pros, Fair Prices',
+  h1: 'Lawn Care in Alexandria, VA - Vetted Pros, Fair Prices',
   intro: 'Alexandria homeowners receive competing quotes from local, insured lawn care professionals. Schedule in minutes and pay only when satisfied.',
   bodyParagraphs: [
     'Alexandria, Virginia blends historic charm with active suburban neighborhoods — from the brick-lined streets of Old Town to the newer developments in Kingstowne and the tree-filled lots of Del Ray. Each area has its own lawn care demands, and Grassgodz connects you with local pros who know exactly how to handle them.',
@@ -37,7 +37,7 @@ const city = {
     '@graph': [
       {
         '@type': 'LocalBusiness',
-        name: 'Grassgodz — Lawn Care Alexandria VA',
+        name: 'Grassgodz - Lawn Care Alexandria VA',
         description: 'Lawn care marketplace connecting Alexandria VA homeowners with vetted local pros.',
         url: 'https://grassgodz.com/lawn-care/alexandria-va',
         areaServed: { '@type': 'City', name: 'Alexandria', addressRegion: 'VA' },

@@ -4,9 +4,9 @@ const city = {
   name: 'Bethesda',
   state: 'MD',
   slug: 'bethesda-md',
-  metaTitle: 'Lawn Care Bethesda MD | Local Pros, Instant Quotes — Grassgodz',
+  metaTitle: 'Lawn Care Bethesda MD | Local Pros, Instant Quotes - Grassgodz',
   metaDescription: 'Book vetted lawn care pros in Bethesda, Maryland. Competing quotes for mowing, aeration, leaf removal, hedges & more. Pay only after completion.',
-  h1: 'Lawn Care in Bethesda, MD — Premium Pros, Transparent Pricing',
+  h1: 'Lawn Care in Bethesda, MD - Premium Pros, Transparent Pricing',
   intro: 'Bethesda homeowners get competing quotes from insured, top-rated lawn care professionals. High-end results without the guesswork on price.',
   bodyParagraphs: [
     'Bethesda is home to some of the most meticulously maintained properties in the DC metro area. From the expansive lots in Burning Tree and Potomac to the manicured gardens in Chevy Chase and Battery Park, Bethesda homeowners expect a high standard — and Grassgodz delivers it by connecting you only with vetted, highly-rated local lawn care professionals.',
@@ -37,7 +37,7 @@ const city = {
     '@graph': [
       {
         '@type': 'LocalBusiness',
-        name: 'Grassgodz — Lawn Care Bethesda MD',
+        name: 'Grassgodz - Lawn Care Bethesda MD',
         description: 'Lawn care marketplace connecting Bethesda MD homeowners with vetted local pros.',
         url: 'https://grassgodz.com/lawn-care/bethesda-md',
         areaServed: { '@type': 'City', name: 'Bethesda', addressRegion: 'MD' },

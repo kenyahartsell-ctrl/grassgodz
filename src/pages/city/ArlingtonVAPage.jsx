@@ -4,9 +4,9 @@ const city = {
   name: 'Arlington',
   state: 'VA',
   slug: 'arlington-va',
-  metaTitle: 'Lawn Care Arlington VA | Local Pros, Instant Quotes — Grassgodz',
+  metaTitle: 'Lawn Care Arlington VA | Local Pros, Instant Quotes - Grassgodz',
   metaDescription: 'Find vetted lawn care pros in Arlington, Virginia. Compare quotes for mowing, aeration, leaf removal & more. Pay only after the job is complete.',
-  h1: 'Lawn Care in Arlington, VA — Trusted Local Pros',
+  h1: 'Lawn Care in Arlington, VA - Trusted Local Pros',
   intro: 'Arlington homeowners get competing quotes from insured lawn care pros. Fast scheduling, fair pricing, and payment held until you\'re satisfied.',
   bodyParagraphs: [
     'Arlington, Virginia is one of the most densely residential counties in the country, with everything from compact townhome yards in Clarendon to larger suburban lots in Westover and Bluemont. Grassgodz connects Arlington homeowners with vetted local lawn care professionals who understand Northern Virginia\'s clay-heavy soils and humid subtropical climate.',
@@ -37,7 +37,7 @@ const city = {
     '@graph': [
       {
         '@type': 'LocalBusiness',
-        name: 'Grassgodz — Lawn Care Arlington VA',
+        name: 'Grassgodz - Lawn Care Arlington VA',
         description: 'Lawn care marketplace connecting Arlington VA homeowners with vetted local pros.',
         url: 'https://grassgodz.com/lawn-care/arlington-va',
         areaServed: { '@type': 'City', name: 'Arlington', addressRegion: 'VA' },

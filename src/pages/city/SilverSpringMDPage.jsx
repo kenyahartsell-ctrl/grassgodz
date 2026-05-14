@@ -4,10 +4,10 @@ const city = {
   name: 'Silver Spring',
   state: 'MD',
   slug: 'silver-spring-md',
-  metaTitle: 'Lawn Care Silver Spring MD | Local Pros, Instant Quotes — Grassgodz',
+  metaTitle: 'Lawn Care Silver Spring MD | Local Pros, Instant Quotes - Grassgodz',
   metaDescription: 'Find trusted lawn care pros in Silver Spring, Maryland. Get competing quotes for mowing, leaf removal, aeration & more. Pay after completion.',
-  h1: 'Lawn Care in Silver Spring, MD — Local Pros You Can Trust',
-  intro: 'Silver Spring homeowners get real competing quotes from insured, background-checked lawn care pros. No contracts — just a yard you\'ll love.',
+  h1: 'Lawn Care in Silver Spring, MD - Local Pros You Can Trust',
+  intro: 'Silver Spring homeowners get real competing quotes from insured, background-checked lawn care pros. No contracts - just a yard you\'ll love.',
   bodyParagraphs: [
     'Silver Spring, Maryland is one of the most diverse and densely populated communities in the DC metro area, with a wide range of property types — from the historic colonials of Woodside Park to the newer single-family homes in Four Corners and the townhomes near downtown Silver Spring. Grassgodz connects homeowners across all these neighborhoods with reliable, vetted local lawn care professionals.',
     'Maryland\'s mix of clay and loam soils, combined with hot summers and heavy fall leaf coverage from mature trees, makes lawn maintenance both essential and challenging in Silver Spring. Our local pros understand these conditions and bring the right equipment and expertise to every job.',
@@ -37,7 +37,7 @@ const city = {
     '@graph': [
       {
         '@type': 'LocalBusiness',
-        name: 'Grassgodz — Lawn Care Silver Spring MD',
+        name: 'Grassgodz - Lawn Care Silver Spring MD',
         description: 'Lawn care marketplace connecting Silver Spring MD homeowners with vetted local pros.',
         url: 'https://grassgodz.com/lawn-care/silver-spring-md',
         areaServed: { '@type': 'City', name: 'Silver Spring', addressRegion: 'MD' },

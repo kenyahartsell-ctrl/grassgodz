@@ -1,9 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /redirect
-Disallow: /customer
-Disallow: /provider
-Disallow: /internal/
 
 Sitemap: https://www.grassgodz.com/sitemap.xml

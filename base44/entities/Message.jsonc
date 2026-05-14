@@ -46,10 +46,10 @@
     "read": {
       "$or": [
         {
-          "data.customer_email": "{{user.email}}"
+          "data.sender_id": "{{user.email}}"
         },
         {
-          "data.provider_email": "{{user.email}}"
+          "data.recipient_email": "{{user.email}}"
         },
         {
           "user_condition": {

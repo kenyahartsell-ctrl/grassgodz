@@ -34,6 +34,11 @@ import ProviderLinksPage from '@/pages/ProviderLinksPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import ProviderOnboardingPage from '@/pages/ProviderOnboardingPage';
 import ProviderFinancialsPage from '@/pages/ProviderFinancialsPage';
+import WashingtonDCPage from '@/pages/city/WashingtonDCPage';
+import ArlingtonVAPage from '@/pages/city/ArlingtonVAPage';
+import AlexandriaVAPage from '@/pages/city/AlexandriaVAPage';
+import SilverSpringMDPage from '@/pages/city/SilverSpringMDPage';
+import BethesdaMDPage from '@/pages/city/BethesdaMDPage';
 
 function CustomerApp() {
   return <CustomerPortal />;
@@ -103,6 +108,13 @@ const AuthenticatedApp = () => {
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
       <Route path="/provider/financials" element={<ProviderFinancialsPage />} />
       <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
+
+      {/* City SEO landing pages */}
+      <Route path="/lawn-care/washington-dc" element={<WashingtonDCPage />} />
+      <Route path="/lawn-care/arlington-va" element={<ArlingtonVAPage />} />
+      <Route path="/lawn-care/alexandria-va" element={<AlexandriaVAPage />} />
+      <Route path="/lawn-care/silver-spring-md" element={<SilverSpringMDPage />} />
+      <Route path="/lawn-care/bethesda-md" element={<BethesdaMDPage />} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

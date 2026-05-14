@@ -32,6 +32,11 @@
         "failed"
       ],
       "default": "authorized"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional notes or description about this payment",
+      "maxLength": 1000
     }
   },
   "required": [
@@ -57,12 +62,6 @@
           "created_by": "{{user.email}}"
         },
         {
-          "data.customer_id": "{{user.id}}"
-        },
-        {
-          "data.provider_id": "{{user.id}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
@@ -75,12 +74,6 @@
           "created_by": "{{user.email}}"
         },
         {
-          "data.customer_id": "{{user.id}}"
-        },
-        {
-          "data.provider_id": "{{user.id}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
@@ -88,9 +81,13 @@
       ]
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     }
   }
 }

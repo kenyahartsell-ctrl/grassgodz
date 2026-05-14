@@ -26,6 +26,11 @@
     "notification_sent": {
       "type": "boolean",
       "default": false
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional notes about this weather cancellation",
+      "maxLength": 1000
     }
   },
   "required": [

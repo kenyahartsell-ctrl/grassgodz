@@ -27,6 +27,11 @@
     "default_payment_method_id": {
       "type": "string"
     },
+    "description": {
+      "type": "string",
+      "description": "Optional notes or description about this customer profile",
+      "maxLength": 1000
+    },
     "notify_new_quote": {
       "type": "boolean",
       "default": true,
@@ -67,7 +72,7 @@
     "read": {
       "$or": [
         {
-          "data.user_email": "{{user.email}}"
+          "created_by": "{{user.email}}"
         },
         {
           "user_condition": {
@@ -79,7 +84,7 @@
     "update": {
       "$or": [
         {
-          "data.user_email": "{{user.email}}"
+          "created_by": "{{user.email}}"
         },
         {
           "user_condition": {

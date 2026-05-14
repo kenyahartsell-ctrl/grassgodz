@@ -20,6 +20,11 @@
     "cached_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional notes about this zip code area",
+      "maxLength": 1000
     }
   },
   "required": [

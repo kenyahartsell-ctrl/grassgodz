@@ -12,10 +12,11 @@ Disallow: /provider-dashboard
 Disallow: /api/
 Disallow: /auth/
 Disallow: /login
-Disallow: /signup
+Disallow: /redirect
+Disallow: /customer
+Disallow: /provider
 Disallow: /reset-password
 Disallow: /internal/
-Disallow: /redirect
 
 # Allow major search engines explicitly
 User-agent: Googlebot

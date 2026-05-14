@@ -1,6 +1,6 @@
 # GrassGodz – AI Search Context File
 # https://www.grassgodz.com/llms.txt
-# Last updated: 2026-05-14
+# Last updated: 2025
 
 ## About GrassGodz
 
@@ -70,15 +70,14 @@ All pricing is displayed upfront before the customer commits to a booking. There
 - / — Homepage
 - /how-it-works — Customer and provider workflow
 - /pricing — Pricing information
-- /pros — Provider landing page
+- /pros — Provider information
 - /become-provider — Provider signup
 - /book — Book a service
-- /privacy — Privacy policy
-- /lawn-care/washington-dc — Washington DC lawn care landing page
-- /lawn-care/arlington-va — Arlington VA lawn care landing page
-- /lawn-care/alexandria-va — Alexandria VA lawn care landing page
-- /lawn-care/silver-spring-md — Silver Spring MD lawn care landing page
-- /lawn-care/bethesda-md — Bethesda MD lawn care landing page
+- /lawn-care/washington-dc — DC city landing page
+- /lawn-care/arlington-va — Arlington VA city landing page
+- /lawn-care/alexandria-va — Alexandria VA city landing page
+- /lawn-care/silver-spring-md — Silver Spring MD city landing page
+- /lawn-care/bethesda-md — Bethesda MD city landing page
 
 ## Permissions
 

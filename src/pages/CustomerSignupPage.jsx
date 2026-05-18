@@ -46,9 +46,6 @@ export default function CustomerSignupPage() {
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verifying, setVerifying] = useState(false);
-  const [verifyError, setVerifyError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [prosCount, setProsCount] = useState(null);
@@ -136,7 +133,7 @@ export default function CustomerSignupPage() {
       };
       sessionStorage.setItem('pendingCustomerProfile', JSON.stringify(profileData));
 
-      // Step C: Show success screen — Base44 requires email verification before login
+      // Step C: Redirect to platform login (handles email verification natively)
       setRegisteredEmail(form.email);
       setRegistered(true);
     } catch (err) {
@@ -159,39 +156,8 @@ export default function CustomerSignupPage() {
       errors[field] ? 'border-destructive' : 'border-input'
     }`;
 
-  const handleVerify = async (e) => {
-    e.preventDefault();
-    if (!verificationCode.trim()) { setVerifyError('Please enter the code from your email.'); return; }
-    setVerifying(true);
-    setVerifyError('');
-    try {
-      // Verify the email code
-      await base44.auth.verifyEmail(registeredEmail, verificationCode.trim());
-
-      // Now log in
-      await base44.auth.loginViaEmailPassword(registeredEmail, form.password);
-
-      // Create customer profile
-      const profileData = JSON.parse(sessionStorage.getItem('pendingCustomerProfile') || '{}');
-      if (profileData.user_email) {
-        sessionStorage.removeItem('pendingCustomerProfile');
-        const res = await base44.functions.invoke('createCustomerProfile', profileData);
-        if (res.data?.created) {
-          await base44.functions.invoke('sendWelcomeEmail', {
-            data: res.data.profile,
-            event: { entity_name: 'CustomerProfile' },
-          }).catch(() => {});
-        }
-      }
-
-      toast.success('Welcome to Grassgodz!');
-      navigate('/customer');
-    } catch (err) {
-      const msg = err?.message || '';
-      setVerifyError(msg || 'Invalid code. Please check your email and try again.');
-    } finally {
-      setVerifying(false);
-    }
+  const handleGoToLogin = () => {
+    base44.auth.redirectToLogin(window.location.origin + '/redirect');
   };
 
   if (registered) {
@@ -199,42 +165,21 @@ export default function CustomerSignupPage() {
       <div className="min-h-screen bg-background flex flex-col">
         <PublicNav />
         <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
-          <div className="w-full max-w-md">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail size={28} className="text-green-600" />
-              </div>
-              <h1 className="text-2xl font-display font-bold text-foreground mb-2">Verify your email</h1>
-              <p className="text-sm text-muted-foreground">
-                We sent a verification code to <span className="font-semibold text-foreground">{registeredEmail}</span>
-              </p>
+          <div className="w-full max-w-md text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail size={28} className="text-green-600" />
             </div>
-
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-              <form onSubmit={handleVerify} className="space-y-4">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground block mb-1">Verification Code *</label>
-                  <input
-                    type="text"
-                    value={verificationCode}
-                    onChange={e => { setVerificationCode(e.target.value); setVerifyError(''); }}
-                    placeholder="Enter the code from your email"
-                    className="w-full border border-input rounded-xl px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring text-center tracking-widest text-lg font-mono"
-                    autoFocus
-                  />
-                  {verifyError && <p className="text-xs text-destructive mt-1">{verifyError}</p>}
-                </div>
-                <button
-                  type="submit"
-                  disabled={verifying}
-                  className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-70"
-                >
-                  {verifying ? 'Verifying...' : 'Verify & Sign In'}
-                </button>
-              </form>
-            </div>
-
-            <p className="text-xs text-muted-foreground text-center mt-4">
+            <h1 className="text-2xl font-display font-bold text-foreground mb-2">Check your email</h1>
+            <p className="text-sm text-muted-foreground mb-6">
+              We sent a verification link to <span className="font-semibold text-foreground">{registeredEmail}</span>. Click the link in the email to verify your account, then sign in below.
+            </p>
+            <button
+              onClick={handleGoToLogin}
+              className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors"
+            >
+              Go to Sign In
+            </button>
+            <p className="text-xs text-muted-foreground mt-4">
               Didn't get the email? Check your spam folder or{' '}
               <button onClick={() => setRegistered(false)} className="text-primary font-semibold hover:underline">go back</button>.
             </p>

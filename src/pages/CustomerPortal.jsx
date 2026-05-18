@@ -76,23 +76,50 @@ export default function CustomerPortal() {
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
 
   const handleRequestJob = async (data) => {
-    const job = await base44.entities.Job.create({
+    const baseJobData = {
       customer_id: customerProfile?.id || user.email,
       customer_name: user.full_name,
       customer_email: user.email,
       status: 'requested',
       ...data,
-    });
-    // Send confirmation notification
+    };
+
+    const job = await base44.entities.Job.create(baseJobData);
+
+    // Auto-create recurring future jobs (4 occurrences ahead)
+    const newJobs = [{ ...job, _providerProfile: null }];
+    if (data.recurrence === 'weekly' || data.recurrence === 'biweekly') {
+      const intervalDays = data.recurrence === 'weekly' ? 7 : 14;
+      const startDate = new Date(data.scheduled_date);
+      const recurringCreates = [];
+      for (let i = 1; i <= 4; i++) {
+        const nextDate = new Date(startDate);
+        nextDate.setDate(startDate.getDate() + intervalDays * i);
+        recurringCreates.push(base44.entities.Job.create({
+          ...baseJobData,
+          scheduled_date: nextDate.toISOString().split('T')[0],
+          recurrence_parent_id: job.id,
+        }));
+      }
+      const futureJobs = await Promise.all(recurringCreates);
+      futureJobs.forEach(j => newJobs.push({ ...j, _providerProfile: null }));
+    }
+
     base44.functions.invoke('notifyQuoteSubmitted', {
       job_id: job.id,
       customer_email: user.email,
       customer_name: user.full_name,
       service_name: data.service_name,
     }).catch(() => {});
-    setJobs(prev => [...prev, { ...job, _providerProfile: null }]);
+
+    setJobs(prev => [...prev, ...newJobs]);
     setTab('quotes');
-    toast.success('Quote request submitted! Providers in your area will respond shortly.');
+    const msg = data.recurrence === 'weekly'
+      ? 'Weekly cuts scheduled! 5 jobs posted for providers in your area.'
+      : data.recurrence === 'biweekly'
+      ? 'Bi-weekly cuts scheduled! 5 jobs posted for providers in your area.'
+      : 'Quote request submitted! Providers in your area will respond shortly.';
+    toast.success(msg);
   };
 
   const handleAcceptQuote = async (quote) => {

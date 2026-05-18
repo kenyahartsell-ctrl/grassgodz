@@ -1,12 +1,17 @@
 import { useState } from 'react';
-import { X, MapPin, Calendar, FileText } from 'lucide-react';
+import { X, MapPin, Calendar, FileText, RefreshCw } from 'lucide-react';
+
+const LAWN_KEYWORDS = ['mow', 'mowing', 'grass', 'lawn', 'cut'];
+const isLawnService = (name) => LAWN_KEYWORDS.some(k => name?.toLowerCase().includes(k));
 
 export default function RequestJobModal({ service, onClose, onSubmit, customerProfile }) {
+  const showRecurrence = isLawnService(service.name);
   const [form, setForm] = useState({
     address: customerProfile?.service_address || '',
     zip_code: customerProfile?.zip_code || '',
     scheduled_date: '',
     customer_notes: '',
+    recurrence: 'one_time',
   });
 
   const handleSubmit = (e) => {
@@ -63,6 +68,38 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
+          {showRecurrence && (
+            <div>
+              <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-2">
+                <RefreshCw size={13} className="text-primary" /> How often do you need this?
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: 'one_time', label: 'One Time' },
+                  { value: 'weekly', label: 'Weekly' },
+                  { value: 'biweekly', label: 'Bi-Weekly' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, recurrence: opt.value }))}
+                    className={`py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                      form.recurrence === opt.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-input hover:border-primary/50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {form.recurrence !== 'one_time' && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  We'll automatically post your next {form.recurrence === 'weekly' ? '4 weekly' : '4 bi-weekly'} cuts so providers can plan ahead.
+                </p>
+              )}
+            </div>
+          )}
           <div>
             <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
               <FileText size={13} className="text-primary" /> Notes for Provider (optional)

@@ -46,6 +46,20 @@
       "type": "string",
       "format": "date"
     },
+    "recurrence": {
+      "type": "string",
+      "enum": [
+        "one_time",
+        "weekly",
+        "biweekly"
+      ],
+      "default": "one_time",
+      "description": "How often this recurring service should repeat"
+    },
+    "recurrence_parent_id": {
+      "type": "string",
+      "description": "ID of the original job this was auto-generated from (for recurring jobs)"
+    },
     "status": {
       "type": "string",
       "enum": [

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle } from 'lucide-react';
 import AdminPriceAdjustModal from '@/components/admin/AdminPriceAdjustModal';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
@@ -128,6 +128,17 @@ export default function AdminPortal() {
     await base44.entities.Job.update(job.id, { status: 'cancelled' });
     setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'cancelled' } : j));
     toast.success('Job cancelled.');
+  };
+
+  const handleCompleteJob = async (job) => {
+    if (!window.confirm(`Mark "${job.service_name}" for ${job.customer_name} as complete? This will also capture payment if authorized.`)) return;
+    try {
+      await base44.functions.invoke('jobCompletedPaymentFlow', { job_id: job.id });
+      setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'completed' } : j));
+      toast.success('Job marked as complete and payment captured.');
+    } catch (err) {
+      toast.error('Failed to complete job: ' + err.message);
+    }
   };
 
   const handleDeleteJob = async (job) => {
@@ -325,6 +336,11 @@ export default function AdminPortal() {
                       </Link>
                       {!['completed', 'cancelled'].includes(j.status) && (
                         <button onClick={() => setAssigningJob(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
+                      )}
+                      {!['completed', 'cancelled'].includes(j.status) && (
+                        <button onClick={() => handleCompleteJob(j)} className="px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center gap-1">
+                          <CheckCircle size={12} /> Complete
+                        </button>
                       )}
                       {!['completed', 'cancelled'].includes(j.status) && (
                         <button onClick={() => handleCancelJob(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>

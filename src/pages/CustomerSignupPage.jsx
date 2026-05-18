@@ -5,6 +5,7 @@ import PublicNav from '@/components/public/PublicNav';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
+// signup-v3
 const LOGO_URL = 'https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png';
 
 function PasswordStrength({ password }) {

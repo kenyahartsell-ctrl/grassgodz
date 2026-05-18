@@ -169,17 +169,23 @@ export default function CustomerSignupPage() {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Mail size={28} className="text-green-600" />
             </div>
-            <h1 className="text-2xl font-display font-bold text-foreground mb-2">Check your email</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground mb-2">Account created!</h1>
+            <p className="text-sm text-muted-foreground mb-2">
+              We sent a verification link to <span className="font-semibold text-foreground">{registeredEmail}</span>.
+            </p>
             <p className="text-sm text-muted-foreground mb-6">
-              We sent a verification link to <span className="font-semibold text-foreground">{registeredEmail}</span>. Click the link in the email to verify your account, then sign in below.
+              Check your email, click the verification link, then sign in below.
             </p>
             <button
               onClick={handleGoToLogin}
-              className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors"
+              className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors mb-3"
             >
-              Go to Sign In
+              Go to Sign In →
             </button>
-            <p className="text-xs text-muted-foreground mt-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-800 mb-4">
+              <strong>Already verified?</strong> Just click "Go to Sign In" above — no code entry needed.
+            </div>
+            <p className="text-xs text-muted-foreground">
               Didn't get the email? Check your spam folder or{' '}
               <button onClick={() => setRegistered(false)} className="text-primary font-semibold hover:underline">go back</button>.
             </p>

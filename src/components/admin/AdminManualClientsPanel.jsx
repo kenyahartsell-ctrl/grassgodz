@@ -222,9 +222,40 @@ export default function AdminManualClientsPanel({ allJobs }) {
     const created = await base44.entities.ManualClient.create(data);
     setClients(prev => [created, ...prev]);
     setShowForm(false);
-    toast.success(`${data.client_name} added. First job will be created on ${data.next_job_date}.`);
-    // Immediately trigger job creation for the new active client
-    base44.functions.invoke('createManualClientJobs', {}).catch(() => {});
+
+    // Immediately create the first job so it appears in Available Jobs right away
+    try {
+      await base44.entities.Job.create({
+        customer_id: 'manual_' + created.id,
+        customer_name: created.client_name,
+        customer_email: null,
+        service_id: 'manual',
+        service_name: created.service_type,
+        address: created.address,
+        zip_code: created.zip_code,
+        scheduled_date: created.next_job_date,
+        customer_notes: created.notes || '',
+        recurrence: 'biweekly',
+        recurrence_parent_id: created.id,
+        status: 'requested',
+        is_cash_job: true,
+        payment_method: 'cash',
+        quoted_price: 0,
+      });
+
+      // Advance next_job_date by 2 weeks
+      const nextDate = new Date(created.next_job_date);
+      nextDate.setDate(nextDate.getDate() + 14);
+      await base44.entities.ManualClient.update(created.id, {
+        last_job_created_at: new Date().toISOString(),
+        next_job_date: nextDate.toISOString().split('T')[0],
+      });
+      setClients(prev => prev.map(c => c.id === created.id ? { ...c, next_job_date: nextDate.toISOString().split('T')[0] } : c));
+
+      toast.success(`${data.client_name} added and job posted to Available Jobs.`);
+    } catch (err) {
+      toast.success(`${data.client_name} added.`);
+    }
   };
 
   const activeCount = clients.filter(c => c.status === 'active').length;

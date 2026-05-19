@@ -223,44 +223,12 @@ export default function AdminManualClientsPanel({ allJobs }) {
     setClients(prev => [created, ...prev]);
     setShowForm(false);
 
-    // Immediately create the first job so it appears in Available Jobs right away
+    // Use backend function (service role) to create profile + job
     try {
-      // Create a CustomerProfile for this manual client so jobs work correctly
-      const profile = await base44.entities.CustomerProfile.create({
-        user_email: `manual_${created.id}@grassgodz.internal`,
-        name: created.client_name,
-        service_address: created.address,
-        zip_code: created.zip_code,
-        billing_address: created.address,
-      });
-
-      await base44.entities.Job.create({
-        customer_id: profile.id,
-        customer_name: created.client_name,
-        customer_email: null,
-        service_id: 'manual',
-        service_name: created.service_type,
-        address: created.address,
-        zip_code: created.zip_code,
-        scheduled_date: created.next_job_date,
-        customer_notes: created.notes || '',
-        recurrence: 'biweekly',
-        recurrence_parent_id: created.id,
-        status: 'requested',
-        is_cash_job: true,
-        payment_method: 'cash',
-        quoted_price: 0,
-      });
-
-      // Advance next_job_date by 2 weeks
-      const nextDate = new Date(created.next_job_date);
-      nextDate.setDate(nextDate.getDate() + 14);
-      await base44.entities.ManualClient.update(created.id, {
-        last_job_created_at: new Date().toISOString(),
-        next_job_date: nextDate.toISOString().split('T')[0],
-      });
-      setClients(prev => prev.map(c => c.id === created.id ? { ...c, next_job_date: nextDate.toISOString().split('T')[0] } : c));
-
+      const res = await base44.functions.invoke('createManualClientJob', { client_id: created.id });
+      if (res.data?.next_job_date) {
+        setClients(prev => prev.map(c => c.id === created.id ? { ...c, next_job_date: res.data.next_job_date } : c));
+      }
       toast.success(`${data.client_name} added and job posted to Available Jobs.`);
     } catch (err) {
       toast.success(`${data.client_name} added.`);

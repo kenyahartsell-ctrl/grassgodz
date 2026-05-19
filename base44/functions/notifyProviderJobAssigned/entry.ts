@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       ? new Date(scheduled_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
       : 'TBD';
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
+    try { await base44.asServiceRole.integrations.Core.SendEmail({
       to: provider_email,
       subject: `New job assigned to you: ${service_name} 🌿`,
       body: `
@@ -48,7 +48,7 @@ Please log in to your Grassgodz provider portal to review and confirm this job.
 Thanks,<br/>
 The Grassgodz Team
       `.trim(),
-    });
+    }); } catch (_emailErr) { /* provider not registered in app — skip email */ }
 
     return Response.json({ success: true, sent_to: provider_email });
   } catch (error) {

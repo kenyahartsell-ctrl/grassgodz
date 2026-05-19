@@ -12,16 +12,31 @@ Deno.serve(async (req) => {
 
     let created = 0;
     for (const client of clients) {
-      // Check if it's time to create a new job
       const nextDate = client.next_job_date ? new Date(client.next_job_date) : null;
 
       if (!nextDate || nextDate <= today) {
-        // Create the job
         const scheduledDate = nextDate || today;
         const scheduledDateStr = scheduledDate.toISOString().split('T')[0];
 
+        // Find or create a CustomerProfile for this manual client
+        const internalEmail = `manual_${client.id}@grassgodz.internal`;
+        let profileId = null;
+        const existingProfiles = await base44.asServiceRole.entities.CustomerProfile.filter({ user_email: internalEmail });
+        if (existingProfiles.length > 0) {
+          profileId = existingProfiles[0].id;
+        } else {
+          const profile = await base44.asServiceRole.entities.CustomerProfile.create({
+            user_email: internalEmail,
+            name: client.client_name,
+            service_address: client.address,
+            zip_code: client.zip_code,
+            billing_address: client.address,
+          });
+          profileId = profile.id;
+        }
+
         await base44.asServiceRole.entities.Job.create({
-          customer_id: 'manual_' + client.id,
+          customer_id: profileId,
           customer_name: client.client_name,
           customer_email: null,
           service_id: 'manual',

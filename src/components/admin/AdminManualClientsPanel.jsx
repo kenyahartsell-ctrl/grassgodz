@@ -225,8 +225,17 @@ export default function AdminManualClientsPanel({ allJobs }) {
 
     // Immediately create the first job so it appears in Available Jobs right away
     try {
+      // Create a CustomerProfile for this manual client so jobs work correctly
+      const profile = await base44.entities.CustomerProfile.create({
+        user_email: `manual_${created.id}@grassgodz.internal`,
+        name: created.client_name,
+        service_address: created.address,
+        zip_code: created.zip_code,
+        billing_address: created.address,
+      });
+
       await base44.entities.Job.create({
-        customer_id: 'manual_' + created.id,
+        customer_id: profile.id,
         customer_name: created.client_name,
         customer_email: null,
         service_id: 'manual',

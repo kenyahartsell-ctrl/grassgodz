@@ -1,0 +1,124 @@
+{
+  "name": "Invoice",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "Optional linked Job ID"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "customer_email": {
+      "type": "string"
+    },
+    "service_address": {
+      "type": "string"
+    },
+    "service_description": {
+      "type": "string"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "labor",
+              "supply"
+            ]
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "line_total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "labor_subtotal": {
+      "type": "number"
+    },
+    "supplies_subtotal": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "tax_rate": {
+      "type": "number",
+      "default": 0.06
+    },
+    "tax_amount": {
+      "type": "number"
+    },
+    "total": {
+      "type": "number"
+    },
+    "stripe_payment_link": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "paid",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "due_before_start": {
+      "type": "boolean",
+      "default": true
+    },
+    "created_by_admin": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "customer_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.customer_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

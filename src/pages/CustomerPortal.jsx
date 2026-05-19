@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText } from 'lucide-react';
+import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt } from 'lucide-react';
+import CustomerInvoicesPanel from '@/components/customer/CustomerInvoicesPanel';
 import ServiceCard from '../components/customer/ServiceCard';
 import RequestJobModal from '../components/customer/RequestJobModal';
 import JobCard from '../components/customer/JobCard';
@@ -17,6 +18,7 @@ const NAV = [
   { key: 'book', label: 'Book', icon: CalendarPlus },
   { key: 'jobs', label: 'My Jobs', icon: Briefcase },
   { key: 'quotes', label: 'Quotes', icon: FileText, badge: true },
+  { key: 'invoices', label: 'Invoices', icon: Receipt },
   { key: 'profile', label: 'Account', icon: User },
 ];
 
@@ -372,6 +374,14 @@ export default function CustomerPortal() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'invoices' && (
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-2">Invoices</h2>
+            <p className="text-sm text-muted-foreground mb-4">Review and pay your invoices from GrassGodz.</p>
+            <CustomerInvoicesPanel userEmail={user?.email} />
           </div>
         )}
 

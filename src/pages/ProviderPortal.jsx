@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2, FileText } from 'lucide-react';
+import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2, FileText, Clock } from 'lucide-react';
 import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
 import BookingRequestCard from '../components/provider/BookingRequestCard';
@@ -32,6 +32,7 @@ export default function ProviderPortal() {
   const [bookingRequests, setBookingRequests] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [unpaidInvoiceJobIds, setUnpaidInvoiceJobIds] = useState(new Set());
 
   useEffect(() => {
     async function loadData() {
@@ -75,6 +76,13 @@ export default function ProviderPortal() {
           const myReviews = await base44.entities.Review.filter({ provider_id: profile.id });
           setReviews(myReviews);
         }
+
+        // Load unpaid invoices to warn provider
+        try {
+          const invoices = await base44.entities.Invoice.filter({ status: 'sent' });
+          const jobIds = new Set(invoices.filter(i => i.job_id).map(i => i.job_id));
+          setUnpaidInvoiceJobIds(jobIds);
+        } catch {}
       } catch (err) {
         toast.error('Failed to load data.');
       } finally {
@@ -423,7 +431,17 @@ export default function ProviderPortal() {
               <div className="mb-5">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Scheduled</h3>
                 <div className="space-y-3">
-                  {scheduled.map(j => <ProviderJobCard key={j.id} job={j} onMarkInProgress={handleMarkInProgress} onMarkComplete={handleMarkComplete} />)}
+                  {scheduled.map(j => (
+                    <div key={j.id}>
+                      {unpaidInvoiceJobIds.has(j.id) && (
+                        <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-t-xl px-3 py-2 -mb-1">
+                          <Clock size={12} className="flex-shrink-0" />
+                          Awaiting customer payment before job can begin.
+                        </div>
+                      )}
+                      <ProviderJobCard job={j} onMarkInProgress={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkInProgress} onMarkComplete={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkComplete} />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

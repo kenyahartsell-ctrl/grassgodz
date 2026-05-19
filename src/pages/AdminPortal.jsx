@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt } from 'lucide-react';
+import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
 import AdminPriceAdjustModal from '@/components/admin/AdminPriceAdjustModal';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
@@ -29,6 +30,7 @@ const NAV = [
   { key: 'support', label: 'Support', icon: MessageSquare },
   { key: 'email', label: 'Email', icon: Mail },
   { key: 'manual', label: 'Manual', icon: Banknote },
+  { key: 'invoices', label: 'Invoices', icon: Receipt },
 ];
 
 export default function AdminPortal() {
@@ -438,6 +440,12 @@ export default function AdminPortal() {
         {tab === 'manual' && (
           <div>
             <AdminManualClientsPanel allJobs={jobs} />
+          </div>
+        )}
+
+        {tab === 'invoices' && (
+          <div>
+            <AdminInvoiceBuilder allJobs={jobs} />
           </div>
         )}
 

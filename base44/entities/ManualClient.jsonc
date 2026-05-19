@@ -1,0 +1,80 @@
+{
+  "name": "ManualClient",
+  "type": "object",
+  "properties": {
+    "client_name": {
+      "type": "string",
+      "description": "Name of the cash client"
+    },
+    "address": {
+      "type": "string",
+      "description": "Service address"
+    },
+    "zip_code": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string",
+      "description": "e.g. Lawn Mowing"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Special instructions about the client or property"
+    },
+    "preferred_day": {
+      "type": "string",
+      "description": "Preferred day of week e.g. Monday"
+    },
+    "preferred_time": {
+      "type": "string",
+      "description": "Preferred time e.g. Morning, Afternoon"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "stopped"
+      ],
+      "default": "active",
+      "description": "active = auto-create jobs every 2 weeks, paused = no new jobs, stopped = permanently ended"
+    },
+    "next_job_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the next recurring job should be created"
+    },
+    "last_job_created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "client_name",
+    "address",
+    "zip_code",
+    "service_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

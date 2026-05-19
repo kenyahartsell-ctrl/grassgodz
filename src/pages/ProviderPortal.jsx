@@ -140,6 +140,17 @@ export default function ProviderPortal() {
     toast.error(`Booking for ${booking.customer_name} declined.`);
   };
 
+  const handleAcceptCashJob = async (job) => {
+    await base44.entities.Job.update(job.id, {
+      provider_id: providerProfile.id,
+      provider_name: providerProfile.business_name || providerProfile.name,
+      provider_email: user.email,
+      status: 'scheduled',
+    });
+    await refreshJobs();
+    toast.success(`Cash job accepted! ${job.service_name} for ${job.customer_name} is now scheduled.`);
+  };
+
   const handleSubmitQuote = async (job, quoteData) => {
     const quote = await base44.entities.Quote.create({
       job_id: job.id,
@@ -380,7 +391,7 @@ export default function ProviderPortal() {
             ) : (
               <div className="space-y-3">
                 {availableJobs.map(job => (
-                  <AvailableJobCard key={job.id} job={job} onSubmitQuote={handleSubmitQuote} onboardingComplete={providerProfile?.onboarding_complete} />
+                  <AvailableJobCard key={job.id} job={job} onSubmitQuote={handleSubmitQuote} onAcceptCashJob={handleAcceptCashJob} onboardingComplete={providerProfile?.onboarding_complete} />
                 ))}
               </div>
             )}

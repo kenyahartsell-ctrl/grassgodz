@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Calendar, MapPin, FileText, DollarSign, ChevronDown, ChevronUp, Send, AlertCircle } from 'lucide-react';
+import { Calendar, MapPin, FileText, DollarSign, ChevronDown, ChevronUp, Send, AlertCircle, Banknote, Check } from 'lucide-react';
 
-export default function AvailableJobCard({ job, onSubmitQuote, onboardingComplete = true }) {
+export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, onboardingComplete = true }) {
   const [expanded, setExpanded] = useState(false);
   const [quoteForm, setQuoteForm] = useState({ price: '', message: '' });
   const [showForm, setShowForm] = useState(false);
+  const isCash = job.is_cash_job || job.payment_method === 'cash';
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -17,7 +18,14 @@ export default function AvailableJobCard({ job, onSubmitQuote, onboardingComplet
     <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground text-sm">{job.service_name}</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-foreground text-sm">{job.service_name}</h3>
+            {isCash && (
+              <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                <Banknote size={10} /> Cash Pay
+              </span>
+            )}
+          </div>
           <div className="mt-1.5 space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Calendar size={11} />
@@ -43,14 +51,27 @@ export default function AvailableJobCard({ job, onSubmitQuote, onboardingComplet
             </div>
           )}
 
-          {!onboardingComplete && (
+          {!onboardingComplete && !isCash && (
             <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2">
               <AlertCircle size={12} className="flex-shrink-0" />
               <span>Complete your payment setup to receive payouts</span>
             </div>
           )}
 
-          {!showForm ? (
+          {isCash ? (
+            <div className="space-y-2">
+              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800">
+                <strong>Cash payment</strong> — collect payment directly from the client after completing the job.
+              </div>
+              <button
+                onClick={() => onAcceptCashJob && onAcceptCashJob(job)}
+                className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+              >
+                <Check size={14} />
+                Accept Job
+              </button>
+            </div>
+          ) : !showForm ? (
             <button
               onClick={() => setShowForm(true)}
               className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"

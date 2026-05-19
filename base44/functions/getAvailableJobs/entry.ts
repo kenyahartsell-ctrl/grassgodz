@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ jobs: [] }, { status: 401 });
 
-    // Use service role to reliably fetch all requested, unassigned jobs
+    // Use service role to reliably fetch all requested, unassigned jobs (including cash/manual jobs)
     const jobs = await base44.asServiceRole.entities.Job.filter({ status: 'requested' });
     const unassigned = jobs.filter(j => !j.provider_id);
 

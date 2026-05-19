@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote } from 'lucide-react';
 import AdminPriceAdjustModal from '@/components/admin/AdminPriceAdjustModal';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
@@ -9,6 +9,7 @@ import AdminAssignProviderModal from '@/components/admin/AdminAssignProviderModa
 import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
 import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
 import AdminEmailPanel from '@/components/admin/AdminEmailPanel';
+import AdminManualClientsPanel from '@/components/admin/AdminManualClientsPanel';
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
@@ -27,6 +28,7 @@ const NAV = [
   { key: 'payments', label: 'Payments', icon: CreditCard },
   { key: 'support', label: 'Support', icon: MessageSquare },
   { key: 'email', label: 'Email', icon: Mail },
+  { key: 'manual', label: 'Manual', icon: Banknote },
 ];
 
 export default function AdminPortal() {
@@ -430,6 +432,12 @@ export default function AdminPortal() {
               <p className="text-sm text-muted-foreground">Send emails to customers or providers directly from here.</p>
             </div>
             <AdminEmailPanel />
+          </div>
+        )}
+
+        {tab === 'manual' && (
+          <div>
+            <AdminManualClientsPanel allJobs={jobs} />
           </div>
         )}
 

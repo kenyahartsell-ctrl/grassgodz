@@ -176,6 +176,18 @@
     },
     "subscription_id": {
       "type": "string"
+    },
+    "is_cash_job": {
+      "type": "boolean",
+      "default": false
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "cash"
+      ],
+      "default": "stripe"
     }
   },
   "required": [
@@ -186,7 +198,16 @@
   ],
   "rls": {
     "create": {
-      "data.customer_id": "{{user.id}}"
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "read": {
       "$or": [

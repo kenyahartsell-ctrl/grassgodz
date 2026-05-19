@@ -39,22 +39,16 @@ export default function CustomerPortal() {
         const me = await base44.auth.me();
         setUser(me);
 
-        const [profiles, allServices, myJobs, myReviews, allProviders] = await Promise.all([
+        const [profiles, allServices, myJobs, myReviews] = await Promise.all([
           base44.entities.CustomerProfile.filter({ user_email: me.email }),
           base44.entities.Service.filter({ active: true }),
           base44.entities.Job.filter({ customer_email: me.email }),
           base44.entities.Review.filter({ customer_id: me.email }),
-          base44.entities.ProviderProfile.list(),
         ]);
 
         setCustomerProfile(profiles[0] || null);
         setServices(allServices);
-        // Attach provider profile data to each job
-        const providerMap = Object.fromEntries(allProviders.map(p => [p.id, p]));
-        setJobs(myJobs.map(j => ({
-          ...j,
-          _providerProfile: j.provider_id ? providerMap[j.provider_id] || null : null,
-        })));
+        setJobs(myJobs.map(j => ({ ...j, _providerProfile: null })));
         setReviews(myReviews);
       } catch (err) {
         toast.error('Failed to load data.');

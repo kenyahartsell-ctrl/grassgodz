@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt } from 'lucide-react';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
+import AdminEditJobModal from '@/components/admin/AdminEditJobModal';
 import AdminPriceAdjustModal from '@/components/admin/AdminPriceAdjustModal';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
@@ -47,6 +48,7 @@ export default function AdminPortal() {
   const [assigningJob, setAssigningJob] = useState(null);
   const [viewingPhotos, setViewingPhotos] = useState(null);
   const [adjustingPayment, setAdjustingPayment] = useState(null); // { payment, job }
+  const [editingJob, setEditingJob] = useState(null);
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -338,6 +340,7 @@ export default function AdminPortal() {
                       >
                         View
                       </Link>
+                      <button onClick={() => setEditingJob(j)} className="px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors">Edit</button>
                       {!['completed', 'cancelled'].includes(j.status) && (
                         <button onClick={() => setAssigningJob(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
                       )}
@@ -476,6 +479,17 @@ export default function AdminPortal() {
           </div>
         )}
       </main>
+
+      {editingJob && (
+        <AdminEditJobModal
+          job={editingJob}
+          onClose={() => setEditingJob(null)}
+          onSaved={async () => {
+            const allJobs = await base44.entities.Job.list('-created_date', 100);
+            setJobs(allJobs);
+          }}
+        />
+      )}
 
       {assigningJob && (
         <AdminAssignProviderModal

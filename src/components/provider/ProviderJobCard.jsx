@@ -59,6 +59,7 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
 
   return (
     <>
+      <div className="relative">
       <Link to={`/jobs/${job.id}`} className="block">
         <div className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-all relative">
           <div className="flex items-start justify-between gap-3 mb-3">
@@ -209,6 +210,8 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
           </div>
         </div>
       </Link>
+
+      </div>
 
       {showPhotoModal && (
         <JobPhotoUploadModal

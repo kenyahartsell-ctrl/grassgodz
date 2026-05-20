@@ -65,7 +65,6 @@ function PhotoSlot({ slot, url, onUpload, uploading }) {
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={onUpload}
       />

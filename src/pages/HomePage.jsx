@@ -39,7 +39,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <PageMeta
-        title="Grassgodz — Lawn Care That Just Shows Up | DC Metro"
+        title="Grassgodz — The Godz of Lawn Care. Imagine your yard, perfected. | DC Metro"
         description="Book vetted local lawn care pros in the DC metro area. Honest pricing, insured pros, and zero hassle. Get a quote in 60 seconds."
         path="/"
       />

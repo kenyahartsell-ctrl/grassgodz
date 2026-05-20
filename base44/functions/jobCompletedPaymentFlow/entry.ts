@@ -14,6 +14,31 @@ Deno.serve(async (req) => {
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
+    // Mark job as completed
+    await base44.asServiceRole.entities.Job.update(job_id, {
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+    });
+
+    // Cash jobs: no Stripe processing needed
+    if (job.is_cash_job || job.payment_method === 'cash') {
+      const existingPayments = await base44.asServiceRole.entities.Payment.filter({ job_id });
+      if (existingPayments.length === 0) {
+        await base44.asServiceRole.entities.Payment.create({
+          job_id: job.id,
+          customer_id: job.customer_id,
+          provider_id: job.provider_id,
+          amount: job.final_price || job.quoted_price || 0,
+          platform_fee: 0,
+          payout_amount: job.final_price || job.quoted_price || 0,
+          stripe_payment_intent_id: '',
+          status: 'captured',
+          description: 'Cash payment — collected directly by provider',
+        });
+      }
+      return Response.json({ success: true, cash_job: true });
+    }
+
     const price = job.final_price || job.quoted_price;
     if (!price) return Response.json({ error: 'No price on job' }, { status: 400 });
 

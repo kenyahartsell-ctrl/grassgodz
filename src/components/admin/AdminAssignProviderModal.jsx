@@ -26,8 +26,8 @@ export default function AdminAssignProviderModal({ job, onClose, onAssigned }) {
       status: ['completed', 'cancelled', 'in_progress'].includes(job.status) ? job.status : 'accepted',
     });
 
-    // Send notification email to provider (best-effort — don't block on failure)
-    base44.functions.invoke('notifyProviderJobAssigned', { job_id: job.id }).catch(() => {});
+    // Send notification email to provider
+    await base44.functions.invoke('notifyProviderJobAssigned', { job_id: job.id });
 
     toast.success(`Job assigned to ${provider.name || provider.business_name}`);
     onAssigned();

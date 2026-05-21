@@ -242,9 +242,9 @@ export default function AdminCalendarPanel({ providers }) {
                             key={sj.id}
                             onClick={e => handleJobClick(e, sj)}
                             className={`text-[10px] font-medium px-1 py-0.5 rounded border truncate cursor-pointer ${getJobColor(sj)}`}
-                            title={`${sj.client_name} — ${sj.service_type}`}
+                            title={`${sj.client_name} — ${sj.service_type} · ${recurrenceLabel(sj.recurrence)}`}
                           >
-                            {sj.client_name}
+                            {sj.client_name} {sj.recurrence !== 'one_time' ? `· ${recurrenceLabel(sj.recurrence)}` : ''}
                           </div>
                         ))}
                         {dayJobs.length > 2 && (

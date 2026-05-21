@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import { X, Calendar, MapPin, FileText, Clock, ChevronLeft, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { X, Calendar, MapPin, FileText, Clock, ChevronLeft, ChevronRight, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+
+const RECURRENCE_OPTIONS = [
+  { value: 'one_time',  label: 'One Time Visit',                  sub: 'Single service, no repeat' },
+  { value: 'weekly',    label: 'Weekly Service',                   sub: 'Every week, same day' },
+  { value: 'biweekly',  label: 'Biweekly Service (Every 2 Weeks)', sub: 'Every other week, same day' },
+];
 
 const TIMES = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
 
@@ -20,6 +26,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
   const [calendarDate, setCalendarDate] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
+  const [recurrence, setRecurrence] = useState('one_time');
   const [form, setForm] = useState({
     address: customerProfile?.service_address || '',
     zip_code: customerProfile?.zip_code || '',
@@ -86,11 +93,13 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
       scheduled_date: selectedDateISO,
       scheduled_time: selectedTime,
       customer_notes: form.notes,
+      recurrence,
     });
     onClose();
   };
 
-  const STEPS = ['Service', 'Date & Time', 'Details', 'Confirm'];
+  const recurrenceLabel = RECURRENCE_OPTIONS.find(o => o.value === recurrence)?.label || 'One Time Visit';
+  const STEPS = ['Service', 'Frequency', 'Date & Time', 'Details', 'Confirm'];
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -99,7 +108,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
         <div className="flex items-center justify-between p-5 border-b border-border flex-shrink-0">
           <div>
             <h2 className="text-lg font-bold text-foreground">Book a Service</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Step {step} of 4 — {STEPS[step - 1]}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Step {step} of 5 — {STEPS[step - 1]}</p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-muted transition-colors">
             <X size={18} />
@@ -149,8 +158,41 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
             </div>
           )}
 
-          {/* Step 2: Date & Time */}
+          {/* Step 2: Frequency */}
           {step === 2 && (
+            <div>
+              <p className="text-sm font-medium text-foreground mb-4 flex items-center gap-1.5">
+                <RefreshCw size={14} className="text-primary" /> How often would you like this service?
+              </p>
+              <div className="space-y-3">
+                {RECURRENCE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setRecurrence(opt.value)}
+                    className={`w-full text-left flex items-center justify-between px-4 py-3.5 rounded-xl border-2 transition-all ${
+                      recurrence === opt.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40 hover:bg-muted/30'
+                    }`}
+                  >
+                    <div>
+                      <p className={`text-sm font-semibold ${recurrence === opt.value ? 'text-primary' : 'text-foreground'}`}>{opt.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{opt.sub}</p>
+                    </div>
+                    {recurrence === opt.value && <CheckCircle2 size={18} className="text-primary flex-shrink-0" />}
+                  </button>
+                ))}
+              </div>
+              {recurrence !== 'one_time' && (
+                <div className="mt-4 bg-secondary/60 border border-primary/20 rounded-xl px-4 py-3 text-xs text-secondary-foreground">
+                  ✓ After your first service, future visits will be automatically scheduled — no need to rebook each time.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Date & Time */}
+          {step === 3 && (
             <div>
               {/* Calendar */}
               <div className="mb-5">
@@ -224,8 +266,8 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
             </div>
           )}
 
-          {/* Step 3: Details */}
-          {step === 3 && (
+          {/* Step 4: Details */}
+          {step === 4 && (
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
@@ -262,8 +304,8 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
             </div>
           )}
 
-          {/* Step 4: Confirm */}
-          {step === 4 && (
+          {/* Step 5: Confirm */}
+          {step === 5 && (
             <div>
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-5 space-y-3 mb-5">
                 <h3 className="text-sm font-bold text-foreground">Booking Summary</h3>
@@ -285,6 +327,10 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
                     <span className="font-semibold text-foreground text-right max-w-[55%]">{form.address}</span>
                   </div>
                   <hr className="border-border" />
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Frequency</span>
+                    <span className="font-semibold text-foreground">{recurrenceLabel}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Estimated Price</span>
                     <span className="font-bold text-primary">From ${selectedService?.base_price_estimate}</span>
@@ -309,15 +355,15 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
             </button>
           )}
           <button
-            onClick={() => step < 4 ? setStep(s => s + 1) : handleSubmit()}
+            onClick={() => step < 5 ? setStep(s => s + 1) : handleSubmit()}
             disabled={
               (step === 1 && !selectedService) ||
-              (step === 2 && (!selectedDate || !selectedTime)) ||
-              (step === 3 && (!form.address || !form.zip_code))
+              (step === 3 && (!selectedDate || !selectedTime)) ||
+              (step === 4 && (!form.address || !form.zip_code))
             }
             className="flex-1 bg-primary text-primary-foreground rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {step === 4 ? 'Confirm Booking' : 'Continue'}
+            {step === 5 ? 'Confirm Booking' : 'Continue'}
           </button>
         </div>
       </div>

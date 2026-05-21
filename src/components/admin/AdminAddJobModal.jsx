@@ -16,6 +16,7 @@ export default function AdminAddJobModal({ onClose, onJobAdded }) {
     quoted_price: '',
     customer_notes: '',
     status: 'requested',
+    recurrence: 'one_time',
   });
   const [saving, setSaving] = useState(false);
 
@@ -35,6 +36,7 @@ export default function AdminAddJobModal({ onClose, onJobAdded }) {
       ...form,
       quoted_price: form.quoted_price ? parseFloat(form.quoted_price) : undefined,
       customer_id: form.customer_email,
+      recurrence: form.recurrence,
     });
     toast.success('Job created successfully.');
     onJobAdded();
@@ -150,6 +152,19 @@ export default function AdminAddJobModal({ onClose, onJobAdded }) {
                 <option value="in_progress">In Progress</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">How Often?</label>
+            <select
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              value={form.recurrence}
+              onChange={e => setForm(f => ({ ...f, recurrence: e.target.value }))}
+            >
+              <option value="one_time">One Time Visit</option>
+              <option value="weekly">Weekly Service</option>
+              <option value="biweekly">Biweekly Service (Every 2 Weeks)</option>
+            </select>
           </div>
 
           <div>

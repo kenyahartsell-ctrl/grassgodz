@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PageMeta from '@/components/shared/PageMeta';
 import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt } from 'lucide-react';
 import CustomerInvoicesPanel from '@/components/customer/CustomerInvoicesPanel';
 import ServiceCard from '../components/customer/ServiceCard';
@@ -164,6 +165,11 @@ export default function CustomerPortal() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <PageMeta
+        title="Grassgodz — The Godz of Lawn Care. Imagine your yard, perfected. | DC Metro"
+        description="Book vetted local lawn care pros in the DC metro area. Honest pricing, insured pros, and zero hassle."
+        path="/customer"
+      />
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">

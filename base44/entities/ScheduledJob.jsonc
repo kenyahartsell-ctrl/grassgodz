@@ -1,0 +1,117 @@
+{
+  "name": "ScheduledJob",
+  "type": "object",
+  "properties": {
+    "client_name": {
+      "type": "string"
+    },
+    "client_email": {
+      "type": "string"
+    },
+    "service_address": {
+      "type": "string"
+    },
+    "zip_code": {
+      "type": "string"
+    },
+    "service_type": {
+      "type": "string"
+    },
+    "preferred_time": {
+      "type": "string"
+    },
+    "provider_id": {
+      "type": "string",
+      "description": "ProviderProfile ID \u2014 blank = unassigned"
+    },
+    "provider_name": {
+      "type": "string"
+    },
+    "provider_email": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "payment_type": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "cash"
+      ],
+      "default": "stripe"
+    },
+    "recurrence": {
+      "type": "string",
+      "enum": [
+        "one_time",
+        "weekly",
+        "biweekly"
+      ],
+      "default": "one_time"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional \u2014 blank = runs indefinitely"
+    },
+    "next_release_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the next Job record should be created"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "stopped",
+        "completed"
+      ],
+      "default": "active"
+    },
+    "released_job_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of Job records created from this schedule"
+    },
+    "service_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_name",
+    "service_address",
+    "zip_code",
+    "service_type",
+    "start_date"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

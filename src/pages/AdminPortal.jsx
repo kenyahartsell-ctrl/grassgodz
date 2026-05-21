@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays } from 'lucide-react';
+import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
 import AdminEditJobModal from '@/components/admin/AdminEditJobModal';
 import AdminPriceAdjustModal from '@/components/admin/AdminPriceAdjustModal';
@@ -24,6 +25,7 @@ import { Button } from '@/components/ui/button';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'calendar', label: 'Calendar', icon: CalendarDays },
   { key: 'customers', label: 'Customers', icon: UserCircle },
   { key: 'providers', label: 'Providers', icon: Users },
   { key: 'jobs', label: 'Jobs', icon: Briefcase },
@@ -264,6 +266,10 @@ export default function AdminPortal() {
               </div>
             )}
           </div>
+        )}
+
+        {tab === 'calendar' && (
+          <AdminCalendarPanel providers={providers} />
         )}
 
         {tab === 'customers' && (

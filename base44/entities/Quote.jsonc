@@ -59,11 +59,19 @@
           "data.provider_email": "{{user.email}}"
         },
         {
-          "data.customer_email": "{{user.email}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "data.job_id": {
+            "$in": {
+              "base44_query": "Job",
+              "filter": {
+                "data.customer_email": "{{user.email}}"
+              },
+              "select": "id"
+            }
           }
         }
       ]
@@ -72,9 +80,6 @@
       "$or": [
         {
           "data.provider_email": "{{user.email}}"
-        },
-        {
-          "data.customer_email": "{{user.email}}"
         },
         {
           "user_condition": {

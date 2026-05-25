@@ -27,7 +27,7 @@
     "create": {
       "$or": [
         {
-          "data.provider_id": "{{user.id}}"
+          "data.provider_email": "{{user.email}}"
         },
         {
           "user_condition": {

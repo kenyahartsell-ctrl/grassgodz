@@ -49,7 +49,22 @@
           "data.sender_id": "{{user.email}}"
         },
         {
-          "data.recipient_email": "{{user.email}}"
+          "data.job_id": {
+            "$in": {
+              "base44_query": "Job",
+              "filter": {
+                "$or": [
+                  {
+                    "data.customer_email": "{{user.email}}"
+                  },
+                  {
+                    "data.provider_email": "{{user.email}}"
+                  }
+                ]
+              },
+              "select": "id"
+            }
+          }
         },
         {
           "user_condition": {

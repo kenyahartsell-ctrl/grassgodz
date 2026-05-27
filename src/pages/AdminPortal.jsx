@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain } from 'lucide-react';
+import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
 import AdminEditJobModal from '@/components/admin/AdminEditJobModal';
@@ -51,6 +52,7 @@ export default function AdminPortal() {
   const [viewingPhotos, setViewingPhotos] = useState(null);
   const [adjustingPayment, setAdjustingPayment] = useState(null); // { payment, job }
   const [editingJob, setEditingJob] = useState(null);
+  const [weatherJob, setWeatherJob] = useState(null);
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -363,6 +365,14 @@ export default function AdminPortal() {
                           Unassign
                         </button>
                       )}
+                      {!['completed', 'cancelled', 'requested'].includes(j.status) && (
+                        <button
+                          onClick={() => setWeatherJob(j)}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                        >
+                          <CloudRain size={12} /> Weather
+                        </button>
+                      )}
                       {!['completed', 'cancelled'].includes(j.status) && (
                         <button onClick={() => handleCompleteJob(j)} className="px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center gap-1">
                           <CheckCircle size={12} /> Complete
@@ -551,6 +561,17 @@ export default function AdminPortal() {
                 ? { ...j, final_price: price, quoted_price: price, platform_fee, provider_payout }
                 : j
             ));
+          }}
+        />
+      )}
+
+      {weatherJob && (
+        <WeatherRescheduleModal
+          job={weatherJob}
+          onClose={() => setWeatherJob(null)}
+          onRescheduled={async () => {
+            const allJobs = await base44.entities.Job.list('-created_date', 100);
+            setJobs(allJobs);
           }}
         />
       )}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign } from 'lucide-react';
+import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign, CloudRain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
+import WeatherRescheduleModal from '../shared/WeatherRescheduleModal';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -49,9 +50,10 @@ function JobMiniMap({ address }) {
   );
 }
 
-export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete }) {
+export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete, onRescheduled }) {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [showWeatherModal, setShowWeatherModal] = useState(false);
 
   const handleComplete = async (job, photos) => {
     await onMarkComplete(job, photos);
@@ -188,7 +190,16 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
             </div>
           )}
 
-          <div className="flex gap-2" onClick={e => e.preventDefault()}>
+          <div className="flex gap-2 flex-wrap" onClick={e => e.preventDefault()}>
+            {['scheduled', 'accepted', 'in_progress'].includes(job.status) && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowWeatherModal(true); }}
+                className="flex items-center justify-center gap-1.5 border border-blue-300 bg-blue-50 text-blue-700 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-blue-100 transition-colors"
+              >
+                <CloudRain size={13} />
+                Weather
+              </button>
+            )}
             {['scheduled', 'accepted'].includes(job.status) && onMarkInProgress && (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMarkInProgress(job); }}
@@ -218,6 +229,13 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete 
           job={job}
           onClose={() => setShowPhotoModal(false)}
           onComplete={handleComplete}
+        />
+      )}
+      {showWeatherModal && (
+        <WeatherRescheduleModal
+          job={job}
+          onClose={() => setShowWeatherModal(false)}
+          onRescheduled={onRescheduled}
         />
       )}
     </>

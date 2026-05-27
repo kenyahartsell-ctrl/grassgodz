@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Calendar, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, MapPin, ChevronDown, ChevronUp, CloudRain } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
 import JobCompletionPhotos from './JobCompletionPhotos';
 import JobQuotesPanel from './JobQuotesPanel';
+import WeatherRescheduleModal from '../shared/WeatherRescheduleModal';
 
-export default function JobCard({ job, customerProfile, onAcceptQuote, onReview, reviewed }) {
+export default function JobCard({ job, customerProfile, onAcceptQuote, onReview, reviewed, onRescheduled }) {
   const [expanded, setExpanded] = useState(job.status === 'quoted');
+  const [showWeatherModal, setShowWeatherModal] = useState(false);
 
   return (
     <div className={`bg-card border rounded-xl overflow-hidden transition-all ${job.status === 'quoted' ? 'border-blue-300 shadow-sm' : 'border-border'}`}>
@@ -66,6 +68,17 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
             />
           )}
 
+          {/* Weather reschedule button for active jobs */}
+          {['scheduled', 'accepted', 'in_progress'].includes(job.status) && (
+            <button
+              onClick={() => setShowWeatherModal(true)}
+              className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-700 border border-blue-200 bg-blue-50 rounded-lg px-3 py-2 hover:bg-blue-100 transition-colors"
+            >
+              <CloudRain size={12} />
+              Request Weather Reschedule
+            </button>
+          )}
+
           {/* Review button for completed jobs */}
           {job.status === 'completed' && !reviewed && onReview && (
             <button
@@ -88,6 +101,13 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
             </div>
           )}
         </div>
+      )}
+      {showWeatherModal && (
+        <WeatherRescheduleModal
+          job={job}
+          onClose={() => setShowWeatherModal(false)}
+          onRescheduled={onRescheduled}
+        />
       )}
     </div>
   );

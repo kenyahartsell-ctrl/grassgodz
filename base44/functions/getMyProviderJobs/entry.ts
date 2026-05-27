@@ -6,8 +6,11 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ jobs: [] }, { status: 401 });
 
+    // Normalize email to lowercase
+    const email = user.email.toLowerCase();
+
     // Get this provider's profile via service role
-    const profiles = await base44.asServiceRole.entities.ProviderProfile.filter({ user_email: user.email });
+    const profiles = await base44.asServiceRole.entities.ProviderProfile.filter({ user_email: email });
     const profile = profiles[0] || null;
 
     if (!profile) return Response.json({ jobs: [], profile: null });
@@ -15,7 +18,7 @@ Deno.serve(async (req) => {
     // Fetch all jobs assigned to this provider by both id and email (deduplicated)
     const [byId, byEmail] = await Promise.all([
       base44.asServiceRole.entities.Job.filter({ provider_id: profile.id }),
-      base44.asServiceRole.entities.Job.filter({ provider_email: user.email }),
+      base44.asServiceRole.entities.Job.filter({ provider_email: email }),
     ]);
 
     const seen = new Set();

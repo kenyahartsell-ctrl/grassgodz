@@ -52,30 +52,14 @@
     "read": {
       "$or": [
         {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "data.provider_id": "{{user.id}}"
+        },
+        {
           "user_condition": {
             "role": "admin"
-          }
-        },
-        {
-          "data.customer_id": {
-            "$in": {
-              "base44_query": "CustomerProfile",
-              "filter": {
-                "user_email": "{{user.email}}"
-              },
-              "select": "id"
-            }
-          }
-        },
-        {
-          "data.provider_id": {
-            "$in": {
-              "base44_query": "ProviderProfile",
-              "filter": {
-                "user_email": "{{user.email}}"
-              },
-              "select": "id"
-            }
           }
         }
       ]

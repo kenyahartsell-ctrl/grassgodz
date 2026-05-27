@@ -38,15 +38,7 @@
           "data.customer_id": "{{user.email}}"
         },
         {
-          "data.provider_id": {
-            "$in": {
-              "base44_query": "ProviderProfile",
-              "filter": {
-                "user_email": "{{user.email}}"
-              },
-              "select": "id"
-            }
-          }
+          "data.provider_id": "{{user.id}}"
         },
         {
           "user_condition": {

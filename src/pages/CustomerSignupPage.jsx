@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, CheckCircle2, XCircle, Users, Mail } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, XCircle, Users, Mail, Loader2 } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-// signup-v3
+// signup-v4 — inline OTP verification flow
 const LOGO_URL = 'https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png';
 
 function PasswordStrength({ password }) {
@@ -19,9 +19,7 @@ function PasswordStrength({ password }) {
   const strength = passed <= 1 ? 'weak' : passed <= 3 ? 'medium' : 'strong';
   const colors = { weak: 'bg-red-400', medium: 'bg-amber-400', strong: 'bg-green-500' };
   const widths = { weak: 'w-1/4', medium: 'w-2/4', strong: 'w-full' };
-
   if (!password) return null;
-
   return (
     <div className="space-y-2 mt-1">
       <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -41,16 +39,23 @@ function PasswordStrength({ password }) {
   );
 }
 
+// Steps: 'form' | 'verify' | 'done'
 export default function CustomerSignupPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const navigate = useNavigate();
+
+  const [step, setStep] = useState('form');
   const [loading, setLoading] = useState(false);
-  const [registered, setRegistered] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [prosCount, setProsCount] = useState(null);
   const [errors, setErrors] = useState({});
+
+  // OTP step state
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [resending, setResending] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -69,7 +74,6 @@ export default function CustomerSignupPage() {
     setErrors(e => ({ ...e, [field]: null }));
   };
 
-  // Format phone number as (XXX) XXX-XXXX
   const handlePhone = (val) => {
     const digits = val.replace(/\D/g, '').slice(0, 10);
     let formatted = digits;
@@ -110,20 +114,47 @@ export default function CustomerSignupPage() {
     return errs;
   };
 
+  // Step 1: Register → triggers OTP email from platform
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
-    }
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
     setLoading(true);
     try {
-      // Step A: Create auth account
       await base44.auth.register({ email: form.email, password: form.password });
+      setStep('verify');
+    } catch (err) {
+      const msg = err?.message || err?.data?.message || JSON.stringify(err) || '';
+      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists') || msg.toLowerCase().includes('duplicate')) {
+        setErrors({ email: 'An account with this email already exists. Try signing in instead.' });
+      } else if (msg.toLowerCase().includes('disabled') || msg.toLowerCase().includes('not enabled')) {
+        toast.error('Email/password signup is not enabled. Please contact support.');
+      } else {
+        toast.error(`Signup failed: ${msg || 'Unknown error.'}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Step B: Store profile data so SmartRedirect creates it after email verification + login
+  // Step 2: Verify OTP → then login → then create profile → redirect
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    if (!otpCode || otpCode.length < 4) { setOtpError('Please enter the verification code.'); return; }
+    setOtpError('');
+    setLoading(true);
+    try {
+      // Verify the OTP code
+      await base44.auth.verifyOtp({ email: form.email, otpCode: otpCode.trim() });
+
+      // Log in to get a session token
+      await base44.auth.loginViaEmailPassword(form.email, form.password);
+
+      // Set role to 'user' (customer)
+      await base44.auth.updateMe({ role: 'user' });
+
+      // Create the customer profile
       const profileData = {
         name: form.name,
         phone: form.phone,
@@ -132,23 +163,31 @@ export default function CustomerSignupPage() {
         zip_code: form.zip,
         user_email: form.email,
       };
-      sessionStorage.setItem('pendingCustomerProfile', JSON.stringify(profileData));
+      await base44.functions.invoke('createCustomerProfile', profileData);
 
-      // Step C: Redirect to platform login (handles email verification natively)
-      setRegisteredEmail(form.email);
-      setRegistered(true);
+      // Navigate to dashboard
+      navigate('/customer', { replace: true });
     } catch (err) {
       const msg = err?.message || err?.data?.message || JSON.stringify(err) || '';
-      console.error('Signup error:', err);
-      if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists') || msg.toLowerCase().includes('duplicate')) {
-        setErrors({ email: 'An account with this email already exists. Try signing in instead.' });
-      } else if (msg.toLowerCase().includes('disabled') || msg.toLowerCase().includes('not enabled')) {
-        toast.error('Email/password signup is not enabled. Please contact support.');
+      if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('incorrect') || msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('otp')) {
+        setOtpError('Invalid or expired code. Please try again or resend.');
       } else {
-        toast.error(`Signup failed: ${msg || 'Unknown error. Check console for details.'}`);
+        setOtpError(`Verification failed: ${msg || 'Unknown error.'}`);
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResending(true);
+    try {
+      await base44.auth.resendOtp(form.email);
+      toast.success('Verification code resent! Check your inbox.');
+    } catch {
+      toast.error('Could not resend code. Please try again.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -157,51 +196,80 @@ export default function CustomerSignupPage() {
       errors[field] ? 'border-destructive' : 'border-input'
     }`;
 
-  const handleGoToLogin = () => {
-    base44.auth.redirectToLogin(window.location.origin + '/redirect');
-  };
-
-  if (registered) {
+  // ── OTP Verification Step ──────────────────────────────────────
+  if (step === 'verify') {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <PublicNav />
         <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
-          <div className="w-full max-w-md text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail size={28} className="text-green-600" />
+          <div className="w-full max-w-md">
+            <div className="text-center mb-7">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail size={28} className="text-green-600" />
+              </div>
+              <h1 className="text-2xl font-display font-bold text-foreground">Check your email</h1>
+              <p className="text-sm text-muted-foreground mt-2">
+                We sent a 6-digit verification code to<br />
+                <span className="font-semibold text-foreground">{form.email}</span>
+              </p>
             </div>
-            <h1 className="text-2xl font-display font-bold text-foreground mb-2">Account created!</h1>
-            <p className="text-sm text-muted-foreground mb-2">
-              We sent a verification link to <span className="font-semibold text-foreground">{registeredEmail}</span>.
-            </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              Check your email, click the verification link, then sign in below.
-            </p>
-            <button
-              onClick={handleGoToLogin}
-              className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors mb-3"
-            >
-              Go to Sign In →
-            </button>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-800 mb-4">
-              <strong>Already verified?</strong> Just click "Go to Sign In" above — no code entry needed.
+
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+              <form onSubmit={handleVerify} className="space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Verification Code *</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={8}
+                    value={otpCode}
+                    onChange={e => { setOtpCode(e.target.value.replace(/\D/g, '')); setOtpError(''); }}
+                    placeholder="123456"
+                    className={`w-full border rounded-xl px-4 py-3 text-sm text-center text-xl tracking-widest bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-colors ${otpError ? 'border-destructive' : 'border-input'}`}
+                    autoFocus
+                  />
+                  {otpError && <p className="text-xs text-destructive mt-1">{otpError}</p>}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {loading ? <><Loader2 size={16} className="animate-spin" /> Verifying...</> : 'Verify & Create Account'}
+                </button>
+              </form>
+
+              <div className="mt-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Didn't get a code?{' '}
+                  <button
+                    onClick={handleResendOtp}
+                    disabled={resending}
+                    className="text-primary font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {resending ? 'Resending...' : 'Resend code'}
+                  </button>
+                  {' or '}
+                  <button onClick={() => setStep('form')} className="text-primary font-semibold hover:underline">
+                    go back
+                  </button>
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Didn't get the email? Check your spam folder or{' '}
-              <button onClick={() => setRegistered(false)} className="text-primary font-semibold hover:underline">go back</button>.
-            </p>
           </div>
         </main>
       </div>
     );
   }
 
+  // ── Registration Form ──────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <PublicNav />
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
-          {/* Header */}
           <div className="text-center mb-7">
             <img src={LOGO_URL} alt="Grassgodz" className="h-12 w-12 object-contain mx-auto mb-3" />
             <h1 className="text-2xl font-display font-bold text-foreground">Create your account</h1>
@@ -209,13 +277,12 @@ export default function CustomerSignupPage() {
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
-
             {prosCount !== null && (
               <div className="flex items-center gap-2 bg-secondary/40 rounded-xl px-4 py-2.5 text-sm font-medium text-foreground">
                 <Users size={15} className="text-primary" />
                 {prosCount > 0
                   ? `${prosCount} pro${prosCount > 1 ? 's' : ''} available in your area!`
-                  : 'No pros in your area yet — join the waitlist and we\'ll notify you.'}
+                  : "No pros in your area yet — join the waitlist and we'll notify you."}
               </div>
             )}
 
@@ -223,36 +290,21 @@ export default function CustomerSignupPage() {
               {/* Full Name */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Full Name *</label>
-                <input
-                  type="text" required value={form.name}
-                  onChange={e => set('name', e.target.value)}
-                  placeholder="Jane Smith"
-                  className={inputClass('name')}
-                />
+                <input type="text" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Jane Smith" className={inputClass('name')} />
                 {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
               </div>
 
               {/* Email */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Email Address *</label>
-                <input
-                  type="email" required value={form.email}
-                  onChange={e => set('email', e.target.value)}
-                  placeholder="you@email.com"
-                  className={inputClass('email')}
-                />
+                <input type="email" required value={form.email} onChange={e => set('email', e.target.value)} placeholder="you@email.com" className={inputClass('email')} />
                 {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
               </div>
 
               {/* Phone */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Phone Number *</label>
-                <input
-                  type="tel" required value={form.phone}
-                  onChange={e => handlePhone(e.target.value)}
-                  placeholder="(555) 123-4567"
-                  className={inputClass('phone')}
-                />
+                <input type="tel" required value={form.phone} onChange={e => handlePhone(e.target.value)} placeholder="(555) 123-4567" className={inputClass('phone')} />
                 {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
               </div>
 
@@ -260,14 +312,8 @@ export default function CustomerSignupPage() {
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Password *</label>
                 <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'} required value={form.password}
-                    onChange={e => set('password', e.target.value)}
-                    placeholder="Min. 8 characters"
-                    className={inputClass('password') + ' pr-11'}
-                  />
-                  <button type="button" onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <input type={showPassword ? 'text' : 'password'} required value={form.password} onChange={e => set('password', e.target.value)} placeholder="Min. 8 characters" className={inputClass('password') + ' pr-11'} />
+                  <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
@@ -279,14 +325,8 @@ export default function CustomerSignupPage() {
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Confirm Password *</label>
                 <div className="relative">
-                  <input
-                    type={showConfirm ? 'text' : 'password'} required value={form.confirmPassword}
-                    onChange={e => set('confirmPassword', e.target.value)}
-                    placeholder="Re-enter your password"
-                    className={inputClass('confirmPassword') + ' pr-11'}
-                  />
-                  <button type="button" onClick={() => setShowConfirm(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <input type={showConfirm ? 'text' : 'password'} required value={form.confirmPassword} onChange={e => set('confirmPassword', e.target.value)} placeholder="Re-enter your password" className={inputClass('confirmPassword') + ' pr-11'} />
+                  <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
@@ -296,61 +336,41 @@ export default function CustomerSignupPage() {
               {/* Service Address */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Service Address *</label>
-                <input
-                  type="text" required value={form.serviceAddress}
-                  onChange={e => set('serviceAddress', e.target.value)}
-                  placeholder="123 Main St, City, State"
-                  className={inputClass('serviceAddress')}
-                />
+                <input type="text" required value={form.serviceAddress} onChange={e => set('serviceAddress', e.target.value)} placeholder="123 Main St, City, State" className={inputClass('serviceAddress')} />
                 {errors.serviceAddress && <p className="text-xs text-destructive mt-1">{errors.serviceAddress}</p>}
               </div>
 
               {/* ZIP */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">ZIP Code *</label>
-                <input
-                  type="text" required value={form.zip}
-                  onChange={e => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))}
-                  placeholder="20001"
-                  maxLength={5}
-                  className={inputClass('zip')}
-                />
+                <input type="text" required value={form.zip} onChange={e => set('zip', e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="20001" maxLength={5} className={inputClass('zip')} />
                 {errors.zip && <p className="text-xs text-destructive mt-1">{errors.zip}</p>}
               </div>
 
               {/* Billing Address */}
               <div>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={form.billingSame}
-                    onChange={e => set('billingSame', e.target.checked)}
-                    className="w-4 h-4 accent-primary" />
+                  <input type="checkbox" checked={form.billingSame} onChange={e => set('billingSame', e.target.checked)} className="w-4 h-4 accent-primary" />
                   <span className="text-sm text-foreground">Billing address same as service address</span>
                 </label>
                 {!form.billingSame && (
-                  <input
-                    type="text" value={form.billingAddress}
-                    onChange={e => set('billingAddress', e.target.value)}
-                    placeholder="Billing address"
-                    className={`${inputClass('billingAddress')} mt-2`}
-                  />
+                  <input type="text" value={form.billingAddress} onChange={e => set('billingAddress', e.target.value)} placeholder="Billing address" className={`${inputClass('billingAddress')} mt-2`} />
                 )}
               </div>
 
               <button
-                type="submit" disabled={loading}
-                className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-70 mt-2"
+                type="submit"
+                disabled={loading}
+                className="w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-70 mt-2 flex items-center justify-center gap-2"
               >
-                {loading ? 'Creating account...' : 'Create Account'}
+                {loading ? <><Loader2 size={16} className="animate-spin" /> Creating account...</> : 'Create Account'}
               </button>
             </form>
           </div>
 
           <p className="text-center text-sm text-muted-foreground mt-5">
             Already have an account?{' '}
-            <button
-              onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')}
-              className="text-primary font-semibold hover:underline"
-            >
+            <button onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')} className="text-primary font-semibold hover:underline">
               Sign in
             </button>
           </p>

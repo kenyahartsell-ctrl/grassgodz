@@ -200,7 +200,7 @@
     "create": {
       "$or": [
         {
-          "data.customer_email": "{{user.email}}"
+          "data.customer_id": "{{user.id}}"
         },
         {
           "user_condition": {

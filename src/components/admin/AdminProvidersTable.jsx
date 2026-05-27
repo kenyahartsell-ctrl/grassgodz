@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import StarRating from '@/components/shared/StarRating';
-import { Check, Ban, ShieldCheck, AlertCircle, Eye, ChevronDown, Trash2 } from 'lucide-react';
+import { Check, Ban, ShieldCheck, AlertCircle, Eye, ChevronDown, Trash2, Mail } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import ProviderDetailModal from './ProviderDetailModal';
@@ -24,6 +24,19 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
   const [expandedId, setExpandedId] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [invitingId, setInvitingId] = useState(null);
+
+  const handleSendInvite = async (provider) => {
+    setInvitingId(provider.id);
+    try {
+      await base44.users.inviteUser(provider.user_email, 'user');
+      toast.success(`Invite sent to ${provider.user_email}`);
+    } catch (err) {
+      toast.error('Failed to send invite: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setInvitingId(null);
+    }
+  };
 
   const handleDelete = async (provider) => {
     if (!confirm(`Delete provider ${provider.business_name || provider.name || provider.user_email}? This permanently removes their profile and cannot be undone.`)) return;
@@ -153,6 +166,14 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
                         <Ban className="w-3.5 h-3.5 mr-1" /> Suspend
                       </Button>
                     )}
+                    <Button
+                      size="sm" variant="ghost"
+                      className="h-7 text-xs text-blue-600 hover:bg-blue-50"
+                      disabled={invitingId === p.id}
+                      onClick={() => handleSendInvite(p)}
+                    >
+                      <Mail className="w-3.5 h-3.5 mr-1" /> {invitingId === p.id ? 'Sending…' : 'Send Invite'}
+                    </Button>
                     <Button
                       size="sm" variant="ghost"
                       className="h-7 text-xs text-destructive hover:bg-destructive/10"

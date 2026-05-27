@@ -9,6 +9,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'user_email is required' }, { status: 400 });
     }
 
+    // Normalize email to lowercase to prevent case mismatch issues
+    profileData.user_email = profileData.user_email.toLowerCase();
+
     // Check if profile already exists
     const existing = await base44.asServiceRole.entities.ProviderProfile.filter({ user_email: profileData.user_email });
     if (existing && existing.length > 0) {

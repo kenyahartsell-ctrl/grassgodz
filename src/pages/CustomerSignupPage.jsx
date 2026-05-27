@@ -370,9 +370,9 @@ export default function CustomerSignupPage() {
 
           <p className="text-center text-sm text-muted-foreground mt-5">
             Already have an account?{' '}
-            <button onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')} className="text-primary font-semibold hover:underline">
+            <Link to="/signin/customer" className="text-primary font-semibold hover:underline">
               Sign in
-            </button>
+            </Link>
           </p>
 
           <p className="text-center text-xs text-muted-foreground mt-3">

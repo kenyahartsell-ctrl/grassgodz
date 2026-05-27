@@ -108,12 +108,12 @@ export default function HomePage() {
               >
                 Get Started as Customer
               </Link>
-              <button
-                onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')}
-                className="w-full text-center font-semibold py-3 rounded-xl border border-white/25 text-white/80 hover:bg-white/10 transition-colors text-sm"
+              <Link
+               to="/signin/customer"
+               className="w-full text-center font-semibold py-3 rounded-xl border border-white/25 text-white/80 hover:bg-white/10 transition-colors text-sm"
               >
-                Customer Sign In
-              </button>
+               Customer Sign In
+              </Link>
             </div>
           </div>
 

@@ -34,6 +34,7 @@ import ProviderLinksPage from '@/pages/ProviderLinksPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import ProviderOnboardingPage from '@/pages/ProviderOnboardingPage';
 import ProviderFinancialsPage from '@/pages/ProviderFinancialsPage';
+import CustomerSignInPage from '@/pages/CustomerSignInPage';
 import WashingtonDCPage from '@/pages/city/WashingtonDCPage';
 import SitemapPage from '@/pages/SitemapPage';
 import RobotsPage from '@/pages/RobotsPage';
@@ -104,6 +105,7 @@ const AuthenticatedApp = () => {
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/book" element={<BookingPage />} />
       <Route path="/signup/customer" element={<CustomerSignupPage />} />
+      <Route path="/signin/customer" element={<CustomerSignInPage />} />
       <Route path="/signup" element={<CustomerSignupPage />} />
       <Route path="/signup/provider" element={<ProviderSignupPage />} />
       <Route path="/not-available" element={<NotAvailablePage />} />

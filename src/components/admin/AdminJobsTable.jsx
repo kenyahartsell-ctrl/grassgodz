@@ -5,9 +5,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import StatusBadge from '@/components/shared/StatusBadge';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import { format } from 'date-fns';
-import { Camera, Pencil, Check, X } from 'lucide-react';
+import { Camera, Pencil, Check, X, UserX } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+
+async function unassignJob(job, onDone) {
+  try {
+    await base44.entities.Job.update(job.id, {
+      provider_id: null,
+      provider_email: null,
+      provider_name: null,
+      status: 'requested',
+    });
+    toast.success('Provider unassigned.');
+    onDone();
+  } catch {
+    toast.error('Failed to unassign provider.');
+  }
+}
 
 function PriceCell({ job }) {
   const [editing, setEditing] = useState(false);
@@ -82,7 +97,7 @@ function PriceCell({ job }) {
   );
 }
 
-export default function AdminJobsTable({ jobs, onUpdateStatus }) {
+export default function AdminJobsTable({ jobs, onUpdateStatus, onRefresh }) {
   const [selectedPhotos, setSelectedPhotos] = useState(null);
   return (
     <div className="rounded-xl border border-border overflow-hidden">
@@ -111,6 +126,17 @@ export default function AdminJobsTable({ jobs, onUpdateStatus }) {
               <TableCell><StatusBadge status={job.status} /></TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
+                  {job.provider_id && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-orange-600 hover:bg-orange-50"
+                      title="Unassign provider"
+                      onClick={() => unassignJob(job, onRefresh)}
+                    >
+                      <UserX size={14} />
+                    </Button>
+                  )}
                   {job.completion_photos && Object.keys(job.completion_photos).length > 0 && (
                     <Button
                       size="sm"

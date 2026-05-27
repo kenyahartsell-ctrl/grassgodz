@@ -350,6 +350,19 @@ export default function AdminPortal() {
                       {!['completed', 'cancelled'].includes(j.status) && (
                         <button onClick={() => setAssigningJob(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
                       )}
+                      {j.provider_id && !['completed', 'cancelled'].includes(j.status) && (
+                        <button
+                          onClick={async () => {
+                            await base44.entities.Job.update(j.id, { provider_id: null, provider_email: null, provider_name: null, status: 'requested' });
+                            const allJobs = await base44.entities.Job.list('-created_date', 100);
+                            setJobs(allJobs);
+                            toast.success('Provider unassigned.');
+                          }}
+                          className="px-2.5 py-1 text-xs font-medium bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors"
+                        >
+                          Unassign
+                        </button>
+                      )}
                       {!['completed', 'cancelled'].includes(j.status) && (
                         <button onClick={() => handleCompleteJob(j)} className="px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center gap-1">
                           <CheckCircle size={12} /> Complete

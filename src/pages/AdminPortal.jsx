@@ -14,6 +14,7 @@ import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
 import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
 import AdminEmailPanel from '@/components/admin/AdminEmailPanel';
 import AdminManualClientsPanel from '@/components/admin/AdminManualClientsPanel';
+import AdminEditPriceModal from '@/components/admin/AdminEditPriceModal';
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
@@ -52,6 +53,7 @@ export default function AdminPortal() {
   const [viewingPhotos, setViewingPhotos] = useState(null);
   const [adjustingPayment, setAdjustingPayment] = useState(null); // { payment, job }
   const [editingJob, setEditingJob] = useState(null);
+  const [editingPriceJob, setEditingPriceJob] = useState(null);
   const [weatherJob, setWeatherJob] = useState(null);
 
   useEffect(() => {
@@ -349,6 +351,7 @@ export default function AdminPortal() {
                         View
                       </Link>
                       <button onClick={() => setEditingJob(j)} className="px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors">Edit</button>
+                      <button onClick={() => setEditingPriceJob(j)} className="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1"><DollarSign size={12} /> {j.quoted_price ? `$${j.quoted_price}` : 'Set Price'}</button>
                       {!['completed', 'cancelled'].includes(j.status) && (
                         <button onClick={() => setAssigningJob(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
                       )}
@@ -572,6 +575,16 @@ export default function AdminPortal() {
           onRescheduled={async () => {
             const allJobs = await base44.entities.Job.list('-created_date', 100);
             setJobs(allJobs);
+          }}
+        />
+      )}
+
+      {editingPriceJob && (
+        <AdminEditPriceModal
+          job={editingPriceJob}
+          onClose={() => setEditingPriceJob(null)}
+          onSaved={(newPrice) => {
+            setJobs(prev => prev.map(j => j.id === editingPriceJob.id ? { ...j, quoted_price: newPrice } : j));
           }}
         />
       )}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const ROBOTS = `# GrassGodz robots.txt
 # https://www.grassgodz.com/robots.txt
@@ -64,7 +64,7 @@ export default function RobotsPage() {
   }, []);
 
   return (
-    <pre style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', padding: '1rem' }}>
+    <pre style={{ fontFamily: 'monospace', whiteSpace: 'pre', padding: '1rem', margin: 0, background: 'white', color: 'black' }}>
       {ROBOTS}
     </pre>
   );

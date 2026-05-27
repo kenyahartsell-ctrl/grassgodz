@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 
 const LOGO_URL = 'https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png';
 
@@ -26,12 +25,12 @@ export default function PublicNav() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')}
+          <Link
+            to="/signin/customer"
             className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             Sign In
-          </button>
+          </Link>
           <Link
             to="/signup/customer"
             className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
@@ -56,7 +55,7 @@ export default function PublicNav() {
           <Link to="/pricing" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">Pricing</Link>
           <Link to="/become-provider" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">For Pros</Link>
           <hr className="border-border" />
-          <button onClick={() => { setMenuOpen(false); base44.auth.redirectToLogin(window.location.origin + '/redirect'); }} className="text-sm font-medium text-foreground py-2 text-left">Sign In</button>
+          <Link to="/signin/customer" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">Sign In</Link>
           <Link
             to="/signup/customer"
             onClick={() => setMenuOpen(false)}

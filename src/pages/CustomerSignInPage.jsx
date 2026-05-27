@@ -216,12 +216,9 @@ export default function CustomerSignInPage() {
 
           <p className="text-center text-xs text-muted-foreground mt-3">
             Are you a lawn care pro?{' '}
-            <button
-              onClick={() => base44.auth.redirectToLogin(window.location.origin + '/redirect')}
-              className="text-primary font-semibold hover:underline"
-            >
-              Provider sign in →
-            </button>
+            <Link to="/signup/provider" className="text-primary font-semibold hover:underline">
+              Apply to join →
+            </Link>
           </p>
         </div>
       </main>

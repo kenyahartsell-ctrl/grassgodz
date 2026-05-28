@@ -133,6 +133,14 @@ export const translations = {
     // Account tab
     my_account: 'Account',
 
+    // Checklist
+    checklist_address: 'Add your service address',
+    checklist_phone: 'Confirm your phone number',
+    checklist_zip: 'Add your ZIP code',
+    checklist_first_service: 'Request your first service',
+    complete_your_profile: 'Complete your profile',
+    expires_label: 'Expires',
+
     // Status badges
     status_requested: 'Requested',
     status_quoted: 'Quoted',
@@ -271,6 +279,14 @@ export const translations = {
 
     // Account tab
     my_account: 'Cuenta',
+
+    // Checklist
+    checklist_address: 'Agrega tu dirección de servicio',
+    checklist_phone: 'Confirma tu número de teléfono',
+    checklist_zip: 'Agrega tu código postal',
+    checklist_first_service: 'Solicita tu primer servicio',
+    complete_your_profile: 'Completa tu perfil',
+    expires_label: 'Vence',
 
     // Status badges
     status_requested: 'Solicitado',

@@ -1,11 +1,13 @@
 import { CheckCircle2, Circle, ChevronRight } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function ProfileCompletionChecklist({ profile, onGoToProfile }) {
+  const { t } = useLanguage();
   const steps = [
-    { label: 'Add your service address', done: !!(profile?.service_address) },
-    { label: 'Confirm your phone number', done: !!(profile?.phone) },
-    { label: 'Add your ZIP code', done: !!(profile?.zip_code) },
-    { label: 'Request your first service', done: false }, // dynamic — passed as prop if needed
+    { label: t('checklist_address'), done: !!(profile?.service_address) },
+    { label: t('checklist_phone'), done: !!(profile?.phone) },
+    { label: t('checklist_zip'), done: !!(profile?.zip_code) },
+    { label: t('checklist_first_service'), done: false },
   ];
 
   const completed = steps.filter(s => s.done).length;
@@ -17,7 +19,7 @@ export default function ProfileCompletionChecklist({ profile, onGoToProfile }) {
   return (
     <div className="bg-card border border-border rounded-xl p-5 mb-5">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-sm font-bold text-foreground">Complete your profile</h3>
+        <h3 className="text-sm font-bold text-foreground">{t('complete_your_profile')}</h3>
         <span className="text-xs font-semibold text-primary">{completed}/{total} done</span>
       </div>
       <div className="w-full h-1.5 bg-muted rounded-full mb-4 overflow-hidden">
@@ -40,7 +42,7 @@ export default function ProfileCompletionChecklist({ profile, onGoToProfile }) {
         onClick={onGoToProfile}
         className="mt-4 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-primary border border-primary/30 rounded-lg py-2 hover:bg-primary/5 transition-colors"
       >
-        Complete profile <ChevronRight size={13} />
+        {t('complete_your_profile')} <ChevronRight size={13} />
       </button>
     </div>
   );

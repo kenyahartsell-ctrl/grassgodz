@@ -4,8 +4,10 @@ import StatusBadge from '../shared/StatusBadge';
 import SaveCardModal from './SaveCardModal';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function QuoteCard({ quote, onAccept, onDecline, decliningId, customerProfile }) {
+  const { t } = useLanguage();
   const [showCardModal, setShowCardModal] = useState(false);
   const [authorizing, setAuthorizing] = useState(false);
 
@@ -42,13 +44,13 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
         payment_method_id: paymentMethodId,
       });
       if (res.data?.success) {
-        toast.success(`Quote accepted! Card authorized for $${quote.price}.`);
+        toast.success(t('quote_accepted', { price: quote.price }));
         onAccept(quote);
       } else {
-        toast.error(res.data?.error || 'Payment authorization failed.');
+        toast.error(res.data?.error || t('payment_failed'));
       }
     } catch (err) {
-      toast.error('Payment authorization failed. Please try again.');
+      toast.error(t('payment_failed'));
     } finally {
       setAuthorizing(false);
     }
@@ -79,7 +81,7 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
             {quote.expires_at && (
               <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                 <Clock size={11} />
-                <span>Expires {new Date(quote.expires_at).toLocaleDateString()}</span>
+                <span>{t('expires_label') || 'Expires'} {new Date(quote.expires_at).toLocaleDateString()}</span>
               </div>
             )}
           </div>
@@ -98,7 +100,7 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
                   disabled={decliningId === quote.id}
                   className="flex-1 border border-border rounded-lg py-2.5 text-sm font-medium text-muted-foreground hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
                 >
-                  {decliningId === quote.id ? <Loader2 size={14} className="animate-spin" /> : 'Decline'}
+                  {decliningId === quote.id ? <Loader2 size={14} className="animate-spin" /> : t('decline')}
                 </button>
               )}
               {onAccept && (
@@ -108,18 +110,18 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
                   className="flex-1 bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {authorizing ? (
-                    <><Loader2 size={15} className="animate-spin" /> Authorizing...</>
+                    <><Loader2 size={15} className="animate-spin" /> {t('authorizing')}</>
                   ) : hasPaymentMethod ? (
-                    <><CheckCircle size={15} /> Accept & Pay</>
+                    <><CheckCircle size={15} /> {t('accept_pay')}</>
                   ) : (
-                    <><CreditCard size={15} /> Accept & Add Card</>
+                    <><CreditCard size={15} /> {t('accept_add_card')}</>
                   )}
                 </button>
               )}
             </div>
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Lock size={10} />
-              <span>Card authorized now, charged only after job completion</span>
+              <span>{t('card_note')}</span>
             </div>
           </div>
         )}

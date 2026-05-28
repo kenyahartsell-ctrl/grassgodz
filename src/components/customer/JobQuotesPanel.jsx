@@ -4,8 +4,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import QuoteCard from './QuoteCard';
 import { toast } from 'sonner';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) {
+  const { t } = useLanguage();
   // Auto-expand when there are quotes pending response
   const [open, setOpen] = useState(job?.status === 'quoted' || job?.status === 'requested');
   const queryClient = useQueryClient();
@@ -26,9 +28,9 @@ export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) 
     try {
       await base44.functions.invoke('updateQuoteStatus', { quote_id: quote.id, status: 'declined' });
       queryClient.invalidateQueries({ queryKey: ['quotes', job.id] });
-      toast.success('Quote declined.');
+      toast.success(t('quote_declined'));
     } catch {
-      toast.error('Could not decline quote. Please try again.');
+      toast.error(t('quote_declined') + ' ' + t('payment_failed'));
     } finally {
       setDeclining(null);
     }
@@ -40,7 +42,7 @@ export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) 
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between text-xs font-semibold text-primary mb-2"
       >
-        <span>Provider Quotes {quotes.length > 0 ? `(${quotes.length})` : ''}</span>
+        <span>{t('provider_quotes')} {quotes.length > 0 ? `(${quotes.length})` : ''}</span>
         {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
 
@@ -52,7 +54,7 @@ export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) 
         ) : quotes.length === 0 ? (
           <div className="flex flex-col items-center py-4 text-center">
             <FileQuestion className="w-7 h-7 text-muted-foreground/30 mb-2" />
-            <p className="text-xs text-muted-foreground">No quotes yet — providers will respond shortly.</p>
+            <p className="text-xs text-muted-foreground">{t('no_quotes_yet')}</p>
           </div>
         ) : (
           <div className="space-y-3">

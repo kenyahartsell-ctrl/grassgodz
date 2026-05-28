@@ -48,7 +48,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-foreground mb-1.5 block">ZIP Code</label>
+            <label className="text-sm font-medium text-foreground mb-1.5 block">{t('zip_code')}</label>
             <input
               type="text"
               value={form.zip_code}
@@ -59,7 +59,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
           </div>
           <div>
             <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
-              <Calendar size={13} className="text-primary" /> Preferred Date
+              <Calendar size={13} className="text-primary" /> {t('preferred_date')}
             </label>
             <input
               type="date"
@@ -73,13 +73,13 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
           {showRecurrence && (
             <div>
               <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-2">
-                <RefreshCw size={13} className="text-primary" /> How often do you need this?
+                <RefreshCw size={13} className="text-primary" /> {t('how_often')}
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: 'one_time', label: 'One Time' },
-                  { value: 'weekly', label: 'Weekly' },
-                  { value: 'biweekly', label: 'Bi-Weekly' },
+                  { value: 'one_time', label: t('one_time') },
+                  { value: 'weekly', label: t('weekly') },
+                  { value: 'biweekly', label: t('biweekly') },
                 ].map(opt => (
                   <button
                     key={opt.value}
@@ -97,33 +97,32 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
               </div>
               {form.recurrence !== 'one_time' && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  We'll automatically post your next {form.recurrence === 'weekly' ? '4 weekly' : '4 bi-weekly'} cuts so providers can plan ahead.
+                  {form.recurrence === 'weekly' ? t('recurrence_note_weekly') : t('recurrence_note_biweekly')}
                 </p>
               )}
             </div>
           )}
           <div>
             <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
-              <FileText size={13} className="text-primary" /> Notes for Provider (optional)
+              <FileText size={13} className="text-primary" /> {t('notes_for_provider')}
             </label>
             <textarea
               value={form.customer_notes}
               onChange={e => setForm(f => ({ ...f, customer_notes: e.target.value }))}
               rows={3}
-              placeholder="Any special instructions, gate codes, pets, etc."
+              placeholder={t('notes_placeholder')}
               className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
           {/* Quote disclaimer */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800 leading-relaxed">
-            <strong>Please note:</strong> This quote is not a guaranteed price. It allows lawn care professionals in your area to review your request and respond with their availability and final pricing.
-          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: t('quote_disclaimer') }} />
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 border border-border rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-              Cancel
+              {t('cancel')}
             </button>
             <button type="submit" className="flex-1 bg-primary text-primary-foreground rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors">
-              Submit Request
+              {t('submit_request')}
             </button>
           </div>
         </form>

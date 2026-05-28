@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/toaster"
 import { HelmetProvider } from 'react-helmet-async';
+import { LanguageProvider } from '@/lib/LanguageContext';
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -136,6 +137,7 @@ function App() {
   return (
     <HelmetProvider>
     <AuthProvider>
+      <LanguageProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <AuthenticatedApp />
@@ -143,6 +145,7 @@ function App() {
         </Router>
         <Toaster />
       </QueryClientProvider>
+      </LanguageProvider>
     </AuthProvider>
     </HelmetProvider>
   );

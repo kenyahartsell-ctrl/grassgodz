@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { X, MapPin, Calendar, FileText, RefreshCw } from 'lucide-react';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const LAWN_KEYWORDS = ['mow', 'mowing', 'grass', 'lawn', 'cut'];
 const isLawnService = (name) => LAWN_KEYWORDS.some(k => name?.toLowerCase().includes(k));
 
 export default function RequestJobModal({ service, onClose, onSubmit, customerProfile }) {
+  const { t } = useLanguage();
   const showRecurrence = isLawnService(service.name);
   const [form, setForm] = useState({
     address: customerProfile?.service_address || '',
@@ -25,7 +27,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
       <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <h2 className="text-lg font-bold text-foreground">Request a Quote</h2>
+            <h2 className="text-lg font-bold text-foreground">{t('request_quote')}</h2>
             <p className="text-sm text-muted-foreground mt-0.5">{service.name}</p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-muted transition-colors">
@@ -35,7 +37,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
-              <MapPin size={13} className="text-primary" /> Service Address
+              <MapPin size={13} className="text-primary" /> {t('service_address')}
             </label>
             <input
               type="text"

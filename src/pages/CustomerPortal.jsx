@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import PageMeta from '@/components/shared/PageMeta';
 import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt } from 'lucide-react';
+import LanguageToggle from '@/components/shared/LanguageToggle';
+import { useLanguage } from '@/lib/LanguageContext';
 import CustomerInvoicesPanel from '@/components/customer/CustomerInvoicesPanel';
 import ServiceCard from '../components/customer/ServiceCard';
 import RequestJobModal from '../components/customer/RequestJobModal';
@@ -14,16 +16,17 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import CustomerProfileEditor from '@/components/customer/CustomerProfileEditor';
 
-const NAV = [
-  { key: 'home', label: 'Home', icon: Home },
-  { key: 'book', label: 'Book', icon: CalendarPlus },
-  { key: 'jobs', label: 'My Jobs', icon: Briefcase },
-  { key: 'quotes', label: 'Quotes', icon: FileText, badge: true },
-  { key: 'invoices', label: 'Invoices', icon: Receipt },
-  { key: 'profile', label: 'Account', icon: User },
+const NAV_KEYS = [
+  { key: 'home', labelKey: 'nav_home', icon: Home },
+  { key: 'book', labelKey: 'nav_book', icon: CalendarPlus },
+  { key: 'jobs', labelKey: 'nav_jobs', icon: Briefcase },
+  { key: 'quotes', labelKey: 'nav_quotes', icon: FileText, badge: true },
+  { key: 'invoices', labelKey: 'nav_invoices', icon: Receipt },
+  { key: 'profile', labelKey: 'nav_account', icon: User },
 ];
 
 export default function CustomerPortal() {
+  const { t, setLang } = useLanguage();
   const [tab, setTab] = useState('home');
   const [user, setUser] = useState(null);
   const [customerProfile, setCustomerProfile] = useState(null);
@@ -49,7 +52,12 @@ export default function CustomerPortal() {
           base44.entities.Review.filter({ customer_id: me.email }),
         ]);
 
-        setCustomerProfile(profiles[0] || null);
+        const profile = profiles[0] || null;
+        setCustomerProfile(profile);
+        // Load language preference from profile
+        if (profile?.language) {
+          setLang(profile.language);
+        }
         setServices(allServices);
         setJobs(myJobs.map(j => ({ ...j, _providerProfile: null })));
         setReviews(myReviews);
@@ -112,10 +120,10 @@ export default function CustomerPortal() {
     setJobs(prev => [...prev, ...newJobs]);
     setTab('quotes');
     const msg = data.recurrence === 'weekly'
-      ? 'Weekly cuts scheduled! 5 jobs posted for providers in your area.'
+      ? t('job_submitted_weekly')
       : data.recurrence === 'biweekly'
-      ? 'Bi-weekly cuts scheduled! 5 jobs posted for providers in your area.'
-      : 'Quote request submitted! Providers in your area will respond shortly.';
+      ? t('job_submitted_biweekly')
+      : t('job_submitted_onetime');
     toast.success(msg);
   };
 
@@ -176,6 +184,7 @@ export default function CustomerPortal() {
           <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
           <div className="ml-auto flex items-center gap-2">
+            <LanguageToggle />
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <span className="text-xs font-bold text-primary">{displayName[0]}</span>
             </div>
@@ -194,15 +203,15 @@ export default function CustomerPortal() {
                 <FileText size={18} className="text-blue-600 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-blue-800">
-                    You have {jobs.filter(j => j.status === 'quoted').length} quote{jobs.filter(j => j.status === 'quoted').length > 1 ? 's' : ''} waiting for your response!
+                    {t('pending_quotes_alert', { n: jobs.filter(j => j.status === 'quoted').length, s: jobs.filter(j => j.status === 'quoted').length > 1 ? 's' : '' })}
                   </p>
-                  <p className="text-xs text-blue-700 mt-0.5">A provider has submitted a price — review and accept to book your service.</p>
+                  <p className="text-xs text-blue-700 mt-0.5">{t('pending_quotes_sub')}</p>
                 </div>
                 <button
                   onClick={() => setTab('quotes')}
                   className="flex-shrink-0 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Review
+                  {t('review')}
                 </button>
               </div>
             )}
@@ -228,12 +237,12 @@ export default function CustomerPortal() {
             {/* Services */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-foreground">Request a Service</h2>
+                <h2 className="text-base font-bold text-foreground">{t('request_service')}</h2>
                 <button
                   onClick={() => setTab('book')}
                   className="text-xs font-semibold text-primary flex items-center gap-1"
                 >
-                  <CalendarPlus size={13} /> Book a date
+                  <CalendarPlus size={13} /> {t('book_a_date')}
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -246,14 +255,14 @@ export default function CustomerPortal() {
             {/* Recent Jobs */}
             {upcomingJobs.length > 0 && (
               <div>
-                <h2 className="text-base font-bold text-foreground mb-3">Upcoming Jobs</h2>
+                <h2 className="text-base font-bold text-foreground mb-3">{t('upcoming')}</h2>
                 <div className="space-y-3">
                   {upcomingJobs.slice(0, 2).map(j => (
                     <JobCard key={j.id} job={j} customerProfile={customerProfile} onAcceptQuote={handleAcceptQuote} onReview={reviewedJobIds.has(j.id) ? null : setSelectedJobForReview} />
                   ))}
                 </div>
                 {upcomingJobs.length > 2 && (
-                  <button onClick={() => setTab('jobs')} className="mt-2 text-sm text-primary font-medium">View all jobs →</button>
+                  <button onClick={() => setTab('jobs')} className="mt-2 text-sm text-primary font-medium">{t('view_all_jobs')}</button>
                 )}
               </div>
             )}
@@ -263,8 +272,8 @@ export default function CustomerPortal() {
         {tab === 'book' && (
           <div>
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-foreground">Book a Service</h2>
-              <p className="text-sm text-muted-foreground mt-1">Choose a service and pick your preferred date & time.</p>
+              <h2 className="text-xl font-bold text-foreground">{t('book_service')}</h2>
+              <p className="text-sm text-muted-foreground mt-1">{t('book_service_sub')}</p>
             </div>
             <div className="grid grid-cols-1 gap-3 mb-6">
               {services.map(s => (
@@ -281,8 +290,8 @@ export default function CustomerPortal() {
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{s.description}</p>
                   </div>
                   <div className="flex-shrink-0 text-right">
-                    <span className="text-sm font-bold text-primary">From ${s.base_price_estimate}</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">Book now →</p>
+                    <span className="text-sm font-bold text-primary">{t('from_price', { price: s.base_price_estimate })}</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('book_now')}</p>
                   </div>
                 </button>
               ))}
@@ -292,13 +301,13 @@ export default function CustomerPortal() {
 
         {tab === 'jobs' && (
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">My Jobs</h2>
+            <h2 className="text-xl font-bold text-foreground mb-5">{t('nav_jobs')}</h2>
 
             {upcomingJobs.length > 0 && (
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
                   <Clock size={15} className="text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Upcoming</h3>
+                  <h3 className="text-sm font-semibold text-foreground">{t('upcoming')}</h3>
                 </div>
                 <div className="space-y-3">
                   {upcomingJobs.map(j => (
@@ -312,7 +321,7 @@ export default function CustomerPortal() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <History size={15} className="text-muted-foreground" />
-                  <h3 className="text-sm font-semibold text-foreground">Past Jobs</h3>
+                  <h3 className="text-sm font-semibold text-foreground">{t('past_jobs')}</h3>
                 </div>
                 <div className="space-y-3">
                   {pastJobs.map(j => (
@@ -325,8 +334,8 @@ export default function CustomerPortal() {
             {jobs.length === 0 && (
               <div className="text-center py-16">
                 <Briefcase className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground font-medium">No jobs yet</p>
-                <p className="text-sm text-muted-foreground mt-1">Request a service from the Home tab to get started.</p>
+                <p className="text-muted-foreground font-medium">{t('no_jobs')}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('no_jobs_sub')}</p>
               </div>
             )}
           </div>
@@ -334,24 +343,24 @@ export default function CustomerPortal() {
 
         {tab === 'quotes' && (
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-2">My Quotes</h2>
-            <p className="text-sm text-muted-foreground mb-4">View provider quotes on your service requests.</p>
+            <h2 className="text-xl font-bold text-foreground mb-2">{t('my_quotes')}</h2>
+            <p className="text-sm text-muted-foreground mb-4">{t('my_quotes_sub')}</p>
 
             {jobs.filter(j => !['completed','cancelled'].includes(j.status)).length === 0 ? (
               <div className="text-center py-16">
                 <FileText className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
-                <p className="text-muted-foreground font-medium">No active requests</p>
-                <p className="text-sm text-muted-foreground mt-1">Request a service from the Home tab to get started.</p>
+                <p className="text-muted-foreground font-medium">{t('no_active_requests')}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('no_active_requests_sub')}</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {jobs.filter(j => !['completed','cancelled'].includes(j.status)).map(job => {
                   const statusMap = {
-                    requested:   { label: 'Waiting for quotes', badge: 'bg-amber-100 text-amber-800' },
-                    quoted:      { label: 'Quote received!', badge: 'bg-blue-100 text-blue-800' },
-                    accepted:    { label: 'Accepted', badge: 'bg-indigo-100 text-indigo-800' },
-                    scheduled:   { label: 'Scheduled', badge: 'bg-indigo-100 text-indigo-800' },
-                    in_progress: { label: 'In Progress', badge: 'bg-orange-100 text-orange-800' },
+                    requested:   { label: t('waiting_for_quotes'), badge: 'bg-amber-100 text-amber-800' },
+                    quoted:      { label: t('quote_received'), badge: 'bg-blue-100 text-blue-800' },
+                    accepted:    { label: t('accepted'), badge: 'bg-indigo-100 text-indigo-800' },
+                    scheduled:   { label: t('scheduled'), badge: 'bg-indigo-100 text-indigo-800' },
+                    in_progress: { label: t('in_progress'), badge: 'bg-orange-100 text-orange-800' },
                   };
                   const cfg = statusMap[job.status] || statusMap.requested;
                   return (
@@ -385,15 +394,15 @@ export default function CustomerPortal() {
 
         {tab === 'invoices' && (
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-2">Invoices</h2>
-            <p className="text-sm text-muted-foreground mb-4">Review and pay your invoices from GrassGodz.</p>
+            <h2 className="text-xl font-bold text-foreground mb-2">{t('invoices')}</h2>
+            <p className="text-sm text-muted-foreground mb-4">{t('invoices_sub')}</p>
             <CustomerInvoicesPanel userEmail={user?.email} />
           </div>
         )}
 
         {tab === 'profile' && (
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">Account</h2>
+            <h2 className="text-xl font-bold text-foreground mb-5">{t('my_account')}</h2>
             <CustomerProfileEditor
               user={user}
               profile={customerProfile}
@@ -409,7 +418,7 @@ export default function CustomerPortal() {
       {/* Bottom Nav */}
       <nav className="bg-card border-t border-border sticky bottom-0 z-30">
         <div className="max-w-3xl mx-auto flex">
-          {NAV.map(({ key, label, icon: Icon, badge }) => {
+          {NAV_KEYS.map(({ key, labelKey, icon: NavIcon, badge }) => {
             const showBadge = badge && jobs.some(j => j.status === 'quoted');
             return (
               <button
@@ -420,12 +429,12 @@ export default function CustomerPortal() {
                 }`}
               >
                 <div className="relative">
-                  <Icon size={18} />
+                  <NavIcon size={18} />
                   {showBadge && (
                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border border-background" />
                   )}
                 </div>
-                {label}
+                {t(labelKey)}
               </button>
             );
           })}

@@ -32,6 +32,15 @@
       "description": "Optional notes or description about this customer profile",
       "maxLength": 1000
     },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es"
+      ],
+      "default": "en",
+      "description": "Preferred language for the customer portal"
+    },
     "notify_new_quote": {
       "type": "boolean",
       "default": true,

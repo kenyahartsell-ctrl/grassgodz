@@ -82,7 +82,7 @@ export default function CustomerPortal() {
 
   const handleRequestJob = async (data) => {
     const baseJobData = {
-      customer_id: customerProfile?.id || user.id,
+      customer_id: user.id,
       customer_name: user.full_name,
       customer_email: user.email,
       status: 'requested',
@@ -138,7 +138,7 @@ export default function CustomerPortal() {
 
   const handleBooking = async (data) => {
     const newJob = await base44.entities.Job.create({
-      customer_id: customerProfile?.id || user.id,
+      customer_id: user.id,
       customer_name: user.full_name,
       customer_email: user.email,
       status: 'requested',

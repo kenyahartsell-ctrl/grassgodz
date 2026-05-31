@@ -6,13 +6,9 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
   const [quoteForm, setQuoteForm] = useState({ price: '', message: '' });
   const [showForm, setShowForm] = useState(false);
   const isCash = job.is_cash_job || job.payment_method === 'cash';
+  const adminPrice = job.quoted_price; // set by admin — provider cannot change
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmitQuote(job, { price: Number(quoteForm.price), message: quoteForm.message });
-    setShowForm(false);
-    setQuoteForm({ price: '', message: '' });
-  };
+
 
   return (
     <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all">
@@ -58,6 +54,13 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
             </div>
           )}
 
+          {adminPrice && (
+            <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <DollarSign size={12} className="flex-shrink-0" />
+              <span>Admin-set price: <strong>${adminPrice.toFixed(2)}</strong> — this price is fixed and cannot be changed.</span>
+            </div>
+          )}
+
           {isCash ? (
             <div className="space-y-2">
               <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800">
@@ -77,10 +80,17 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
               className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
             >
               <Send size={14} />
-              Submit a Quote
+              {adminPrice ? 'Accept Job at Fixed Price' : 'Submit a Quote'}
             </button>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-3 bg-muted/30 rounded-xl p-3">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const price = adminPrice ? adminPrice : Number(quoteForm.price);
+              onSubmitQuote(job, { price, message: quoteForm.message });
+              setShowForm(false);
+              setQuoteForm({ price: '', message: '' });
+            }} className="space-y-3 bg-muted/30 rounded-xl p-3">
+              {!adminPrice && (
               <div>
                 <label className="text-xs font-medium text-foreground mb-1 block">Your Price ($)</label>
                 <input
@@ -94,8 +104,9 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
                   required
                 />
               </div>
+              )}
               <div>
-                <label className="text-xs font-medium text-foreground mb-1 block">Message to Customer</label>
+                <label className="text-xs font-medium text-foreground mb-1 block">{adminPrice ? 'Message to Customer (optional)' : 'Message to Customer'}</label>
                 <textarea
                   value={quoteForm.message}
                   onChange={e => setQuoteForm(f => ({ ...f, message: e.target.value }))}

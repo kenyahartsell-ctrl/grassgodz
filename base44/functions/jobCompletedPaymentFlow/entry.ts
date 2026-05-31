@@ -43,8 +43,8 @@ Deno.serve(async (req) => {
     if (!price) return Response.json({ error: 'No price on job' }, { status: 400 });
 
     const amountCents = Math.round(price * 100);
-    const platformFee = price * 0.25;
-    const providerPayout = price * 0.75;
+    const platformFee = price * 0.10;
+    const providerPayout = price * 0.90;
 
     // 1. Create a Stripe Price + Payment Link
     const stripePrice = await stripe.prices.create({

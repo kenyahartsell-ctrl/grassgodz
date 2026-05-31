@@ -192,7 +192,7 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
               {job.provider_payout ? (
                 <><DollarSign size={12} /><span>Paid out ${job.provider_payout.toFixed(2)}</span></>
               ) : job.quoted_price ? (
-                <><DollarSign size={12} /><span>Pending payment — expected ${(job.quoted_price * 0.75).toFixed(2)}</span></>
+                <><DollarSign size={12} /><span>Pending payment — expected ${(job.quoted_price * 0.90).toFixed(2)}</span></>
               ) : (
                 <><DollarSign size={12} /><span>Payment pending — contact admin for payout details</span></>
               )}

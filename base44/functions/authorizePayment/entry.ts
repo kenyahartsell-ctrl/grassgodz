@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
 
     const amountCents = Math.round(job.quoted_price * 100);
-    const applicationFeeCents = Math.round(amountCents * 0.25);
+    const applicationFeeCents = Math.round(amountCents * 0.10);
 
     // If job is more than 5 days away, capture immediately (authorization would expire)
     const daysUntilJob = job.scheduled_date
@@ -72,8 +72,8 @@ Deno.serve(async (req) => {
       provider_id: providerProfile.id,
       stripe_payment_intent_id: paymentIntent.id,
       amount: job.quoted_price,
-      platform_fee: job.quoted_price * 0.25,
-      payout_amount: job.quoted_price * 0.75,
+      platform_fee: job.quoted_price * 0.10,
+      payout_amount: job.quoted_price * 0.90,
       status: captureMethod === 'automatic' ? 'captured' : 'authorized',
     });
 

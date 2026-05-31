@@ -46,6 +46,7 @@ export default function AdminPortal() {
   const [quotes, setQuotes] = useState([]);
   const [payments, setPayments] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [adminUser, setAdminUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddJob, setShowAddJob] = useState(false);
   const [showAddProvider, setShowAddProvider] = useState(false);
@@ -68,6 +69,8 @@ export default function AdminPortal() {
 
     async function loadData() {
       try {
+        const me = await base44.auth.me();
+        setAdminUser(me);
         const [allProviders, allCustomers, allJobs, allQuotes, allPayments, allReviews] = await Promise.all([
           base44.entities.ProviderProfile.list(),
           base44.entities.CustomerProfile.list(),
@@ -465,7 +468,7 @@ export default function AdminPortal() {
               <h2 className="text-xl font-bold text-foreground">Support Messaging</h2>
               <p className="text-sm text-muted-foreground">View job conversations and send admin support messages to customers or providers.</p>
             </div>
-            <AdminSupportPanel jobs={jobs} initialJob={supportJob} onJobConsumed={() => setSupportJob(null)} />
+            <AdminSupportPanel jobs={jobs} initialJob={supportJob} onJobConsumed={() => setSupportJob(null)} adminUser={adminUser} />
           </div>
         )}
 

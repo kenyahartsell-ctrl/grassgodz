@@ -4,7 +4,7 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed }) {
+export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed, adminUser }) {
   const [selectedJob, setSelectedJob] = useState(null);
 
   // Auto-select job if navigated from Jobs tab
@@ -56,7 +56,7 @@ export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed }) {
     try {
       await base44.entities.Message.create({
         job_id: selectedJob.id,
-        sender_id: 'admin',
+        sender_id: adminUser?.email || 'admin',
         sender_role: 'provider',
         body: `[Admin Support] ${newMessage.trim()}`,
       });
@@ -133,7 +133,7 @@ export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed }) {
           </div>
         ) : (
           messages.map(m => {
-            const isAdmin = m.sender_id === 'admin';
+            const isAdmin = m.sender_id === 'admin' || m.sender_id === adminUser?.email;
             const isProvider = m.sender_role === 'provider' && !isAdmin;
             return (
               <div key={m.id} className={`flex ${isProvider || isAdmin ? 'justify-end' : 'justify-start'}`}>

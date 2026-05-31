@@ -55,6 +55,7 @@ export default function AdminPortal() {
   const [editingJob, setEditingJob] = useState(null);
   const [editingPriceJob, setEditingPriceJob] = useState(null);
   const [weatherJob, setWeatherJob] = useState(null);
+  const [supportJob, setSupportJob] = useState(null);
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -388,13 +389,19 @@ export default function AdminPortal() {
                         <Trash2 size={12} /> Delete
                       </button>
                       {j.status === 'completed' && j.completion_photos && Object.keys(j.completion_photos).length > 0 && (
-                        <button
-                          onClick={() => setViewingPhotos(j.completion_photos)}
-                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                        >
-                          <Camera size={12} /> Photos
-                        </button>
+                       <button
+                         onClick={() => setViewingPhotos(j.completion_photos)}
+                         className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                       >
+                         <Camera size={12} /> Photos
+                       </button>
                       )}
+                      <button
+                       onClick={() => { setSupportJob(j); setTab('support'); }}
+                       className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+                      >
+                       <MessageSquare size={12} /> Chat
+                      </button>
                     </div>
                     {/* Provider, date, zip */}
                     <p className="text-xs text-muted-foreground">
@@ -458,7 +465,7 @@ export default function AdminPortal() {
               <h2 className="text-xl font-bold text-foreground">Support Messaging</h2>
               <p className="text-sm text-muted-foreground">View job conversations and send admin support messages to customers or providers.</p>
             </div>
-            <AdminSupportPanel jobs={jobs} />
+            <AdminSupportPanel jobs={jobs} initialJob={supportJob} onJobConsumed={() => setSupportJob(null)} />
           </div>
         )}
 

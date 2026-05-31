@@ -4,8 +4,16 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function AdminSupportPanel({ jobs }) {
+export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed }) {
   const [selectedJob, setSelectedJob] = useState(null);
+
+  // Auto-select job if navigated from Jobs tab
+  useEffect(() => {
+    if (initialJob) {
+      setSelectedJob(initialJob);
+      onJobConsumed?.();
+    }
+  }, [initialJob]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);

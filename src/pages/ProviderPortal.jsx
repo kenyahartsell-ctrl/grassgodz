@@ -243,6 +243,7 @@ export default function ProviderPortal() {
             <div className="flex-1">
               <p className="text-sm font-semibold text-amber-800">Complete your payment setup to receive payouts</p>
               <p className="text-xs text-amber-700 mt-0.5">You can still accept and complete jobs — set up your bank account to get paid when jobs are completed.</p>
+              <p className="text-xs text-amber-700 mt-1.5 font-medium">📌 When Stripe asks for a website, enter <strong>grassgodz.com</strong> — this is the platform you operate under.</p>
               <button
                 onClick={async () => {
                   try {

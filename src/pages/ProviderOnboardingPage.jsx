@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Globe } from "lucide-react";
 
 export default function ProviderOnboardingPage() {
   const [loading, setLoading] = useState(true);
@@ -32,6 +32,22 @@ export default function ProviderOnboardingPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center space-y-4">
         <h1 className="text-2xl font-bold text-foreground">Set Up Your Payout Account</h1>
+
+        {/* Stripe Setup Instructions */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-left space-y-3">
+          <div className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <h2 className="text-sm font-bold text-amber-900">Setting Up Your Stripe Account</h2>
+          </div>
+          <p className="text-sm text-amber-800 leading-relaxed">
+            When signing up for Stripe, you will be asked to provide a <strong>website</strong>. Enter{' '}
+            <span className="font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">grassgodz.com</span>{' '}
+            as your website URL.
+          </p>
+          <p className="text-sm text-amber-800 leading-relaxed">
+            This is the platform you are operating under and is the correct answer for that field.
+          </p>
+        </div>
 
         {loading && !error && (
           <div className="flex flex-col items-center gap-3 text-muted-foreground">

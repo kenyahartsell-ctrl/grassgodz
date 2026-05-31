@@ -55,9 +55,15 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
           )}
 
           {adminPrice && (
-            <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-              <DollarSign size={12} className="flex-shrink-0" />
-              <span>Admin-set price: <strong>${adminPrice.toFixed(2)}</strong> — this price is fixed and cannot be changed.</span>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-1">
+              <div className="flex items-center gap-2 text-xs text-blue-800">
+                <DollarSign size={12} className="flex-shrink-0" />
+                <span>Fixed price: <strong>${adminPrice.toFixed(2)}</strong> — set by admin, cannot be changed.</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-green-700 font-semibold">
+                <DollarSign size={12} className="flex-shrink-0" />
+                <span>Your payout: <strong>${(adminPrice * 0.75).toFixed(2)}</strong> <span className="font-normal text-green-600">(75% of job price)</span></span>
+              </div>
             </div>
           )}
 

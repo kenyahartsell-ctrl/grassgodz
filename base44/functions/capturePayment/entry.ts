@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
 
     const price = final_price || job.quoted_price;
     const now = new Date().toISOString();
-    const providerPayout = price ? price * 0.75 : 0;
-    const platformFee = price ? price * 0.25 : 0;
+    const providerPayout = price ? price * 0.90 : 0;
+    const platformFee = price ? price * 0.10 : 0;
 
     // Mark job as completed
     await base44.asServiceRole.entities.Job.update(job.id, {

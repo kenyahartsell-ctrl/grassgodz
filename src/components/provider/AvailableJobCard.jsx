@@ -62,7 +62,7 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
               </div>
               <div className="flex items-center gap-2 text-xs text-green-700 font-semibold">
                 <DollarSign size={12} className="flex-shrink-0" />
-                <span>Your payout: <strong>${(adminPrice * 0.75).toFixed(2)}</strong> <span className="font-normal text-green-600">(75% of job price)</span></span>
+                <span>Your payout: <strong>${(adminPrice * 0.90).toFixed(2)}</strong> <span className="font-normal text-green-600">(90% of job price)</span></span>
               </div>
             </div>
           )}

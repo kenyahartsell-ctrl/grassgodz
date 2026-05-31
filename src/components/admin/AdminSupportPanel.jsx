@@ -6,6 +6,12 @@ import { toast } from 'sonner';
 
 export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed, adminUser }) {
   const [selectedJob, setSelectedJob] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const messagesEndRef = useRef(null);
 
   // Auto-select job if navigated from Jobs tab
   useEffect(() => {
@@ -14,19 +20,6 @@ export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed, adm
       onJobConsumed?.();
     }
   }, [initialJob]);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const messagesEndRef = useRef(null);
-
-  const filteredJobs = jobs.filter(j =>
-    !searchQuery ||
-    j.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    j.provider_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    j.service_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   useEffect(() => {
     if (!selectedJob) return;
@@ -36,6 +29,13 @@ export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed, adm
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const filteredJobs = jobs.filter(j =>
+    !searchQuery ||
+    j.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    j.provider_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    j.service_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const loadMessages = async (jobId) => {
     setLoadingMessages(true);
@@ -69,7 +69,7 @@ export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed, adm
     }
   };
 
-  const JobList = () => (
+  const jobListPanel = (
     <div className="flex flex-col bg-card border border-border rounded-xl overflow-hidden h-[calc(100vh-220px)] min-h-[400px]">
       <div className="p-3 border-b border-border flex-shrink-0">
         <input
@@ -102,7 +102,7 @@ export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed, adm
     </div>
   );
 
-  const MessageThread = () => (
+  const messageThreadPanel = selectedJob ? (
     <div className="flex flex-col bg-card border border-border rounded-xl overflow-hidden h-[calc(100vh-220px)] min-h-[400px]">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border flex-shrink-0">
@@ -171,22 +171,22 @@ export default function AdminSupportPanel({ jobs, initialJob, onJobConsumed, adm
         </button>
       </div>
     </div>
-  );
+  ) : null;
 
   return (
     <>
       {/* Mobile: show job list OR message thread */}
       <div className="md:hidden">
-        {selectedJob ? <MessageThread /> : <JobList />}
+        {selectedJob ? messageThreadPanel : jobListPanel}
       </div>
 
       {/* Desktop: side-by-side */}
       <div className="hidden md:flex gap-4 h-[calc(100vh-220px)] min-h-[400px]">
         <div className="w-72 flex-shrink-0">
-          <JobList />
+          {jobListPanel}
         </div>
         <div className="flex-1">
-          {selectedJob ? <MessageThread /> : (
+          {selectedJob ? messageThreadPanel : (
             <div className="flex flex-col items-center justify-center h-full bg-card border border-border rounded-xl text-center p-8">
               <MessageSquare className="w-12 h-12 text-muted-foreground/20 mb-3" />
               <p className="text-sm font-medium text-muted-foreground">Select a job to view messages</p>

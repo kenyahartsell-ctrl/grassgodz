@@ -1,29 +1,27 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Loader2, FileText, CheckCircle2, Clock, XCircle, DollarSign } from 'lucide-react';
+import { Loader2, FileText, CheckCircle2, Clock, XCircle, DollarSign, ArrowRight, PartyPopper } from 'lucide-react';
 
 const STATUS_CONFIG = {
-  pending:  { label: 'Pending Customer Response', badge: 'bg-amber-100 text-amber-800', icon: Clock },
-  accepted: { label: 'Accepted!',                 badge: 'bg-green-100 text-green-800',  icon: CheckCircle2 },
-  declined: { label: 'Declined',                  badge: 'bg-red-100 text-red-700',      icon: XCircle },
-  expired:  { label: 'Expired',                   badge: 'bg-gray-100 text-gray-500',    icon: Clock },
+  pending:  { label: 'Awaiting Customer Response', badge: 'bg-amber-100 text-amber-800', icon: Clock },
+  accepted: { label: 'Accepted!',                  badge: 'bg-green-100 text-green-800',  icon: CheckCircle2 },
+  declined: { label: 'Declined',                   badge: 'bg-red-100 text-red-700',      icon: XCircle },
+  expired:  { label: 'Expired',                    badge: 'bg-gray-100 text-gray-500',    icon: Clock },
 };
 
-export default function MyQuotesPanel({ providerProfile }) {
+export default function MyQuotesPanel({ providerProfile, onGoToMyJobs }) {
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ['provider-quotes', providerProfile?.id],
     queryFn: async () => {
       if (!providerProfile?.id) return [];
-      // Fetch all quotes submitted by this provider
       const res = await base44.entities.Quote.filter({ provider_id: providerProfile.id });
       return res || [];
     },
     enabled: !!providerProfile?.id,
     refetchOnWindowFocus: true,
-    refetchInterval: 30000,
+    refetchInterval: 10000, // poll every 10s so provider sees acceptances quickly
   });
 
-  // Also fetch the related jobs so we can show service/customer info
   const { data: jobMap = {} } = useQuery({
     queryKey: ['provider-quote-jobs', quotes.map(q => q.job_id).join(',')],
     queryFn: async () => {
@@ -55,22 +53,32 @@ export default function MyQuotesPanel({ providerProfile }) {
     );
   }
 
-  const pending = quotes.filter(q => q.status === 'pending');
   const accepted = quotes.filter(q => q.status === 'accepted');
-  const other = quotes.filter(q => !['pending', 'accepted'].includes(q.status));
+  const pending  = quotes.filter(q => q.status === 'pending');
+  const other    = quotes.filter(q => !['pending', 'accepted'].includes(q.status));
 
   const renderQuote = (q) => {
     const cfg = STATUS_CONFIG[q.status] || STATUS_CONFIG.pending;
     const Icon = cfg.icon;
     const job = jobMap[q.job_id];
+    const isAccepted = q.status === 'accepted';
+
     return (
-      <div key={q.id} className={`bg-card border rounded-xl p-4 ${q.status === 'accepted' ? 'border-green-300' : 'border-border'}`}>
+      <div
+        key={q.id}
+        className={`bg-card border rounded-xl p-4 ${isAccepted ? 'border-green-300 shadow-md' : 'border-border'}`}
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">{job?.service_name || 'Service Job'}</p>
             <p className="text-xs text-muted-foreground mt-0.5 truncate">{job?.address || '—'}</p>
             {job?.customer_name && (
               <p className="text-xs text-muted-foreground mt-0.5">Customer: {job.customer_name}</p>
+            )}
+            {job?.scheduled_date && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Date: {new Date(job.scheduled_date).toLocaleDateString()}
+              </p>
             )}
             {q.message && (
               <p className="text-xs text-muted-foreground mt-1.5 italic">"{q.message}"</p>
@@ -87,9 +95,25 @@ export default function MyQuotesPanel({ providerProfile }) {
             </span>
           </div>
         </div>
-        {q.status === 'accepted' && (
-          <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800 font-medium">
-            🎉 Customer accepted your quote! Check "My Jobs" to manage this job.
+
+        {isAccepted && (
+          <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <PartyPopper size={15} className="text-green-600 flex-shrink-0" />
+              <p className="text-sm font-semibold text-green-800">Your quote was accepted!</p>
+            </div>
+            <p className="text-xs text-green-700">
+              {job?.customer_name || 'The customer'} accepted your ${q.price} quote.
+              Head to <strong>My Jobs</strong> to manage this job and mark progress.
+            </p>
+            {onGoToMyJobs && (
+              <button
+                onClick={onGoToMyJobs}
+                className="w-full flex items-center justify-center gap-2 bg-green-600 text-white rounded-lg py-2 text-xs font-semibold hover:bg-green-700 transition-colors"
+              >
+                Go to My Jobs <ArrowRight size={13} />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -98,16 +122,20 @@ export default function MyQuotesPanel({ providerProfile }) {
 
   return (
     <div className="space-y-4">
-      {pending.length > 0 && (
-        <div>
-          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Awaiting Response ({pending.length})</h3>
-          <div className="space-y-3">{pending.map(renderQuote)}</div>
-        </div>
-      )}
       {accepted.length > 0 && (
         <div>
-          <h3 className="text-xs font-bold text-green-700 uppercase tracking-wide mb-2">Accepted ({accepted.length})</h3>
+          <h3 className="text-xs font-bold text-green-700 uppercase tracking-wide mb-2">
+            🎉 Accepted ({accepted.length})
+          </h3>
           <div className="space-y-3">{accepted.map(renderQuote)}</div>
+        </div>
+      )}
+      {pending.length > 0 && (
+        <div>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">
+            Awaiting Response ({pending.length})
+          </h3>
+          <div className="space-y-3">{pending.map(renderQuote)}</div>
         </div>
       )}
       {other.length > 0 && (

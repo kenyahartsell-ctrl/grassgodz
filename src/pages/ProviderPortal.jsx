@@ -412,7 +412,7 @@ export default function ProviderPortal() {
               <h2 className="text-xl font-bold text-foreground">My Quotes</h2>
               <p className="text-sm text-muted-foreground">Track quotes you've submitted and their status.</p>
             </div>
-            <MyQuotesPanel providerProfile={providerProfile} />
+            <MyQuotesPanel providerProfile={providerProfile} onGoToMyJobs={() => setTab('myjobs')} />
           </div>
         )}
 
@@ -541,7 +541,7 @@ export default function ProviderPortal() {
       {/* Bottom Nav */}
       <nav className="bg-card border-t border-border sticky bottom-0 z-30">
         <div className="max-w-3xl mx-auto flex">
-          {NAV.map(({ key, label, icon: Icon }) => (
+          {NAV.map(({ key, label, icon: NavIcon }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
@@ -549,7 +549,9 @@ export default function ProviderPortal() {
                 tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Icon size={18} />
+              <div className="relative">
+                <NavIcon size={18} />
+              </div>
               <span className="hidden sm:block">{label}</span>
             </button>
           ))}

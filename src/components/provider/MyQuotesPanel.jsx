@@ -11,13 +11,13 @@ const STATUS_CONFIG = {
 
 export default function MyQuotesPanel({ providerProfile, onGoToMyJobs }) {
   const { data: quotes = [], isLoading } = useQuery({
-    queryKey: ['provider-quotes', providerProfile?.id],
+    queryKey: ['provider-quotes', providerProfile?.user_email],
     queryFn: async () => {
-      if (!providerProfile?.id) return [];
-      const res = await base44.entities.Quote.filter({ provider_id: providerProfile.id });
+      if (!providerProfile?.user_email) return [];
+      const res = await base44.entities.Quote.filter({ provider_email: providerProfile.user_email });
       return res || [];
     },
-    enabled: !!providerProfile?.id,
+    enabled: !!providerProfile?.user_email,
     refetchOnWindowFocus: true,
     refetchInterval: 10000, // poll every 10s so provider sees acceptances quickly
   });

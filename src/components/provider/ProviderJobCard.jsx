@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign, CloudRain } from 'lucide-react';
+import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign, CloudRain, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
 import WeatherRescheduleModal from '../shared/WeatherRescheduleModal';
+import ChatDrawer from '../shared/ChatDrawer';
+import { base44 } from '@/api/base44Client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -50,10 +52,24 @@ function JobMiniMap({ address }) {
   );
 }
 
+const CHAT_ENABLED_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed'];
+
 export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete, onRescheduled }) {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [showWeatherModal, setShowWeatherModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [chatUser, setChatUser] = useState(null);
+  const chatAvailable = CHAT_ENABLED_STATUSES.includes(job.status);
+
+  const openChat = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let u = chatUser;
+    if (!u) u = await base44.auth.me();
+    setChatUser(u);
+    setShowChat(true);
+  };
 
   const handleComplete = async (job, photos) => {
     await onMarkComplete(job, photos);
@@ -191,6 +207,15 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
           )}
 
           <div className="flex gap-2 flex-wrap" onClick={e => e.preventDefault()}>
+            {chatAvailable && (
+              <button
+                onClick={openChat}
+                className="flex items-center justify-center gap-1.5 border border-primary/30 bg-primary/10 text-primary rounded-lg px-3 py-2 text-xs font-semibold hover:bg-primary/20 transition-colors"
+              >
+                <MessageCircle size={13} />
+                Message Customer
+              </button>
+            )}
             {['scheduled', 'accepted', 'in_progress'].includes(job.status) && (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowWeatherModal(true); }}
@@ -236,6 +261,15 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
           job={job}
           onClose={() => setShowWeatherModal(false)}
           onRescheduled={onRescheduled}
+        />
+      )}
+      {showChat && chatUser && (
+        <ChatDrawer
+          job={job}
+          user={chatUser}
+          senderRole="provider"
+          otherPartyName={job.customer_name || 'Customer'}
+          onClose={() => setShowChat(false)}
         />
       )}
     </>

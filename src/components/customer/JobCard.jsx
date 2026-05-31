@@ -1,13 +1,28 @@
 import { useState } from 'react';
-import { Calendar, MapPin, ChevronDown, ChevronUp, CloudRain } from 'lucide-react';
+import { Calendar, MapPin, ChevronDown, ChevronUp, CloudRain, MessageCircle } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
 import JobCompletionPhotos from './JobCompletionPhotos';
 import JobQuotesPanel from './JobQuotesPanel';
 import WeatherRescheduleModal from '../shared/WeatherRescheduleModal';
+import ChatDrawer from '../shared/ChatDrawer';
+import { base44 } from '@/api/base44Client';
 
-export default function JobCard({ job, customerProfile, onAcceptQuote, onReview, reviewed, onRescheduled }) {
+const CHAT_ENABLED_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed'];
+
+export default function JobCard({ job, customerProfile, onAcceptQuote, onReview, reviewed, onRescheduled, user }) {
   const [expanded, setExpanded] = useState(job.status === 'quoted');
   const [showWeatherModal, setShowWeatherModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [chatUser, setChatUser] = useState(null);
+  const chatAvailable = CHAT_ENABLED_STATUSES.includes(job.status) && !!job.provider_id;
+
+  const openChat = async (e) => {
+    e.stopPropagation();
+    let u = user;
+    if (!u) u = await base44.auth.me();
+    setChatUser(u);
+    setShowChat(true);
+  };
 
   return (
     <div className={`bg-card border rounded-xl overflow-hidden transition-all ${job.status === 'quoted' ? 'border-blue-300 shadow-sm' : 'border-border'}`}>
@@ -45,6 +60,14 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
           <div className="flex-shrink-0 flex flex-col items-end gap-1">
             {job.quoted_price && (
               <p className="text-base font-bold text-foreground">${job.quoted_price}</p>
+            )}
+            {chatAvailable && (
+              <button
+                onClick={openChat}
+                className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 rounded-full px-2 py-0.5 hover:bg-primary/20 transition-colors"
+              >
+                <MessageCircle size={11} /> Chat
+              </button>
             )}
             {job.status === 'quoted' && !expanded && (
               <span className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
@@ -107,6 +130,15 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
           job={job}
           onClose={() => setShowWeatherModal(false)}
           onRescheduled={onRescheduled}
+        />
+      )}
+      {showChat && chatUser && (
+        <ChatDrawer
+          job={job}
+          user={chatUser}
+          senderRole="customer"
+          otherPartyName={job.provider_name || 'Your Provider'}
+          onClose={() => setShowChat(false)}
         />
       )}
     </div>

@@ -9,27 +9,16 @@ import { useLanguage } from '@/lib/LanguageContext';
 export default function QuoteCard({ quote, onAccept, onDecline, decliningId, customerProfile }) {
   const { t } = useLanguage();
   const [showCardModal, setShowCardModal] = useState(false);
+  const [accepting, setAccepting] = useState(false);
   const [authorizing, setAuthorizing] = useState(false);
+  const [quoteAccepted, setQuoteAccepted] = useState(false);
 
   const hasPaymentMethod = !!customerProfile?.default_payment_method_id;
 
+  // Step 1: Accept the quote first
   const handleAccept = async () => {
-    if (!hasPaymentMethod) {
-      setShowCardModal(true);
-      return;
-    }
-    await doAuthorize(customerProfile.default_payment_method_id);
-  };
-
-  const handleCardSaved = async (paymentMethodId) => {
-    setShowCardModal(false);
-    await doAuthorize(paymentMethodId);
-  };
-
-  const doAuthorize = async (paymentMethodId) => {
-    setAuthorizing(true);
+    setAccepting(true);
     try {
-      // Update job via backend function (customers can't write Job directly via RLS)
       await base44.functions.invoke('updateJobToQuoted', {
         job_id: quote.job_id,
         quoted_price: quote.price,
@@ -37,8 +26,30 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
         provider_email: quote.provider_email,
         provider_name: quote.provider_name,
       });
+      setQuoteAccepted(true);
+      // Step 2: Now collect payment
+      if (hasPaymentMethod) {
+        await doAuthorize(customerProfile.default_payment_method_id);
+      } else {
+        setShowCardModal(true);
+      }
+    } catch (err) {
+      toast.error('Failed to accept quote. Please try again.');
+    } finally {
+      setAccepting(false);
+    }
+  };
 
-      // Authorize payment
+  // Called after card is saved
+  const handleCardSaved = async (paymentMethodId) => {
+    setShowCardModal(false);
+    await doAuthorize(paymentMethodId);
+  };
+
+  // Step 2: Authorize payment after quote is accepted
+  const doAuthorize = async (paymentMethodId) => {
+    setAuthorizing(true);
+    try {
       const res = await base44.functions.invoke('authorizePayment', {
         job_id: quote.job_id,
         payment_method_id: paymentMethodId,
@@ -106,15 +117,17 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
               {onAccept && (
                 <button
                   onClick={handleAccept}
-                  disabled={authorizing}
+                  disabled={accepting || authorizing}
                   className="flex-1 bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  {authorizing ? (
+                  {accepting ? (
+                    <><Loader2 size={15} className="animate-spin" /> Accepting...</>
+                  ) : authorizing ? (
                     <><Loader2 size={15} className="animate-spin" /> {t('authorizing')}</>
                   ) : hasPaymentMethod ? (
                     <><CheckCircle size={15} /> {t('accept_pay')}</>
                   ) : (
-                    <><CreditCard size={15} /> {t('accept_add_card')}</>
+                    <><CreditCard size={15} /> Accept Quote</>
                   )}
                 </button>
               )}

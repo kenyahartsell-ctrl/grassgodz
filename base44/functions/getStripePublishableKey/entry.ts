@@ -1,6 +1,6 @@
 Deno.serve(async (req) => {
   try {
-    const key = Deno.env.get('VITE_STRIPE_PUBLISHABLE_KEY');
+    const key = Deno.env.get('STRIPE_PUBLISHABLE_KEY') || Deno.env.get('VITE_STRIPE_PUBLISHABLE_KEY');
     if (!key) return Response.json({ error: 'Stripe publishable key not configured' }, { status: 500 });
     return Response.json({ publishable_key: key });
   } catch (error) {

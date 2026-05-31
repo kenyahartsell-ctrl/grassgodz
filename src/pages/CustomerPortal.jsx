@@ -119,12 +119,7 @@ export default function CustomerPortal() {
 
     setJobs(prev => [...prev, ...newJobs]);
     setTab('quotes');
-    const msg = data.recurrence === 'weekly'
-      ? t('job_submitted_weekly')
-      : data.recurrence === 'biweekly'
-      ? t('job_submitted_biweekly')
-      : t('job_submitted_onetime');
-    toast.success(msg);
+    toast.success('Request submitted! You\'ll see provider quotes here as they come in. Check your email for confirmation.');
   };
 
   const handleAcceptQuote = async (quote) => {

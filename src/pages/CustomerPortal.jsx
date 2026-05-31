@@ -192,21 +192,27 @@ export default function CustomerPortal() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {tab === 'home' && (
           <div>
-            {/* Pending quotes alert */}
+            {/* Pending quotes alert — prominent banner when provider has responded */}
             {jobs.filter(j => j.status === 'quoted').length > 0 && (
-              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
-                <FileText size={18} className="text-blue-600 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-blue-800">
-                    {t('pending_quotes_alert', { n: jobs.filter(j => j.status === 'quoted').length, s: jobs.filter(j => j.status === 'quoted').length > 1 ? 's' : '' })}
-                  </p>
-                  <p className="text-xs text-blue-700 mt-0.5">{t('pending_quotes_sub')}</p>
+              <div className="mb-4 bg-green-600 border border-green-700 rounded-2xl p-5 shadow-lg">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl">🎉</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-base font-bold text-white">
+                      A provider has quoted your yard!
+                    </p>
+                    <p className="text-sm text-green-100 mt-0.5">
+                      {jobs.filter(j => j.status === 'quoted').map(j => j.provider_name || 'A provider').join(', ')} submitted a price for your lawn care. Tap below to review and accept.
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setTab('quotes')}
-                  className="flex-shrink-0 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="w-full bg-white text-green-700 font-bold py-3 rounded-xl text-sm hover:bg-green-50 transition-colors"
                 >
-                  {t('review')}
+                  👉 Review & Accept Quote
                 </button>
               </div>
             )}
@@ -222,9 +228,19 @@ export default function CustomerPortal() {
               <h1 className="text-2xl font-bold mb-1">{displayName.split(' ')[0]} 👋</h1>
               {displayAddress && <p className="text-sm text-white/80">{displayAddress}</p>}
               {upcomingJobs.length > 0 && (
-                <div className="mt-4 bg-white/15 rounded-xl px-4 py-3 flex items-center gap-2 text-sm">
-                  <CheckCircle2 size={15} />
-                  <span>{upcomingJobs.length} upcoming job{upcomingJobs.length > 1 ? 's' : ''} scheduled</span>
+                <div className="mt-4 space-y-2">
+                  {jobs.filter(j => j.status === 'quoted' && j.provider_name).map(j => (
+                    <div key={j.id} className="bg-white/20 rounded-xl px-4 py-3 flex items-center gap-2 text-sm">
+                      <span>✅</span>
+                      <span><strong>{j.provider_name}</strong> quoted your {j.service_name} — tap "Review Quote" above!</span>
+                    </div>
+                  ))}
+                  {jobs.filter(j => ['accepted','scheduled','in_progress'].includes(j.status)).length > 0 && (
+                    <div className="bg-white/15 rounded-xl px-4 py-3 flex items-center gap-2 text-sm">
+                      <CheckCircle2 size={15} />
+                      <span>{jobs.filter(j => ['accepted','scheduled','in_progress'].includes(j.status)).length} job{jobs.filter(j => ['accepted','scheduled','in_progress'].includes(j.status)).length > 1 ? 's' : ''} scheduled</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

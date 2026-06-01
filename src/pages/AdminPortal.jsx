@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain, Copy } from 'lucide-react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
@@ -217,15 +217,43 @@ export default function AdminPortal() {
                 <h2 className="text-xl font-bold text-foreground">Platform Overview</h2>
                 <p className="text-sm text-muted-foreground">Real-time metrics across the marketplace</p>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleTestStripe}
-                className="flex items-center gap-2"
-              >
-                <TestTube size={14} />
-                Test Stripe
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const emails = providers.map(p => p.user_email).filter(Boolean).join(', ');
+                    navigator.clipboard.writeText(emails);
+                    toast.success(`Copied ${providers.length} provider email${providers.length !== 1 ? 's' : ''}`);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Copy size={14} />
+                  Copy Provider Emails
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const emails = customers.map(c => c.user_email).filter(Boolean).join(', ');
+                    navigator.clipboard.writeText(emails);
+                    toast.success(`Copied ${customers.length} customer email${customers.length !== 1 ? 's' : ''}`);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Copy size={14} />
+                  Copy Customer Emails
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleTestStripe}
+                  className="flex items-center gap-2"
+                >
+                  <TestTube size={14} />
+                  Test Stripe
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

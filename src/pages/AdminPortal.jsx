@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain, Copy } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain, Copy, LinkIcon } from 'lucide-react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
@@ -14,6 +14,7 @@ import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
 import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
 import AdminEmailPanel from '@/components/admin/AdminEmailPanel';
 import AdminManualClientsPanel from '@/components/admin/AdminManualClientsPanel';
+import AdminPaymentLinksPanel from '@/components/admin/AdminPaymentLinksPanel';
 import AdminEditPriceModal from '@/components/admin/AdminEditPriceModal';
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
@@ -36,6 +37,7 @@ const NAV = [
   { key: 'email', label: 'Email', icon: Mail },
   { key: 'manual', label: 'Manual', icon: Banknote },
   { key: 'invoices', label: 'Invoices', icon: Receipt },
+  { key: 'paymentlinks', label: 'Pay Links', icon: LinkIcon },
 ];
 
 export default function AdminPortal() {
@@ -519,6 +521,12 @@ export default function AdminPortal() {
         {tab === 'invoices' && (
           <div>
             <AdminInvoiceBuilder allJobs={jobs} />
+          </div>
+        )}
+
+        {tab === 'paymentlinks' && (
+          <div>
+            <AdminPaymentLinksPanel allJobs={jobs} />
           </div>
         )}
 

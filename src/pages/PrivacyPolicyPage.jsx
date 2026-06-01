@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
 
           <div className="prose prose-sm max-w-none space-y-8 text-foreground">
 
-            <section>
+            <section className="hidden">
               <h2 className="text-xl font-bold text-foreground mb-3">1. Introduction</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Welcome to Grassgodz ("we," "our," or "us"). We operate a lawn care marketplace connecting customers with local service providers in the DC metro area. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and mobile application (collectively, the "Service").
@@ -136,6 +136,6 @@ export default function PrivacyPolicyPage() {
         </div>
       </main>
       <PublicFooter />
-    </div>
-  );
+    </div>);
+
 }

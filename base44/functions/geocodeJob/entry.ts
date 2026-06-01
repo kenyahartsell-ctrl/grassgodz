@@ -1,15 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Uses Nominatim (OpenStreetMap) — free, no API key required, server-side safe
 async function geocodeAddress(address) {
-  const token = Deno.env.get('VITE_MAPBOX_SECRET');
-  if (!token) throw new Error('VITE_MAPBOX_SECRET not set');
   const encoded = encodeURIComponent(address);
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${token}&limit=1`;
-  const res = await fetch(url);
+  const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'GrassGodz/1.0 (grassgodz.com)' }
+  });
   const data = await res.json();
-  if (!data.features || data.features.length === 0) return null;
-  const [longitude, latitude] = data.features[0].center;
-  return { latitude, longitude };
+  if (!data || data.length === 0) return null;
+  return {
+    latitude: parseFloat(data[0].lat),
+    longitude: parseFloat(data[0].lon),
+  };
 }
 
 Deno.serve(async (req) => {

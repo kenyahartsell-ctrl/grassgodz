@@ -1,13 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-async function geocodeAddress(address, token) {
+async function geocodeAddress(address) {
   const encoded = encodeURIComponent(address);
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${token}&limit=1`;
-  const res = await fetch(url);
+  const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'GrassGodz/1.0 (grassgodz.com)' }
+  });
   const data = await res.json();
-  if (!data.features || data.features.length === 0) return null;
-  const [longitude, latitude] = data.features[0].center;
-  return { latitude, longitude };
+  if (!data || data.length === 0) return null;
+  return {
+    latitude: parseFloat(data[0].lat),
+    longitude: parseFloat(data[0].lon),
+  };
 }
 
 Deno.serve(async (req) => {
@@ -21,10 +25,7 @@ Deno.serve(async (req) => {
     if (!job?.address) return Response.json({ skipped: 'no address' });
     if (job.latitude && job.longitude) return Response.json({ skipped: 'already geocoded' });
 
-    const token = Deno.env.get('VITE_MAPBOX_SECRET');
-    if (!token) return Response.json({ error: 'VITE_MAPBOX_SECRET not set' }, { status: 500 });
-
-    const coords = await geocodeAddress(job.address, token);
+    const coords = await geocodeAddress(job.address);
     if (!coords) return Response.json({ skipped: 'geocode failed', address: job.address });
 
     const base44 = createClientFromRequest(req);

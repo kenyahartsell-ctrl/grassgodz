@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { ChevronDown, Eye, Mail, Trash2 } from 'lucide-react';
+import { ChevronDown, Eye, Mail, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CustomerDetailModal from './CustomerDetailModal';
+import AdminEditCustomerModal from './AdminEditCustomerModal';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 export default function AdminCustomersTable({ customers, jobs, quotes, onCustomerDeleted }) {
   const [expandedId, setExpandedId] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [customerList, setCustomerList] = useState(customers);
   const [deletingId, setDeletingId] = useState(null);
 
   const handleDelete = async (customerId, customerName) => {
@@ -36,8 +39,18 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
           onClose={() => setSelectedCustomer(null)}
         />
       )}
+      {editingCustomer && (
+        <AdminEditCustomerModal
+          customer={editingCustomer}
+          onClose={() => setEditingCustomer(null)}
+          onSaved={(updated) => {
+            setCustomerList(prev => prev.map(c => c.id === updated.id ? updated : c));
+            setEditingCustomer(null);
+          }}
+        />
+      )}
       <div className="space-y-2">
-        {customers.map(c => {
+        {customerList.map(c => {
           const customerJobs = jobs.filter(j => j.customer_email === c.user_email);
           const open = expandedId === c.id;
           return (
@@ -111,9 +124,12 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
                     </div>
                   )}
 
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex gap-2 flex-wrap">
                     <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setSelectedCustomer(c)}>
                       <Eye size={12} /> Full Profile
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEditingCustomer(c)}>
+                      <Pencil size={12} /> Edit
                     </Button>
                     <a href={`mailto:${c.user_email}`}>
                       <Button size="sm" variant="outline" className="h-7 text-xs gap-1">

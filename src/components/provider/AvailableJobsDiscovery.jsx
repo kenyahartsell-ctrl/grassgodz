@@ -43,8 +43,10 @@ function JobMapView({ jobs, providerProfile }) {
       ) : (
         <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%' }} zoomControl>
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
+            url={`https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${import.meta.env.VITE_MAPBOX_SECRET}`}
+            attribution='&copy; <a href="https://www.mapbox.com/">Mapbox</a>'
+            tileSize={512}
+            zoomOffset={-1}
           />
           {jobsWithCoords.map(job => {
             const color = getPinColor(job.quoted_price);

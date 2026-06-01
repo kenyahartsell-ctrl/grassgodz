@@ -127,6 +127,7 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
         {!editing ? (
           <div className="space-y-3 border-t border-border pt-4">
             {[
+              { label: 'Email', value: user?.email || '—' },
               { label: t('phone'), value: profile?.phone || '—' },
               { label: t('service_address'), value: profile?.service_address || '—' },
               { label: t('zip_code'), value: profile?.zip_code || '—' },
@@ -139,6 +140,15 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
           </div>
         ) : (
           <form onSubmit={handleSave} className="space-y-3 border-t border-border pt-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Email</label>
+              <input
+                value={user?.email || ''}
+                readOnly
+                className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-muted text-muted-foreground cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground mt-0.5">Email cannot be changed here.</p>
+            </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">{t('full_name')}</label>
               <input value={form.name} onChange={e => set('name', e.target.value)}

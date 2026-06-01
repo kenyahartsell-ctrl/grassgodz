@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
-import { Pencil, Save, X, Bell, Camera, Loader2, LogOut, Trash2 } from 'lucide-react';
+import { Pencil, Save, X, Bell, Camera, Loader2, LogOut, Trash2, MessageSquare } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import StarRating from '@/components/shared/StarRating';
+import SmsOptInCard from '@/components/shared/SmsOptInCard';
 
 function Toggle({ checked, onChange, label, description }) {
   return (
@@ -339,6 +340,9 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
           </button>
         )}
       </div>
+
+      {/* SMS Opt-In */}
+      <SmsOptInCard profile={profile} onSaved={onProfileUpdated} entityName="ProviderProfile" />
 
       {/* Account Actions */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-3">

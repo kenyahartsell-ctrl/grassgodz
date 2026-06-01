@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Pencil, Save, X, Bell, LogOut, Trash2 } from 'lucide-react';
+import { Pencil, Save, X, Bell, LogOut, Trash2, MessageSquare } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
+import SmsOptInCard from '@/components/shared/SmsOptInCard';
 
 function Toggle({ checked, onChange, label, description }) {
   return (
@@ -225,6 +226,9 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
           </button>
         )}
       </div>
+
+      {/* SMS Opt-In */}
+      <SmsOptInCard profile={profile} onSaved={onProfileUpdated} entityName="CustomerProfile" />
 
       {/* Account Actions */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-3">

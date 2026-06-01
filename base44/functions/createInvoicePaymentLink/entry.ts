@@ -23,27 +23,78 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invoice total must be greater than 0' }, { status: 400 });
     }
 
-    // Create a Stripe Price on the fly
+    // Try to find the customer's saved card on file
+    let stripeCustomerId = null;
+    let defaultPaymentMethodId = null;
+
+    if (invoice.customer_email) {
+      const profiles = await base44.asServiceRole.entities.CustomerProfile.filter({ user_email: invoice.customer_email });
+      if (profiles && profiles.length > 0) {
+        stripeCustomerId = profiles[0].stripe_customer_id || null;
+        defaultPaymentMethodId = profiles[0].default_payment_method_id || null;
+      }
+    }
+
+    const description = invoice.service_description || `Invoice for ${invoice.customer_name || invoice.customer_email}`;
+
+    // If customer has a card on file, charge it directly
+    if (stripeCustomerId && defaultPaymentMethodId) {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: totalCents,
+        currency: 'usd',
+        customer: stripeCustomerId,
+        payment_method: defaultPaymentMethodId,
+        description,
+        receipt_email: invoice.customer_email,
+        confirm: true,
+        off_session: true,
+        metadata: { invoice_id: invoice.id },
+      });
+
+      // Mark invoice as paid immediately if succeeded
+      if (paymentIntent.status === 'succeeded') {
+        await base44.asServiceRole.entities.Invoice.update(invoice.id, {
+          status: 'paid',
+          stripe_payment_link: `https://dashboard.stripe.com/payments/${paymentIntent.id}`,
+        });
+        return Response.json({
+          charged_card_on_file: true,
+          payment_intent_id: paymentIntent.id,
+          status: paymentIntent.status,
+          payment_link: null,
+        });
+      }
+
+      // If requires_action, fall through to payment link below
+    }
+
+    // Fallback: create a Stripe Payment Link for manual checkout
     const price = await stripe.prices.create({
       currency: 'usd',
       unit_amount: totalCents,
-      product_data: {
-        name: invoice.service_description || `Invoice for ${invoice.customer_name || invoice.customer_email}`,
-      },
+      product_data: { name: description },
     });
 
-    // Create a Payment Link
-    const paymentLink = await stripe.paymentLinks.create({
+    const linkParams = {
       line_items: [{ price: price.id, quantity: 1 }],
       metadata: { invoice_id: invoice.id },
-    });
+    };
 
-    // Save payment link URL to invoice
+    // Pre-fill customer email if available
+    if (invoice.customer_email) {
+      linkParams.customer_creation = 'if_required';
+    }
+
+    const paymentLink = await stripe.paymentLinks.create(linkParams);
+
     await base44.asServiceRole.entities.Invoice.update(invoice.id, {
       stripe_payment_link: paymentLink.url,
     });
 
-    return Response.json({ payment_link: paymentLink.url });
+    return Response.json({
+      charged_card_on_file: false,
+      payment_link: paymentLink.url,
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

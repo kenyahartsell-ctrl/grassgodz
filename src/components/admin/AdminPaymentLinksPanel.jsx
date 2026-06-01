@@ -25,11 +25,16 @@ function PaymentLinkRow({ invoice, onRefresh }) {
     setGeneratingLink(true);
     try {
       const res = await base44.functions.invoke('createInvoicePaymentLink', { invoice_id: invoice.id });
-      if (res.data?.payment_link) {
-        toast.success('Payment link generated!');
+      if (res.data?.error) {
+        toast.error(res.data.error);
+      } else if (res.data?.charged_card_on_file) {
+        toast.success('Card on file charged! Invoice marked as paid.');
+        onRefresh();
+      } else if (res.data?.payment_link) {
+        toast.success('Payment link generated! (No card on file — link ready to share)');
         onRefresh();
       } else {
-        toast.error(res.data?.error || 'Failed to generate link.');
+        toast.error('Failed to generate link.');
       }
     } catch {
       toast.error('Error generating link.');

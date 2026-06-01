@@ -39,8 +39,8 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
         setOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
   }, []);
 
   const handleSelect = (tab) => {

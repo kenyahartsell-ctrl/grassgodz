@@ -21,6 +21,7 @@ import StatusBadge from '../components/shared/StatusBadge';
 import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
 import AdminProvidersTable from '../components/admin/AdminProvidersTable';
 import StarRating from '../components/shared/StarRating';
+import AdminGlobalSearch from '@/components/admin/AdminGlobalSearch';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { toast } from 'sonner';
@@ -196,8 +197,14 @@ export default function AdminPortal() {
       <header className="bg-card border-b border-border sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-2">
           <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-8 w-8 object-contain flex-shrink-0" />
-          <span className="font-display font-bold text-base text-foreground">Grassgodz</span>
-          <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full">Admin</span>
+          <span className="font-display font-bold text-base text-foreground hidden sm:block">Grassgodz</span>
+          <span className="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full hidden sm:block">Admin</span>
+          <AdminGlobalSearch
+            customers={customers}
+            providers={providers}
+            jobs={jobs}
+            onNavigate={(tab) => setTab(tab)}
+          />
           <div className="ml-auto flex items-center gap-2 flex-shrink-0">
             <Shield size={14} className="text-purple-600 hidden sm:block" />
             <span className="text-xs font-medium text-foreground hidden sm:block">Super Admin</span>

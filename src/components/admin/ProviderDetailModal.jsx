@@ -51,6 +51,8 @@ export default function ProviderDetailModal({ provider: p, onClose }) {
             </h3>
             <div className="grid grid-cols-2 gap-4 bg-muted/30 rounded-xl p-4">
               <InfoRow label="Email" value={p.user_email} />
+              <InfoRow label="Full Name" value={p.name} />
+              <InfoRow label="Business Name" value={p.business_name} />
               <InfoRow label="Phone" value={p.phone} />
               <InfoRow label="Date of Birth" value={p.dob} />
               <InfoRow label="Home Address" value={p.home_address} />

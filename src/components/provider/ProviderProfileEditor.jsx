@@ -197,8 +197,9 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
           <div className="space-y-3 border-t border-border pt-4">
             {[
               { label: 'Email', value: user?.email },
-              { label: 'Phone', value: profile?.phone || '—' },
+              { label: 'Full Name', value: profile?.name || user?.full_name || '—' },
               { label: 'Business Name', value: profile?.business_name || '—' },
+              { label: 'Phone', value: profile?.phone || '—' },
               { label: 'Years of Experience', value: profile?.years_experience ? `${profile.years_experience} years` : '—' },
               { label: 'Vehicle', value: [profile?.vehicle_year, profile?.vehicle_make, profile?.vehicle_model].filter(Boolean).join(' ') || '—' },
               { label: 'Service ZIPs', value: profile?.service_zip_codes?.join(', ') || '—' },

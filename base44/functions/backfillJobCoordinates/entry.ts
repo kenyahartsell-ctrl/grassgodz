@@ -1,17 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 async function geocodeAddress(address) {
+  const token = Deno.env.get('MAPBOX_SECRET_TOKEN');
+  if (!token) throw new Error('MAPBOX_SECRET_TOKEN not set');
   const encoded = encodeURIComponent(address);
-  const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'GrassGodz/1.0 (grassgodz.com)' }
-  });
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${token}&limit=1&types=address,postcode,place`;
+  const res = await fetch(url);
   const data = await res.json();
-  if (!data || data.length === 0) return null;
-  return {
-    latitude: parseFloat(data[0].lat),
-    longitude: parseFloat(data[0].lon),
-  };
+  if (data.message) throw new Error(`Mapbox error: ${data.message}`);
+  if (!data.features || data.features.length === 0) return null;
+  const [longitude, latitude] = data.features[0].center;
+  return { latitude, longitude };
 }
 
 Deno.serve(async (req) => {
@@ -29,18 +28,22 @@ Deno.serve(async (req) => {
     let failed = 0;
 
     for (const job of needsGeocode) {
-      const coords = await geocodeAddress(job.address);
-      if (coords) {
-        await base44.asServiceRole.entities.Job.update(job.id, {
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        });
-        updated++;
-      } else {
+      try {
+        const coords = await geocodeAddress(job.address);
+        if (coords) {
+          await base44.asServiceRole.entities.Job.update(job.id, {
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          });
+          updated++;
+        } else {
+          failed++;
+        }
+      } catch {
         failed++;
       }
-      // Nominatim rate limit: max 1 req/sec
-      await new Promise(r => setTimeout(r, 1100));
+      // Mapbox allows high request rates, small delay to be safe
+      await new Promise(r => setTimeout(r, 100));
     }
 
     return Response.json({ success: true, updated, failed, total: needsGeocode.length });

@@ -1,7 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import Stripe from 'npm:stripe@16.0.0';
-
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
 Deno.serve(async (req) => {
   try {
@@ -50,32 +47,7 @@ Deno.serve(async (req) => {
     const platformFee = price * 0.10; // always based on full price
     const providerPayout = price * 0.90;
 
-    const amountCents = Math.round(amountDue * 100);
-
-    // 1. Create a Stripe Price + Payment Link
-    const stripePrice = await stripe.prices.create({
-      currency: 'usd',
-      unit_amount: amountCents,
-      product_data: {
-        name: job.service_name || 'Lawn Care Service',
-      },
-    });
-
-    const paymentLink = await stripe.paymentLinks.create({
-      line_items: [{ price: stripePrice.id, quantity: 1 }],
-      after_completion: {
-        type: 'redirect',
-        redirect: { url: 'https://grassgodz.com/payment-success' },
-      },
-      metadata: {
-        job_id: job.id,
-        customer_id: job.customer_id,
-        provider_id: job.provider_id,
-        payment_type: job.deposit_required && job.deposit_paid ? 'final_balance' : 'full',
-      },
-    });
-
-    // 2. Create Payment record
+    // 1. Create Payment record
     const existingPayments = await base44.asServiceRole.entities.Payment.filter({ job_id });
     if (existingPayments.length === 0) {
       await base44.asServiceRole.entities.Payment.create({
@@ -90,13 +62,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    const portalLink = 'https://grassgodz.com/customer';
+
     const depositNote = (job.deposit_required && job.deposit_paid)
       ? `<p style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;font-size:14px;color:#166534;">
-          ✓ Deposit of $${job.deposit_amount?.toFixed(2)} already paid — this is your remaining balance.
+          ✓ Deposit of $${job.deposit_amount?.toFixed(2)} already paid — remaining balance: $${amountDue.toFixed(2)}.
         </p>`
       : '';
 
-    // 3. Send payment link to customer via email
+    // 2. Send customer to portal to pay
     if (job.customer_email) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: job.customer_email,
@@ -104,13 +78,11 @@ Deno.serve(async (req) => {
         body: `
 <p>Hi ${job.customer_name || 'there'},</p>
 
-<p>Your lawn service has been completed! Please click the link below to complete your payment:</p>
+<p>Your lawn service has been completed! Please log in to your Grassgodz account to complete payment of <strong>$${amountDue.toFixed(2)}</strong>.</p>
 
 ${depositNote}
 
-<p><a href="${paymentLink.url}" style="background:#2d6a2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">Complete Payment — $${amountDue.toFixed(2)}</a></p>
-
-<p>Or copy this link: <a href="${paymentLink.url}">${paymentLink.url}</a></p>
+<p><a href="${portalLink}" style="background:#2d6a2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">Complete Payment — $${amountDue.toFixed(2)}</a></p>
 
 <p>Thank you for choosing Grassgodz.</p>
 
@@ -119,7 +91,7 @@ ${depositNote}
       });
     }
 
-    return Response.json({ success: true, payment_link: paymentLink.url });
+    return Response.json({ success: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

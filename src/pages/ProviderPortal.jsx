@@ -199,7 +199,7 @@ export default function ProviderPortal() {
       skip_photos: skipPhotos,
     });
     if (res.data?.success) {
-      const payout = res.data.payout != null ? Number(res.data.payout).toFixed(2) : ((job.quoted_price || 0) * 0.75).toFixed(2);
+      const payout = res.data.payout != null ? Number(res.data.payout).toFixed(2) : ((job.quoted_price || 0) * 0.90).toFixed(2);
       await refreshJobs();
       toast.success(`Job completed! $${payout} payout — customer has been notified.`);
     } else {

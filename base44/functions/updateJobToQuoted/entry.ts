@@ -19,6 +19,14 @@ Deno.serve(async (req) => {
 
       if (quoted_price !== undefined && quoted_price !== null) {
         updates.quoted_price = quoted_price;
+
+        // Deposit rule: jobs over $200 require a 50% deposit before going live
+        if (quoted_price > 200) {
+          updates.deposit_required = true;
+          updates.deposit_amount = parseFloat((quoted_price * 0.5).toFixed(2));
+          updates.deposit_paid = false;
+          updates.remaining_balance = parseFloat((quoted_price * 0.5).toFixed(2));
+        }
       }
 
       if (provider_email) updates.provider_email = provider_email;

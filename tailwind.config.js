@@ -12,6 +12,7 @@ module.exports = {
       'bg-red-100', 'text-red-800', 'border-red-200',
       'bg-gray-100', 'text-gray-600', 'border-gray-200',
       'bg-orange-100', 'text-orange-800', 'border-orange-200',
+      'bg-amber-100', 'text-amber-800', 'border-amber-200',
       'bg-amber-50', 'text-amber-600',
       'bg-blue-50', 'text-blue-600',
       'bg-emerald-50', 'text-emerald-600',

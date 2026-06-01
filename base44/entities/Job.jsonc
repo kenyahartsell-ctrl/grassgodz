@@ -63,6 +63,7 @@
     "status": {
       "type": "string",
       "enum": [
+        "pending_deposit",
         "requested",
         "quoted",
         "accepted",
@@ -188,6 +189,32 @@
         "cash"
       ],
       "default": "stripe"
+    },
+    "deposit_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if job total exceeds $200 and a 50% deposit is required"
+    },
+    "deposit_amount": {
+      "type": "number",
+      "description": "50% of quoted price, required before job is visible to providers"
+    },
+    "deposit_paid": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once deposit payment is confirmed"
+    },
+    "deposit_payment_intent_id": {
+      "type": "string",
+      "description": "Stripe payment intent ID for the deposit transaction"
+    },
+    "remaining_balance": {
+      "type": "number",
+      "description": "Full price minus deposit amount \u2014 charged at job completion"
+    },
+    "final_payment_intent_id": {
+      "type": "string",
+      "description": "Stripe payment intent ID for the remaining balance payment"
     }
   },
   "required": [

@@ -3,6 +3,7 @@ import { Calendar, MapPin, ChevronDown, ChevronUp, CloudRain, MessageCircle } fr
 import StatusBadge from '../shared/StatusBadge';
 import JobCompletionPhotos from './JobCompletionPhotos';
 import JobQuotesPanel from './JobQuotesPanel';
+import DepositBanner from './DepositBanner';
 import WeatherRescheduleModal from '../shared/WeatherRescheduleModal';
 import ChatDrawer from '../shared/ChatDrawer';
 import { base44 } from '@/api/base44Client';
@@ -79,11 +80,20 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
         </div>
       </button>
 
+      {/* Deposit banner — shown when deposit is required and not yet paid */}
+      {job.status === 'pending_deposit' && job.deposit_required && !job.deposit_paid && (
+        <DepositBanner
+          job={job}
+          customerProfile={customerProfile}
+          onDepositPaid={onAcceptQuote}
+        />
+      )}
+
       {/* Expanded content */}
       {expanded && (
         <div className="px-4 pb-4 border-t border-border pt-3">
           {/* Quotes panel — for active (non-completed/cancelled) jobs */}
-          {!['completed', 'cancelled'].includes(job.status) && (
+          {!['completed', 'cancelled', 'pending_deposit'].includes(job.status) && (
             <JobQuotesPanel
               job={job}
               customerProfile={customerProfile}

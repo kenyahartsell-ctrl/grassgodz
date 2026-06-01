@@ -42,9 +42,15 @@ Deno.serve(async (req) => {
     const price = job.final_price || job.quoted_price;
     if (!price) return Response.json({ error: 'No price on job' }, { status: 400 });
 
-    const amountCents = Math.round(price * 100);
-    const platformFee = price * 0.10;
+    // For deposit jobs, only charge the remaining balance at completion
+    const amountDue = (job.deposit_required && job.deposit_paid && job.remaining_balance)
+      ? job.remaining_balance
+      : price;
+
+    const platformFee = price * 0.10; // always based on full price
     const providerPayout = price * 0.90;
+
+    const amountCents = Math.round(amountDue * 100);
 
     // 1. Create a Stripe Price + Payment Link
     const stripePrice = await stripe.prices.create({
@@ -65,10 +71,11 @@ Deno.serve(async (req) => {
         job_id: job.id,
         customer_id: job.customer_id,
         provider_id: job.provider_id,
+        payment_type: job.deposit_required && job.deposit_paid ? 'final_balance' : 'full',
       },
     });
 
-    // 2. Create Payment record (status: authorized, no payment_intent yet)
+    // 2. Create Payment record
     const existingPayments = await base44.asServiceRole.entities.Payment.filter({ job_id });
     if (existingPayments.length === 0) {
       await base44.asServiceRole.entities.Payment.create({
@@ -83,6 +90,12 @@ Deno.serve(async (req) => {
       });
     }
 
+    const depositNote = (job.deposit_required && job.deposit_paid)
+      ? `<p style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px 14px;border-radius:8px;font-size:14px;color:#166534;">
+          ✓ Deposit of $${job.deposit_amount?.toFixed(2)} already paid — this is your remaining balance.
+        </p>`
+      : '';
+
     // 3. Send payment link to customer via email
     if (job.customer_email) {
       await base44.asServiceRole.integrations.Core.SendEmail({
@@ -93,7 +106,9 @@ Deno.serve(async (req) => {
 
 <p>Your lawn service has been completed! Please click the link below to complete your payment:</p>
 
-<p><a href="${paymentLink.url}" style="background:#2d6a2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">Complete Payment — $${price.toFixed(2)}</a></p>
+${depositNote}
+
+<p><a href="${paymentLink.url}" style="background:#2d6a2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">Complete Payment — $${amountDue.toFixed(2)}</a></p>
 
 <p>Or copy this link: <a href="${paymentLink.url}">${paymentLink.url}</a></p>
 

@@ -19,15 +19,26 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
   const handleAccept = async () => {
     setAccepting(true);
     try {
-      await base44.functions.invoke('updateJobToQuoted', {
+      const res = await base44.functions.invoke('updateJobToQuoted', {
         job_id: quote.job_id,
         quoted_price: quote.price,
         provider_id: quote.provider_id,
         provider_email: quote.provider_email,
         provider_name: quote.provider_name,
       });
+      if (res.data?.error) throw new Error(res.data.error);
+
       setQuoteAccepted(true);
-      // Step 2: Now collect payment
+
+      // If deposit required (price > $200), set pending_deposit and prompt for deposit
+      if (quote.price > 200) {
+        await base44.entities.Job.update(quote.job_id, { status: 'pending_deposit' });
+        toast.success('Quote accepted! A 50% deposit is required to confirm your job.');
+        onAccept(quote);
+        return;
+      }
+
+      // Under $200: collect full payment immediately
       if (hasPaymentMethod) {
         await doAuthorize(customerProfile.default_payment_method_id);
       } else {
@@ -40,13 +51,13 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
     }
   };
 
-  // Called after card is saved
+  // Called after card is saved (under $200 path only)
   const handleCardSaved = async (paymentMethodId) => {
     setShowCardModal(false);
     await doAuthorize(paymentMethodId);
   };
 
-  // Step 2: Authorize payment after quote is accepted
+  // Step 2: Authorize full payment (only for jobs under $200)
   const doAuthorize = async (paymentMethodId) => {
     setAuthorizing(true);
     try {

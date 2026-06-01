@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2, FileText, Clock } from 'lucide-react';
+import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2, FileText, Clock, Power } from 'lucide-react';
 import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
 import BookingRequestCard from '../components/provider/BookingRequestCard';
@@ -7,6 +7,9 @@ import ProviderJobMap from '../components/provider/ProviderJobMap';
 import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
 import MyQuotesPanel from '@/components/provider/MyQuotesPanel';
+
+import ReadyToWorkToggle from '@/components/provider/ReadyToWorkToggle';
+import AvailableJobsDiscovery from '@/components/provider/AvailableJobsDiscovery';
 
 import { base44 } from '@/api/base44Client';
 import ProviderProfileEditor from '@/components/provider/ProviderProfileEditor';
@@ -215,6 +218,12 @@ export default function ProviderPortal() {
     );
   }
 
+  const isProviderActive = providerProfile?.status === 'active';
+
+  const handleStatusChanged = (newStatus) => {
+    setProviderProfile(p => p ? { ...p, status: newStatus } : p);
+  };
+
   const displayName = providerProfile?.name || user?.full_name || 'Provider';
   const businessName = providerProfile?.business_name || displayName;
 
@@ -272,6 +281,13 @@ export default function ProviderPortal() {
               <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
               <p className="text-sm text-muted-foreground">Welcome back, {displayName.split(' ')[0]}</p>
             </div>
+
+            {providerProfile && (
+              <ReadyToWorkToggle
+                providerProfile={providerProfile}
+                onStatusChanged={handleStatusChanged}
+              />
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <MetricCard title="Scheduled" value={scheduled.length} icon={CalendarDays} />
@@ -389,20 +405,31 @@ export default function ProviderPortal() {
           <div>
             <div className="mb-5">
               <h2 className="text-xl font-bold text-foreground">Available Jobs</h2>
-              <p className="text-sm text-muted-foreground">{availableJobs.length} job{availableJobs.length !== 1 ? 's' : ''} available near you</p>
             </div>
-            {availableJobs.length === 0 ? (
-              <div className="text-center py-16">
-                <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground font-medium">No available jobs right now</p>
-                <p className="text-sm text-muted-foreground mt-1">Check back soon — new jobs are posted daily.</p>
+            {!isProviderActive ? (
+              <div className="text-center py-16 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+                  <Power className="w-7 h-7 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-foreground font-semibold">You're currently Inactive</p>
+                  <p className="text-sm text-muted-foreground mt-1">Go to Dashboard and tap "Ready to Work" to see available jobs.</p>
+                </div>
+                <button
+                  onClick={() => setTab('dashboard')}
+                  className="bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  Go to Dashboard
+                </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {availableJobs.map(job => (
-                  <AvailableJobCard key={job.id} job={job} onSubmitQuote={handleSubmitQuote} onAcceptCashJob={handleAcceptCashJob} onboardingComplete={providerProfile?.onboarding_complete} />
-                ))}
-              </div>
+              <AvailableJobsDiscovery
+                jobs={availableJobs}
+                providerProfile={providerProfile}
+                onSubmitQuote={handleSubmitQuote}
+                onAcceptCashJob={handleAcceptCashJob}
+                onboardingComplete={providerProfile?.onboarding_complete}
+              />
             )}
           </div>
         )}

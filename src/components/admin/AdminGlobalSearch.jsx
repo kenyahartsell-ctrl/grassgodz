@@ -83,7 +83,7 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedCustomers.map(c => (
                 <button
                   key={c.id}
-                  onClick={() => handleSelect('customers')}
+                  onMouseDown={e => { e.preventDefault(); handleSelect('customers'); }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <UserCircle size={13} className="text-muted-foreground flex-shrink-0" />
@@ -102,7 +102,7 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedProviders.map(p => (
                 <button
                   key={p.id}
-                  onClick={() => handleSelect('providers')}
+                  onMouseDown={e => { e.preventDefault(); handleSelect('providers'); }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <Users size={13} className="text-muted-foreground flex-shrink-0" />
@@ -121,7 +121,7 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedJobs.map(j => (
                 <button
                   key={j.id}
-                  onClick={() => handleSelect('jobs')}
+                  onMouseDown={e => { e.preventDefault(); handleSelect('jobs'); }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <MapPin size={13} className="text-muted-foreground flex-shrink-0" />

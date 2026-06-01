@@ -167,6 +167,15 @@
     "notify_promotions": {
       "type": "boolean",
       "default": false
+    },
+    "sms_opt_in": {
+      "type": "boolean",
+      "description": "Whether the provider has consented to receive SMS notifications. Null = no consent recorded (existing users)."
+    },
+    "sms_opt_in_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the provider accepted SMS consent"
     }
   },
   "required": [

@@ -60,6 +60,15 @@
       "type": "boolean",
       "default": false,
       "description": "Promotional emails and offers"
+    },
+    "sms_opt_in": {
+      "type": "boolean",
+      "description": "Whether the customer has consented to receive SMS notifications. Null = no consent recorded (existing users)."
+    },
+    "sms_opt_in_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the customer accepted SMS consent"
     }
   },
   "required": [

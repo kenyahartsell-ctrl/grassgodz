@@ -44,6 +44,7 @@ export default function ProviderSignupPage() {
     zipCodes: '', servicesOffered: [],
     // Step 3 – Consent
     agreedBackground: false, agreedTerms: false, signature: '',
+    smsOptIn: false,
   });
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
@@ -96,6 +97,8 @@ export default function ProviderSignupPage() {
         consent_timestamp: new Date().toISOString(),
         status: 'pending_review',
         background_check_status: 'not_started',
+        sms_opt_in: form.smsOptIn,
+        sms_opt_in_date: form.smsOptIn ? new Date().toISOString() : null,
       });
 
       if (res.data?.error) throw new Error(res.data.error);
@@ -378,9 +381,25 @@ export default function ProviderSignupPage() {
                   <p className="text-xs text-green-800">Background check consent recorded with electronic signature. A copy will be emailed to you.</p>
                 </div>
 
+                {/* SMS Consent */}
+                <div>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={form.smsOptIn}
+                      onChange={e => set('smsOptIn', e.target.checked)}
+                      className="mt-1 w-4 h-4 accent-primary flex-shrink-0"
+                    />
+                    <span className="text-xs text-muted-foreground leading-relaxed">
+                      By creating an account, you agree to receive SMS notifications from Grassgodz including job alerts, chat message notifications, and account updates. Message and data rates may apply. Reply STOP at any time to opt out.
+                    </span>
+                  </label>
+                </div>
+
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(3)} className="flex-1 border border-border rounded-xl py-3 text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1"><ArrowLeft size={14} /> Back</button>
-                  <button type="submit" disabled={loading} className="flex-1 bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-colors">
+                  <button type="submit" disabled={loading || !form.smsOptIn} className="flex-1 bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-colors">
                     {loading ? 'Submitting…' : 'Apply to Become a Provider'}
                   </button>
                 </div>

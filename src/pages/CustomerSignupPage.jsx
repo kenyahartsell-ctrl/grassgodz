@@ -67,6 +67,7 @@ export default function CustomerSignupPage() {
     zip: urlParams.get('zip') || '',
     billingSame: true,
     billingAddress: '',
+    smsOptIn: false,
   });
 
   const set = (field, val) => {
@@ -162,6 +163,8 @@ export default function CustomerSignupPage() {
         billing_address: form.billingSame ? form.serviceAddress : form.billingAddress,
         zip_code: form.zip,
         user_email: form.email,
+        sms_opt_in: form.smsOptIn,
+        sms_opt_in_date: form.smsOptIn ? new Date().toISOString() : null,
       };
       await base44.functions.invoke('createCustomerProfile', profileData);
 
@@ -356,6 +359,22 @@ export default function CustomerSignupPage() {
                 {!form.billingSame && (
                   <input type="text" value={form.billingAddress} onChange={e => set('billingAddress', e.target.value)} placeholder="Billing address" className={`${inputClass('billingAddress')} mt-2`} />
                 )}
+              </div>
+
+              {/* SMS Consent */}
+              <div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={form.smsOptIn}
+                    onChange={e => set('smsOptIn', e.target.checked)}
+                    className="mt-1 w-4 h-4 accent-primary flex-shrink-0"
+                  />
+                  <span className="text-xs text-muted-foreground leading-relaxed">
+                    By creating an account, you agree to receive SMS notifications from Grassgodz including job alerts, chat message notifications, and account updates. Message and data rates may apply. Reply STOP at any time to opt out.
+                  </span>
+                </label>
               </div>
 
               <button

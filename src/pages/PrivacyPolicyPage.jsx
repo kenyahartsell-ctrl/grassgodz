@@ -6,7 +6,7 @@ export default function PrivacyPolicyPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <PublicNav />
       <main className="flex-1 px-4 py-12">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto hidden">
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">Privacy Policy</h1>
           <p className="text-sm text-muted-foreground mb-10">Last updated: April 2025</p>
 
@@ -23,10 +23,10 @@ export default function PrivacyPolicyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-bold text-foreground mb-3">2. Information We Collect</h2>
+              <h2 className="text-xl font-bold text-foreground mb-3 hidden">2. Information We Collect</h2>
               <h3 className="text-base font-semibold text-foreground mb-2">Information You Provide</h3>
               <ul className="list-disc list-inside text-muted-foreground space-y-1 leading-relaxed">
-                <li>Name, email address, and phone number</li>
+                <li className="hidden">Name, email address, and phone number</li>
                 <li>Service address and billing address</li>
                 <li>Payment information (processed securely via Stripe)</li>
                 <li>Profile photos and job completion photos</li>

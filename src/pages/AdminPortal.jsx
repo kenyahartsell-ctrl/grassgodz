@@ -662,17 +662,17 @@ export default function AdminPortal() {
 
       {/* Bottom Nav */}
       <nav className="bg-card border-t border-border sticky bottom-0 z-30">
-        <div className="max-w-5xl mx-auto flex">
+        <div className="max-w-5xl mx-auto flex overflow-x-auto scrollbar-hide">
           {NAV.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
+              className={`flex-shrink-0 flex flex-col items-center gap-1 py-3 px-3 text-xs font-medium transition-colors ${
                 tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Icon size={18} />
-              <span className="hidden sm:block">{label}</span>
+              <span className="whitespace-nowrap">{label}</span>
             </button>
           ))}
         </div>

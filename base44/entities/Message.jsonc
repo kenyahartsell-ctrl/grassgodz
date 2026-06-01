@@ -43,7 +43,33 @@
         }
       ]
     },
-    "read": null,
+    "read": {
+      "$or": [
+        {
+          "data.sender_id": "{{user.email}}"
+        },
+        {
+          "base44_query": "Job",
+          "filter": {
+            "id": "{{data.job_id}}",
+            "$or": [
+              {
+                "data.customer_email": "{{user.email}}"
+              },
+              {
+                "data.provider_email": "{{user.email}}"
+              }
+            ]
+          },
+          "select": "id"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "update": {
       "user_condition": {
         "role": "admin"

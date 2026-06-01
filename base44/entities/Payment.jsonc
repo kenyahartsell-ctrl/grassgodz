@@ -52,10 +52,20 @@
     "read": {
       "$or": [
         {
-          "data.customer_id": "{{user.id}}"
+          "base44_query": "CustomerProfile",
+          "filter": {
+            "id": "{{data.customer_id}}",
+            "data.user_email": "{{user.email}}"
+          },
+          "select": "id"
         },
         {
-          "data.provider_id": "{{user.id}}"
+          "base44_query": "ProviderProfile",
+          "filter": {
+            "id": "{{data.provider_id}}",
+            "data.user_email": "{{user.email}}"
+          },
+          "select": "id"
         },
         {
           "user_condition": {

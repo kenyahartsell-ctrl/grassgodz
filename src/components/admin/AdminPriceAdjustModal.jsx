@@ -16,8 +16,8 @@ export default function AdminPriceAdjustModal({ payment, job, onClose, onSaved }
 
     setSaving(true);
     try {
-      const platform_fee = parseFloat((price * 0.25).toFixed(2));
-      const provider_payout = parseFloat((price * 0.75).toFixed(2));
+      const platform_fee = parseFloat((price * 0.10).toFixed(2));
+      const provider_payout = parseFloat((price * 0.90).toFixed(2));
 
       // Update job pricing
       if (job) {
@@ -78,13 +78,13 @@ export default function AdminPriceAdjustModal({ payment, job, onClose, onSaved }
             </div>
             {payment?.platform_fee != null && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Platform fee (25%)</span>
+                <span className="text-muted-foreground">Platform fee (10%)</span>
                 <span className="font-semibold">${Number(payment.platform_fee).toFixed(2)}</span>
               </div>
             )}
             {payment?.payout_amount != null && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Provider payout (75%)</span>
+                <span className="text-muted-foreground">Provider payout (90%)</span>
                 <span className="font-semibold">${Number(payment.payout_amount).toFixed(2)}</span>
               </div>
             )}
@@ -108,8 +108,8 @@ export default function AdminPriceAdjustModal({ payment, job, onClose, onSaved }
             </div>
             {valid && newPrice && (
               <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-                <span>Platform fee: <strong className="text-foreground">${(price * 0.25).toFixed(2)}</strong></span>
-                <span>Provider payout: <strong className="text-foreground">${(price * 0.75).toFixed(2)}</strong></span>
+                <span>Platform fee: <strong className="text-foreground">${(price * 0.10).toFixed(2)}</strong></span>
+                <span>Provider payout: <strong className="text-foreground">${(price * 0.90).toFixed(2)}</strong></span>
               </div>
             )}
           </div>

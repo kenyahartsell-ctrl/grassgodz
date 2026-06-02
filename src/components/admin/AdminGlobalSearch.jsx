@@ -1,10 +1,14 @@
 import { useState, useRef } from 'react';
 import { Search, UserCircle, Users, MapPin, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminGlobalSearch({ customers, providers, jobs, onNavigate }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const inputRef = useRef(null);
+  const navigate = useNavigate();
+  // Track if a result was mousedown'd — prevents blur from closing before click fires
+  const selectingRef = useRef(false);
 
   const q = query.trim().toLowerCase();
 
@@ -32,15 +36,38 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
 
   const hasResults = matchedCustomers.length > 0 || matchedProviders.length > 0 || matchedJobs.length > 0;
 
-  const handleSelect = (tab) => {
-    onNavigate(tab);
+  const close = () => {
     setQuery('');
     setOpen(false);
+    selectingRef.current = false;
+  };
+
+  // Use onMouseDown to capture the selection before the input loses focus.
+  // e.preventDefault() stops the input from blurring so the click event still fires.
+  const handleResultMouseDown = (e) => {
+    e.preventDefault(); // prevent input blur
+    selectingRef.current = true;
+  };
+
+  const handleCustomerClick = (c) => {
+    onNavigate('customers');
+    close();
+  };
+
+  const handleProviderClick = (p) => {
+    onNavigate('providers');
+    close();
+  };
+
+  const handleJobClick = (j) => {
+    navigate(`/jobs/${j.id}`);
+    close();
   };
 
   const handleBlur = () => {
-    // Delay so click on result fires first
-    setTimeout(() => setOpen(false), 200);
+    if (!selectingRef.current) {
+      setOpen(false);
+    }
   };
 
   const clear = () => { setQuery(''); inputRef.current?.focus(); };
@@ -78,7 +105,8 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedCustomers.map(c => (
                 <button
                   key={c.id}
-                  onClick={() => handleSelect('customers')}
+                  onMouseDown={handleResultMouseDown}
+                  onClick={() => handleCustomerClick(c)}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <UserCircle size={13} className="text-muted-foreground flex-shrink-0" />
@@ -97,7 +125,8 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedProviders.map(p => (
                 <button
                   key={p.id}
-                  onClick={() => handleSelect('providers')}
+                  onMouseDown={handleResultMouseDown}
+                  onClick={() => handleProviderClick(p)}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <Users size={13} className="text-muted-foreground flex-shrink-0" />
@@ -116,7 +145,8 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedJobs.map(j => (
                 <button
                   key={j.id}
-                  onClick={() => handleSelect('jobs')}
+                  onMouseDown={handleResultMouseDown}
+                  onClick={() => handleJobClick(j)}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <MapPin size={13} className="text-muted-foreground flex-shrink-0" />

@@ -550,7 +550,7 @@ export default function AdminInvoiceBuilder({ allJobs }) {
       ) : (
         <div className="space-y-3">
           {invoices.map(inv => (
-            <InvoiceRow key={inv.id} invoice={inv} onRefresh={loadInvoices} onEdit={(inv) => { setEditingInvoice(inv); setShowForm(false); }}
+            <InvoiceRow key={inv.id} invoice={inv} onRefresh={loadInvoices} onEdit={(inv) => { setEditingInvoice(inv); setShowForm(false); }} />
           ))}
         </div>
       )}

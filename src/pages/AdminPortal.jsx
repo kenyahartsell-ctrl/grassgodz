@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain, Copy, LinkIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain, Copy, LinkIcon, UserPlus } from 'lucide-react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
@@ -24,6 +24,7 @@ import StarRating from '../components/shared/StarRating';
 import AdminGlobalSearch from '@/components/admin/AdminGlobalSearch';
 import JobsInvoicesDashboard from '@/components/admin/JobsInvoicesDashboard';
 import AdminPayoutsPanel from '@/components/admin/AdminPayoutsPanel';
+import AdminInviteModal from '@/components/admin/AdminInviteModal';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { toast } from 'sonner';
@@ -64,6 +65,7 @@ export default function AdminPortal() {
   const [editingPriceJob, setEditingPriceJob] = useState(null);
   const [weatherJob, setWeatherJob] = useState(null);
   const [supportJob, setSupportJob] = useState(null);
+  const [showInvite, setShowInvite] = useState(false);
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -265,6 +267,14 @@ export default function AdminPortal() {
                 >
                   <TestTube size={14} />
                   Test Stripe
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setShowInvite(true)}
+                  className="flex items-center gap-2"
+                >
+                  <UserPlus size={14} />
+                  Invite User
                 </Button>
               </div>
             </div>
@@ -663,6 +673,10 @@ export default function AdminPortal() {
             setJobs(prev => prev.map(j => j.id === editingPriceJob.id ? { ...j, quoted_price: newPrice } : j));
           }}
         />
+      )}
+
+      {showInvite && (
+        <AdminInviteModal onClose={() => setShowInvite(false)} />
       )}
 
       {showAddJob && (

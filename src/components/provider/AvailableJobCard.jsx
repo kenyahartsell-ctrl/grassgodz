@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Calendar, MapPin, FileText, DollarSign, ChevronDown, ChevronUp, Send, AlertCircle, Banknote, Check, Ruler } from 'lucide-react';
 import { getMinimumPrice, YARD_SIZES } from '@/lib/pricingFloors';
 
-export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, onboardingComplete = true }) {
+export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, onAcceptCashJob, onboardingComplete = true }) {
   const [expanded, setExpanded] = useState(false);
   const [quoteForm, setQuoteForm] = useState({ price: '', message: '' });
   const [showForm, setShowForm] = useState(false);
@@ -11,6 +11,15 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
   const adminPrice = job.quoted_price; // set by admin — provider cannot change
   const minPrice = getMinimumPrice(job.service_name, job.yard_size);
   const yardSizeLabel = YARD_SIZES.find(s => s.value === job.yard_size)?.label || null;
+
+  // Compute hauling fee to show/add to quote
+  const haulingApplies = providerProfile?.hauling_fees_apply;
+  const haulingFeeType = providerProfile?.hauling_fee_type || 'flat';
+  const haulingFeeValue = providerProfile?.hauling_fee_value || 0;
+  const computeHaulingFee = (basePrice) => {
+    if (!haulingApplies || !haulingFeeValue) return 0;
+    return haulingFeeType === 'percentage' ? (basePrice * haulingFeeValue / 100) : haulingFeeValue;
+  };
 
 
 
@@ -102,12 +111,14 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
             <form onSubmit={(e) => {
               e.preventDefault();
               setPriceError('');
-              const price = adminPrice ? adminPrice : Number(quoteForm.price);
-              if (!adminPrice && minPrice && price < minPrice) {
+              const basePrice = adminPrice ? adminPrice : Number(quoteForm.price);
+              if (!adminPrice && minPrice && basePrice < minPrice) {
                 setPriceError(`Your quote is below the minimum rate for this service and yard size. Minimum for this job is $${minPrice}.`);
                 return;
               }
-              onSubmitQuote(job, { price, message: quoteForm.message });
+              const haulingFee = computeHaulingFee(basePrice);
+              const finalPrice = basePrice + haulingFee;
+              onSubmitQuote(job, { price: finalPrice, message: quoteForm.message });
               setShowForm(false);
               setQuoteForm({ price: '', message: '' });
             }} className="space-y-3 bg-muted/30 rounded-xl p-3">
@@ -130,6 +141,11 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
                   <p className="text-xs text-red-600 mt-1 flex items-start gap-1">
                     <AlertCircle size={11} className="flex-shrink-0 mt-0.5" />
                     {priceError}
+                  </p>
+                )}
+                {haulingApplies && quoteForm.price && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 mt-1.5">
+                    Hauling fee ({haulingFeeType === 'percentage' ? `${haulingFeeValue}%` : `$${haulingFeeValue}`}) will be added → Total: <strong>${(Number(quoteForm.price) + computeHaulingFee(Number(quoteForm.price))).toFixed(2)}</strong>
                   </p>
                 )}
               </div>

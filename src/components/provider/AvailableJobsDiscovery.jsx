@@ -101,7 +101,7 @@ function JobMapView({ jobs, providerProfile }) {
   );
 }
 
-function JobListView({ jobs, onSubmitQuote, onAcceptCashJob, onboardingComplete }) {
+function JobListView({ jobs, providerProfile, onSubmitQuote, onAcceptCashJob, onboardingComplete }) {
   const sorted = [...jobs].sort((a, b) => (b.quoted_price || 0) - (a.quoted_price || 0));
 
   return (
@@ -147,6 +147,7 @@ function JobListView({ jobs, onSubmitQuote, onAcceptCashJob, onboardingComplete 
             <div className="px-4 pb-4 pt-3">
               <AvailableJobCard
                 job={job}
+                providerProfile={providerProfile}
                 onSubmitQuote={onSubmitQuote}
                 onAcceptCashJob={onAcceptCashJob}
                 onboardingComplete={onboardingComplete}
@@ -200,6 +201,7 @@ export default function AvailableJobsDiscovery({ jobs, providerProfile, onSubmit
       ) : (
         <JobListView
           jobs={jobs}
+          providerProfile={providerProfile}
           onSubmitQuote={onSubmitQuote}
           onAcceptCashJob={onAcceptCashJob}
           onboardingComplete={onboardingComplete}

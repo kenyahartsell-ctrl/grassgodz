@@ -176,6 +176,31 @@
       "type": "string",
       "format": "date-time",
       "description": "Timestamp when the provider accepted SMS consent"
+    },
+    "equipment": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of equipment/tool identifiers the provider has available"
+    },
+    "hauling_fees_apply": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether provider charges hauling/dump fees on applicable jobs"
+    },
+    "hauling_fee_type": {
+      "type": "string",
+      "enum": [
+        "flat",
+        "percentage"
+      ],
+      "default": "flat",
+      "description": "Whether hauling fee is a flat rate or a percentage of job total"
+    },
+    "hauling_fee_value": {
+      "type": "number",
+      "description": "Hauling/dump fee amount (dollars if flat, percent if percentage)"
     }
   },
   "required": [

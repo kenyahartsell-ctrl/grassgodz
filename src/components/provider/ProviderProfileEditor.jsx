@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import StarRating from '@/components/shared/StarRating';
 import SmsOptInCard from '@/components/shared/SmsOptInCard';
+import ProviderEquipmentEditor from '@/components/provider/ProviderEquipmentEditor';
 
 function Toggle({ checked, onChange, label, description }) {
   return (
@@ -341,6 +342,9 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
           </button>
         )}
       </div>
+
+      {/* Equipment & Services */}
+      <ProviderEquipmentEditor profile={profile} onProfileUpdated={onProfileUpdated} />
 
       {/* SMS Opt-In */}
       <SmsOptInCard profile={profile} onSaved={onProfileUpdated} entityName="ProviderProfile" />

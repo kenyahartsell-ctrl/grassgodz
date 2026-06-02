@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       </tr>
     `).join('');
 
-    const body = `
+    const htmlBody = `
       <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
         <div style="background:#166534;padding:24px 32px;">
           <h1 style="color:#fff;margin:0;font-size:22px;">Invoice from GrassGodz</h1>
@@ -90,11 +90,38 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: inv.customer_email,
-      subject: `Invoice from GrassGodz — ${formatCurrency(inv.total)} Due`,
-      body,
+    // Use Gmail connector to send to any external email address
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('gmail');
+
+    const subject = `Invoice from GrassGodz — ${formatCurrency(inv.total)} Due`;
+    const to = inv.customer_email;
+
+    // Build RFC 2822 email message
+    const messageParts = [
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      htmlBody,
+    ];
+    const rawMessage = messageParts.join('\r\n');
+    const encodedMessage = btoa(unescape(encodeURIComponent(rawMessage)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ raw: encodedMessage }),
     });
+
+    if (!gmailRes.ok) {
+      const err = await gmailRes.text();
+      return Response.json({ error: `Gmail send failed: ${err}` }, { status: 500 });
+    }
 
     await base44.asServiceRole.entities.Invoice.update(inv.id, { status: 'sent' });
 

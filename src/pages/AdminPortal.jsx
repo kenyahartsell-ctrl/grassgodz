@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain, Copy, LinkIcon, UserPlus, MapPin } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, SlidersHorizontal, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin } from 'lucide-react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
@@ -22,7 +22,7 @@ import ProviderApprovalRow from '../components/admin/ProviderApprovalRow';
 import AdminProvidersTable from '../components/admin/AdminProvidersTable';
 import StarRating from '../components/shared/StarRating';
 import AdminGlobalSearch from '@/components/admin/AdminGlobalSearch';
-import JobsInvoicesDashboard from '@/components/admin/JobsInvoicesDashboard';
+import AdminJobsDashboard from '@/components/admin/AdminJobsDashboard';
 import AdminPayoutsPanel from '@/components/admin/AdminPayoutsPanel';
 import AdminInviteModal from '@/components/admin/AdminInviteModal';
 import AdminZipLookup from '@/components/admin/AdminZipLookup';
@@ -43,7 +43,6 @@ const NAV = [
   { key: 'manual', label: 'Manual', icon: Banknote },
   { key: 'invoices', label: 'Invoices', icon: Receipt },
   { key: 'paymentlinks', label: 'Pay Links', icon: LinkIcon },
-  { key: 'jobsdash', label: 'Jobs & Inv', icon: CalendarDays },
   { key: 'payouts', label: 'Payouts', icon: DollarSign },
   { key: 'ziplookup', label: 'Zip Lookup', icon: MapPin },
 ];
@@ -380,101 +379,28 @@ export default function AdminPortal() {
         )}
 
         {tab === 'jobs' && (
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-foreground">All Jobs</h2>
-              <Button size="sm" onClick={() => setShowAddJob(true)} className="flex items-center gap-2">
-                <Plus size={14} /> Add Job
-              </Button>
-            </div>
-            {jobs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-10">No jobs yet.</p>
-            ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                {jobs.map((j, i) => (
-                  <div key={j.id} className={`px-5 py-4 flex flex-col gap-2 ${i < jobs.length - 1 ? 'border-b border-border' : ''}`}>
-                    {/* Service type */}
-                    <p className="text-sm font-bold text-foreground">{j.service_name}</p>
-                    {/* Customer name */}
-                    <p className="text-xs text-muted-foreground">{j.customer_name}</p>
-                    {/* Status badge */}
-                    <div className="flex flex-wrap gap-1.5">
-                      <StatusBadge status={j.status} />
-                      {j.cash_paid && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200">
-                          💵 Cash Paid
-                        </span>
-                      )}
-                    </div>
-                    {/* Action buttons */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        to={`/jobs/${j.id}`}
-                        className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
-                      >
-                        View
-                      </Link>
-                      <button onClick={() => setEditingJob(j)} className="px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors">Edit</button>
-                      <button onClick={() => setEditingPriceJob(j)} className="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1"><DollarSign size={12} /> {j.quoted_price ? `$${j.quoted_price}` : 'Set Price'}</button>
-                      {!['completed', 'cancelled'].includes(j.status) && (
-                        <button onClick={() => setAssigningJob(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
-                      )}
-                      {j.provider_id && !['completed', 'cancelled'].includes(j.status) && (
-                        <button
-                          onClick={async () => {
-                            await base44.entities.Job.update(j.id, { provider_id: null, provider_email: null, provider_name: null, status: 'requested' });
-                            const allJobs = await base44.entities.Job.list('-created_date', 100);
-                            setJobs(allJobs);
-                            toast.success('Provider unassigned.');
-                          }}
-                          className="px-2.5 py-1 text-xs font-medium bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors"
-                        >
-                          Unassign
-                        </button>
-                      )}
-                      {!['completed', 'cancelled', 'requested'].includes(j.status) && (
-                        <button
-                          onClick={() => setWeatherJob(j)}
-                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                        >
-                          <CloudRain size={12} /> Weather
-                        </button>
-                      )}
-                      {!['completed', 'cancelled'].includes(j.status) && (
-                        <button onClick={() => handleCompleteJob(j)} className="px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center gap-1">
-                          <CheckCircle size={12} /> Complete
-                        </button>
-                      )}
-                      {!['completed', 'cancelled'].includes(j.status) && (
-                        <button onClick={() => handleCancelJob(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
-                      )}
-                      <button onClick={() => handleDeleteJob(j)} className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1">
-                        <Trash2 size={12} /> Delete
-                      </button>
-                      {j.status === 'completed' && j.completion_photos && Object.keys(j.completion_photos).length > 0 && (
-                       <button
-                         onClick={() => setViewingPhotos(j.completion_photos)}
-                         className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                       >
-                         <Camera size={12} /> Photos
-                       </button>
-                      )}
-                      <button
-                       onClick={() => { setSupportJob(j); setTab('support'); }}
-                       className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
-                      >
-                       <MessageSquare size={12} /> Chat
-                      </button>
-                    </div>
-                    {/* Provider, date, zip */}
-                    <p className="text-xs text-muted-foreground">
-                      {j.provider_name || 'Unassigned'} · {j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString() : '—'} · {j.zip_code || '—'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <AdminJobsDashboard
+            jobs={jobs}
+            setJobs={setJobs}
+            handlers={{
+              onAddJob: () => setShowAddJob(true),
+              onEdit: (j) => setEditingJob(j),
+              onEditPrice: (j) => setEditingPriceJob(j),
+              onAssign: (j) => setAssigningJob(j),
+              onUnassign: async (j) => {
+                await base44.entities.Job.update(j.id, { provider_id: null, provider_email: null, provider_name: null, status: 'requested' });
+                const allJobs = await base44.entities.Job.list('-created_date', 100);
+                setJobs(allJobs);
+                toast.success('Provider unassigned.');
+              },
+              onWeather: (j) => setWeatherJob(j),
+              onComplete: handleCompleteJob,
+              onCancel: handleCancelJob,
+              onDelete: handleDeleteJob,
+              onPhotos: (photos) => setViewingPhotos(photos),
+              onChat: (j) => { setSupportJob(j); setTab('support'); },
+            }}
+          />
         )}
 
         {tab === 'payments' && (
@@ -557,12 +483,6 @@ export default function AdminPortal() {
         {tab === 'paymentlinks' && (
           <div>
             <AdminPaymentLinksPanel allJobs={jobs} />
-          </div>
-        )}
-
-        {tab === 'jobsdash' && (
-          <div>
-            <JobsInvoicesDashboard />
           </div>
         )}
 

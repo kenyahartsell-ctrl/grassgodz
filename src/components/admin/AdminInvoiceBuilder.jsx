@@ -15,11 +15,11 @@ const STATUS_COLORS = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-function calcTotals(lineItems) {
+function calcTotals(lineItems, applyTax = true) {
   const labor = lineItems.filter(l => l.type === 'labor').reduce((s, l) => s + (l.line_total || 0), 0);
   const supplies = lineItems.filter(l => l.type === 'supply').reduce((s, l) => s + (l.line_total || 0), 0);
   const subtotal = labor + supplies;
-  const tax = subtotal * TAX_RATE;
+  const tax = applyTax ? subtotal * TAX_RATE : 0;
   return { labor_subtotal: labor, supplies_subtotal: supplies, subtotal, tax_amount: tax, total: subtotal + tax };
 }
 
@@ -88,6 +88,7 @@ function InvoiceForm({ jobs, onSaved, onCancel }) {
   const [sending, setSending] = useState(false);
   const [savedInvoiceId, setSavedInvoiceId] = useState(null);
   const [paymentLink, setPaymentLink] = useState('');
+  const [applyTax, setApplyTax] = useState(true);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -117,12 +118,12 @@ function InvoiceForm({ jobs, onSaved, onCancel }) {
     set('line_items', [...form.line_items, { ...EMPTY_LINE }]);
   };
 
-  const totals = calcTotals(form.line_items);
+  const totals = calcTotals(form.line_items, applyTax);
 
   const buildPayload = () => ({
     ...form,
     ...totals,
-    tax_rate: TAX_RATE,
+    tax_rate: applyTax ? TAX_RATE : 0,
     created_by_admin: true,
     due_before_start: true,
     stripe_payment_link: paymentLink || undefined,
@@ -279,8 +280,17 @@ function InvoiceForm({ jobs, onSaved, onCancel }) {
         <div className="flex justify-between text-foreground font-medium">
           <span>Subtotal</span><span>${totals.subtotal.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-muted-foreground">
-          <span>DC Sales Tax (6%)</span><span>${totals.tax_amount.toFixed(2)}</span>
+        <div className="flex justify-between items-center text-muted-foreground">
+          <span>Sales Tax {applyTax ? '(6%)' : '(none)'}</span>
+          <div className="flex items-center gap-2">
+            <span>${totals.tax_amount.toFixed(2)}</span>
+            <button
+              onClick={() => setApplyTax(t => !t)}
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors ${applyTax ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}`}
+            >
+              {applyTax ? 'Remove Tax' : '+ Add Tax'}
+            </button>
+          </div>
         </div>
         <div className="flex justify-between text-primary font-bold text-base border-t border-border pt-2 mt-1">
           <span>Total Due</span><span>${totals.total.toFixed(2)}</span>

@@ -90,7 +90,7 @@
     }
   },
   "required": [
-    "customer_email"
+    "customer_name"
   ],
   "rls": {
     "create": {

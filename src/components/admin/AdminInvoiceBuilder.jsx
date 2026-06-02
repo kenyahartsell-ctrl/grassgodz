@@ -139,7 +139,7 @@ function InvoiceForm({ jobs, onSaved, onCancel, editingInvoice }) {
   });
 
   const handleSaveDraft = async () => {
-    if (!form.customer_email) return toast.error('Customer email is required.');
+    if (!form.customer_name && !form.customer_email) return toast.error('At least a customer name is required.');
     setSaving(true);
     try {
       const inv = savedInvoiceId
@@ -156,7 +156,6 @@ function InvoiceForm({ jobs, onSaved, onCancel, editingInvoice }) {
   };
 
   const handleGenerateLink = async () => {
-    if (!form.customer_email) return toast.error('Customer email is required.');
     setGeneratingLink(true);
     try {
       // Save first
@@ -227,7 +226,7 @@ function InvoiceForm({ jobs, onSaved, onCancel, editingInvoice }) {
             className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1">Client Email *</label>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">Client Email (optional)</label>
           <input type="email" value={form.customer_email} onChange={e => set('customer_email', e.target.value)}
             className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
         </div>

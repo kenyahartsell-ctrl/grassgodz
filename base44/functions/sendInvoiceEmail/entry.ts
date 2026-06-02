@@ -20,6 +20,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Generate a payment link before sending.' }, { status: 400 });
     }
 
+    if (!inv.customer_email) {
+      return Response.json({ error: 'No customer email on file. Copy the link and send it manually.' }, { status: 400 });
+    }
+
     const formatCurrency = (n) => `$${(n || 0).toFixed(2)}`;
 
     const lineItemsHtml = (inv.line_items || []).map(item => `

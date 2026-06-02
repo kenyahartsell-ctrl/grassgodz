@@ -140,7 +140,7 @@ function PaymentLinkRow({ invoice, onRefresh }) {
             </button>
           </>
         )}
-        {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.stripe_payment_link && (
+        {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.stripe_payment_link && invoice.customer_email && (
           <button
             onClick={handleResend}
             disabled={sending}
@@ -148,6 +148,11 @@ function PaymentLinkRow({ invoice, onRefresh }) {
           >
             <Send size={11} /> {sending ? 'Sending...' : 'Resend Email'}
           </button>
+        )}
+        {invoice.stripe_payment_link && !invoice.customer_email && (
+          <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+            No email — copy link to send manually
+          </span>
         )}
         {invoice.status === 'sent' && (
           <button

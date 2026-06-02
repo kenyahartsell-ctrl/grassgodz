@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PageMeta from '@/components/shared/PageMeta';
-import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt } from 'lucide-react';
+import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt, CreditCard, AlertCircle } from 'lucide-react';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { useLanguage } from '@/lib/LanguageContext';
 import CustomerInvoicesPanel from '@/components/customer/CustomerInvoicesPanel';
@@ -214,6 +214,27 @@ export default function CustomerPortal() {
                 >
                   👉 Review & Accept Quote
                 </button>
+              </div>
+            )}
+
+            {/* No card on file — prompt to save payment method */}
+            {!customerProfile?.default_payment_method_id && (
+              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <CreditCard size={18} className="text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-amber-900">Add a payment method to confirm your booking</p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Your service request won't be matched with a provider until a card is saved. It only takes 30 seconds.
+                  </p>
+                  <button
+                    onClick={() => setTab('profile')}
+                    className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700 transition-colors"
+                  >
+                    <CreditCard size={12} /> Save a Card Now
+                  </button>
+                </div>
               </div>
             )}
 

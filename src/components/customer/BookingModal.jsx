@@ -337,8 +337,9 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
                   </div>
                 </div>
               </div>
-              <div className="bg-muted/40 rounded-xl p-4 text-xs text-muted-foreground">
-                Providers in your area will receive this booking request. Once a provider accepts, your card will be authorized for the final quoted amount.
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 flex items-start gap-2">
+                <span className="text-amber-500 flex-shrink-0 mt-0.5">⚠️</span>
+                <span><strong>A saved payment card is required</strong> to complete your booking. After submitting, you will be prompted to add a card if one is not already on file. Your card will be authorized once a provider accepts your request.</span>
               </div>
             </div>
           )}

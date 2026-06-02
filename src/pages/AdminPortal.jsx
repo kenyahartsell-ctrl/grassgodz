@@ -23,6 +23,7 @@ import AdminProvidersTable from '../components/admin/AdminProvidersTable';
 import StarRating from '../components/shared/StarRating';
 import AdminGlobalSearch from '@/components/admin/AdminGlobalSearch';
 import JobsInvoicesDashboard from '@/components/admin/JobsInvoicesDashboard';
+import AdminPayoutsPanel from '@/components/admin/AdminPayoutsPanel';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { toast } from 'sonner';
@@ -41,6 +42,7 @@ const NAV = [
   { key: 'invoices', label: 'Invoices', icon: Receipt },
   { key: 'paymentlinks', label: 'Pay Links', icon: LinkIcon },
   { key: 'jobsdash', label: 'Jobs & Inv', icon: CalendarDays },
+  { key: 'payouts', label: 'Payouts', icon: DollarSign },
 ];
 
 export default function AdminPortal() {
@@ -549,6 +551,12 @@ export default function AdminPortal() {
         {tab === 'jobsdash' && (
           <div>
             <JobsInvoicesDashboard />
+          </div>
+        )}
+
+        {tab === 'payouts' && (
+          <div>
+            <AdminPayoutsPanel providers={providers} />
           </div>
         )}
 

@@ -123,7 +123,7 @@ function JobListView({ jobs, onSubmitQuote, onAcceptCashJob, onboardingComplete 
                       <Banknote size={10} /> Cash
                     </span>
                   )}
-                  {priceTag && (
+                  {priceTag && priceTag.label !== 'Under $100' && (
                     <span className={`text-xs border px-2 py-0.5 rounded-full font-medium ${priceTag.color}`}>
                       {priceTag.label}
                     </span>

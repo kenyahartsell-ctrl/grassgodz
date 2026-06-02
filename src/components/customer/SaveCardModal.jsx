@@ -28,9 +28,11 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
     setLoading(true);
 
     try {
-      const res = await base44.functions.invoke('createSetupIntent', {
-        customer_id: customerProfile.id,
-      });
+      const res = await base44.functions.invoke('createSetupIntent', {});
+      if (res.data?.error) {
+        toast.error('Could not initialize payment setup: ' + res.data.error);
+        return;
+      }
       const { client_secret } = res.data;
 
       const result = await stripe.confirmCardSetup(client_secret, {
@@ -50,7 +52,7 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
       toast.success('Card saved successfully!');
       onSuccess(paymentMethodId);
     } catch (err) {
-      toast.error('Failed to save card. Please try again.');
+      toast.error(err.message || 'Failed to save card. Please try again.');
     } finally {
       setLoading(false);
     }

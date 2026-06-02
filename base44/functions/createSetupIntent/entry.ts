@@ -1,20 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import Stripe from 'npm:stripe@16.0.0';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { customer_id } = await req.json();
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
+    // Find the customer profile for this user
     const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
     const profile = profiles[0];
     if (!profile) return Response.json({ error: 'Customer profile not found' }, { status: 404 });
-    if (profile.id !== customer_id) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     // Ensure Stripe customer exists
     let stripeCustomerId = profile.stripe_customer_id;

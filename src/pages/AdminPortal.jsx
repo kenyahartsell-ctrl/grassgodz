@@ -26,6 +26,7 @@ import AdminJobsDashboard from '@/components/admin/AdminJobsDashboard';
 import AdminPayoutsPanel from '@/components/admin/AdminPayoutsPanel';
 import AdminInviteModal from '@/components/admin/AdminInviteModal';
 import AdminZipLookup from '@/components/admin/AdminZipLookup';
+import AdminCancelJobModal from '@/components/admin/AdminCancelJobModal';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { toast } from 'sonner';
@@ -67,6 +68,7 @@ export default function AdminPortal() {
   const [weatherJob, setWeatherJob] = useState(null);
   const [supportJob, setSupportJob] = useState(null);
   const [showInvite, setShowInvite] = useState(false);
+  const [cancellingJob, setCancellingJob] = useState(null);
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -395,7 +397,7 @@ export default function AdminPortal() {
               },
               onWeather: (j) => setWeatherJob(j),
               onComplete: handleCompleteJob,
-              onCancel: handleCancelJob,
+              onCancel: (j) => setCancellingJob(j),
               onDelete: handleDeleteJob,
               onPhotos: (photos) => setViewingPhotos(photos),
               onChat: (j) => { setSupportJob(j); setTab('support'); },
@@ -603,6 +605,17 @@ export default function AdminPortal() {
 
       {showInvite && (
         <AdminInviteModal onClose={() => setShowInvite(false)} />
+      )}
+
+      {cancellingJob && (
+        <AdminCancelJobModal
+          job={cancellingJob}
+          onClose={() => setCancellingJob(null)}
+          onCancelled={async () => {
+            const allJobs = await base44.entities.Job.list('-created_date', 100);
+            setJobs(allJobs);
+          }}
+        />
       )}
 
       {showAddJob && (

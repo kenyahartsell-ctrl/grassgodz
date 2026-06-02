@@ -163,6 +163,12 @@ function AllJobsSection({ jobs, setJobs, handlers }) {
                 {j.provider_name || 'Unassigned'} · {j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString() : '—'} · {j.zip_code || '—'}
                 {j.final_price || j.quoted_price ? ` · ${fmtAmt(j.final_price || j.quoted_price)}` : ''}
               </p>
+              {j.status === 'cancelled' && j.cancellation_reason && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5 mt-1">
+                  <span className="font-semibold">Reason:</span> {j.cancellation_reason}
+                  {j.cancelled_by && <span className="text-red-400 ml-1">· by {j.cancelled_by}</span>}
+                </p>
+              )}
             </div>
           ))}
         </div>

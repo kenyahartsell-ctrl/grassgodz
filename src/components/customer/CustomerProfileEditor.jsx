@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pencil, Save, X, Bell, LogOut, Trash2, MessageSquare } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Pencil, Save, X, Bell, LogOut, Trash2, Camera, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -29,6 +29,29 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState(profile?.profile_image_url || '');
+  const photoInputRef = useRef(null);
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return toast.error('Please select an image file.');
+    setPhotoUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setPhotoUrl(file_url);
+      if (profile?.id) {
+        await base44.entities.CustomerProfile.update(profile.id, { profile_image_url: file_url });
+      }
+      toast.success('Profile photo updated!');
+      onProfileUpdated();
+    } catch {
+      toast.error('Failed to upload photo.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
 
   const handleSignOut = () => {
     base44.auth.logout('/');
@@ -109,8 +132,23 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-lg font-bold text-primary">{(form.name || user?.full_name || '?')[0]}</span>
+            <div className="relative flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-border">
+                {photoUrl ? (
+                  <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-lg font-bold text-primary">{(form.name || user?.full_name || '?')[0]}</span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoUploading}
+                className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow border-2 border-card hover:bg-primary/90 transition-colors"
+              >
+                {photoUploading ? <Loader2 size={10} className="animate-spin" /> : <Camera size={10} />}
+              </button>
+              <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
             </div>
             <div>
               <p className="font-bold text-foreground">{form.name || user?.full_name}</p>

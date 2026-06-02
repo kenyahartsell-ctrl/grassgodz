@@ -27,6 +27,10 @@
     "default_payment_method_id": {
       "type": "string"
     },
+    "profile_image_url": {
+      "type": "string",
+      "description": "Customer profile photo URL"
+    },
     "description": {
       "type": "string",
       "description": "Optional notes or description about this customer profile",

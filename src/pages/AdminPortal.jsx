@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, SlidersHorizontal, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, SlidersHorizontal, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera } from 'lucide-react';
+import { useRef } from 'react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
@@ -69,6 +70,25 @@ export default function AdminPortal() {
   const [supportJob, setSupportJob] = useState(null);
   const [showInvite, setShowInvite] = useState(false);
   const [cancellingJob, setCancellingJob] = useState(null);
+  const [adminPhotoUrl, setAdminPhotoUrl] = useState('');
+  const [adminPhotoUploading, setAdminPhotoUploading] = useState(false);
+  const adminPhotoRef = useRef(null);
+
+  const handleAdminPhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    setAdminPhotoUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      await base44.auth.updateMe({ profile_image_url: file_url });
+      setAdminPhotoUrl(file_url);
+      toast.success('Profile photo updated!');
+    } catch {
+      toast.error('Failed to upload photo.');
+    } finally {
+      setAdminPhotoUploading(false);
+    }
+  };
 
   useEffect(() => {
     // Log Stripe public key prefix for verification
@@ -83,6 +103,7 @@ export default function AdminPortal() {
       try {
         const me = await base44.auth.me();
         setAdminUser(me);
+        setAdminPhotoUrl(me?.profile_image_url || '');
         const [allProviders, allCustomers, allJobs, allQuotes, allPayments, allReviews] = await Promise.all([
           base44.entities.ProviderProfile.list(),
           base44.entities.CustomerProfile.list(),
@@ -215,7 +236,22 @@ export default function AdminPortal() {
             onNavigate={(tab) => setTab(tab)}
           />
           <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-            <Shield size={14} className="text-purple-600 hidden sm:block" />
+            <div className="relative hidden sm:block">
+              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden border-2 border-border cursor-pointer" onClick={() => adminPhotoRef.current?.click()}>
+                {adminPhotoUrl ? (
+                  <img src={adminPhotoUrl} alt="Admin" className="w-full h-full object-cover" />
+                ) : (
+                  <Shield size={14} className="text-purple-600" />
+                )}
+              </div>
+              {adminPhotoUploading && <Loader2 size={10} className="absolute -bottom-0.5 -right-0.5 animate-spin text-primary" />}
+              {!adminPhotoUploading && (
+                <button onClick={() => adminPhotoRef.current?.click()} className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center border border-card">
+                  <Camera size={8} />
+                </button>
+              )}
+              <input ref={adminPhotoRef} type="file" accept="image/*" className="hidden" onChange={handleAdminPhotoUpload} />
+            </div>
             <span className="text-xs font-medium text-foreground hidden sm:block">Super Admin</span>
             <button
               onClick={() => base44.auth.logout()}

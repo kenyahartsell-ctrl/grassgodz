@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import PageMeta from '@/components/shared/PageMeta';
 import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt, CreditCard, AlertCircle } from 'lucide-react';
+import SaveCardModal from '@/components/customer/SaveCardModal';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { useLanguage } from '@/lib/LanguageContext';
 import CustomerInvoicesPanel from '@/components/customer/CustomerInvoicesPanel';
@@ -38,6 +39,7 @@ export default function CustomerPortal() {
   const [selectedJobForQuotes, setSelectedJobForQuotes] = useState(null);
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showSaveCardModal, setShowSaveCardModal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -80,12 +82,36 @@ export default function CustomerPortal() {
   const upcomingJobs = jobs.filter(j => ['scheduled', 'accepted', 'in_progress', 'quoted', 'requested'].includes(j.status));
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
 
+  // Reactivate all pending_deposit jobs that are only waiting on a card (not a real deposit)
+  const reactivatePendingPaymentJobs = async () => {
+    const pendingJobs = jobs.filter(j => j.status === 'pending_deposit' && !j.deposit_required);
+    if (pendingJobs.length === 0) return;
+    await Promise.all(
+      pendingJobs.map(j => base44.entities.Job.update(j.id, { status: 'requested' }))
+    );
+    setJobs(prev => prev.map(j =>
+      j.status === 'pending_deposit' && !j.deposit_required ? { ...j, status: 'requested' } : j
+    ));
+  };
+
+  const handleCardSavedFromPortal = async (paymentMethodId) => {
+    setShowSaveCardModal(false);
+    // Refresh profile
+    const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+    const updatedProfile = profiles[0] || null;
+    setCustomerProfile(updatedProfile);
+    // Reactivate any jobs that were waiting on a payment method
+    await reactivatePendingPaymentJobs();
+    toast.success('Card saved! Your job requests are now active and visible to providers.');
+  };
+
   const handleRequestJob = async (data) => {
+    const hasCard = !!customerProfile?.default_payment_method_id;
     const baseJobData = {
       customer_id: user.id,
       customer_name: user.full_name,
       customer_email: user.email,
-      status: 'requested',
+      status: hasCard ? 'requested' : 'pending_deposit',
       ...data,
     };
 
@@ -119,7 +145,11 @@ export default function CustomerPortal() {
 
     setJobs(prev => [...prev, ...newJobs]);
     setTab('quotes');
-    toast.success('Request submitted! You\'ll see provider quotes here as they come in. Check your email for confirmation.');
+    if (!customerProfile?.default_payment_method_id) {
+      toast.warning('Request submitted! Please add a payment method to activate your job and get matched with a provider.');
+    } else {
+      toast.success('Request submitted! You\'ll see provider quotes here as they come in. Check your email for confirmation.');
+    }
   };
 
   const handleAcceptQuote = async (quote) => {
@@ -229,7 +259,7 @@ export default function CustomerPortal() {
                     Your service request won't be matched with a provider until a card is saved. It only takes 30 seconds.
                   </p>
                   <button
-                    onClick={() => setTab('profile')}
+                    onClick={() => setShowSaveCardModal(true)}
                     className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-bold bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700 transition-colors"
                   >
                     <CreditCard size={12} /> Save a Card Now
@@ -388,15 +418,17 @@ export default function CustomerPortal() {
               <div className="space-y-4">
                 {jobs.filter(j => !['completed','cancelled'].includes(j.status)).map(job => {
                   const statusMap = {
+                    pending_deposit: { label: 'Pending Payment', badge: 'bg-amber-100 text-amber-800' },
                     requested:   { label: t('waiting_for_quotes'), badge: 'bg-amber-100 text-amber-800' },
                     quoted:      { label: t('quote_received'), badge: 'bg-blue-100 text-blue-800' },
                     accepted:    { label: t('accepted'), badge: 'bg-indigo-100 text-indigo-800' },
                     scheduled:   { label: t('scheduled'), badge: 'bg-indigo-100 text-indigo-800' },
                     in_progress: { label: t('in_progress'), badge: 'bg-orange-100 text-orange-800' },
                   };
+                  const isPendingPayment = job.status === 'pending_deposit' && !job.deposit_required;
                   const cfg = statusMap[job.status] || statusMap.requested;
                   return (
-                    <div key={job.id} className={`bg-card border rounded-xl p-4 ${job.status === 'quoted' ? 'border-blue-300 shadow-sm' : 'border-border'}`}>
+                    <div key={job.id} className={`bg-card border rounded-xl p-4 ${job.status === 'quoted' ? 'border-blue-300 shadow-sm' : isPendingPayment ? 'border-amber-300' : 'border-border'}`}>
                       <div className="flex items-start justify-between gap-3 mb-1">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-foreground text-sm">{job.service_name || 'Service Request'}</p>
@@ -411,11 +443,27 @@ export default function CustomerPortal() {
                           Date: {new Date(job.scheduled_date).toLocaleDateString()}
                         </p>
                       )}
-                      <JobQuotesPanel
-                        job={job}
-                        customerProfile={customerProfile}
-                        onAcceptQuote={handleAcceptQuote}
-                      />
+                      {isPendingPayment ? (
+                        <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
+                          <CreditCard size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-amber-900">Payment method required</p>
+                            <p className="text-xs text-amber-700 mt-0.5">Add a card to activate this job. Providers won't see it until payment is on file.</p>
+                            <button
+                              onClick={() => setShowSaveCardModal(true)}
+                              className="mt-2 text-xs font-bold text-amber-700 underline"
+                            >
+                              Add Card Now →
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <JobQuotesPanel
+                          job={job}
+                          customerProfile={customerProfile}
+                          onAcceptQuote={handleAcceptQuote}
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -503,6 +551,13 @@ export default function CustomerPortal() {
           onClose={() => setShowBookingModal(false)}
           onSubmit={handleBooking}
           customerProfile={customerProfile}
+        />
+      )}
+      {showSaveCardModal && customerProfile && (
+        <SaveCardModal
+          customerProfile={customerProfile}
+          onClose={() => setShowSaveCardModal(false)}
+          onSuccess={handleCardSavedFromPortal}
         />
       )}
     </div>

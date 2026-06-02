@@ -72,8 +72,17 @@ function LineItemRow({ item, index, onChange, onRemove }) {
   );
 }
 
-function InvoiceForm({ jobs, onSaved, onCancel }) {
-  const [form, setForm] = useState({
+function InvoiceForm({ jobs, onSaved, onCancel, editingInvoice }) {
+  const [form, setForm] = useState(editingInvoice ? {
+    customer_name: editingInvoice.customer_name || '',
+    customer_email: editingInvoice.customer_email || '',
+    service_address: editingInvoice.service_address || '',
+    service_description: editingInvoice.service_description || '',
+    job_id: editingInvoice.job_id || '',
+    notes: editingInvoice.notes || '',
+    status: editingInvoice.status || 'draft',
+    line_items: editingInvoice.line_items?.length ? editingInvoice.line_items : [{ ...EMPTY_LINE }],
+  } : {
     customer_name: '',
     customer_email: '',
     service_address: '',
@@ -86,9 +95,9 @@ function InvoiceForm({ jobs, onSaved, onCancel }) {
   const [saving, setSaving] = useState(false);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [sending, setSending] = useState(false);
-  const [savedInvoiceId, setSavedInvoiceId] = useState(null);
-  const [paymentLink, setPaymentLink] = useState('');
-  const [applyTax, setApplyTax] = useState(true);
+  const [savedInvoiceId, setSavedInvoiceId] = useState(editingInvoice?.id || null);
+  const [paymentLink, setPaymentLink] = useState(editingInvoice?.stripe_payment_link || '');
+  const [applyTax, setApplyTax] = useState(editingInvoice ? (editingInvoice.tax_rate > 0) : true);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -208,7 +217,7 @@ function InvoiceForm({ jobs, onSaved, onCancel }) {
 
   return (
     <div className="bg-card border border-border rounded-xl p-5 space-y-5">
-      <h3 className="font-bold text-foreground text-base">New Invoice</h3>
+      <h3 className="font-bold text-foreground text-base">{editingInvoice ? 'Edit Invoice' : 'New Invoice'}</h3>
 
       {/* Client Info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -332,10 +341,26 @@ function InvoiceForm({ jobs, onSaved, onCancel }) {
   );
 }
 
-function InvoiceRow({ invoice, onRefresh }) {
+function InvoiceRow({ invoice, onRefresh, onEdit }) {
   const [expanded, setExpanded] = useState(false);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [sending, setSending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (!window.confirm(`Delete invoice for ${invoice.customer_name || invoice.customer_email}? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await base44.entities.Invoice.delete(invoice.id);
+      toast.success('Invoice deleted.');
+      onRefresh();
+    } catch {
+      toast.error('Failed to delete invoice.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const totals = {
     labor_subtotal: invoice.labor_subtotal || 0,
@@ -407,6 +432,14 @@ function InvoiceRow({ invoice, onRefresh }) {
             {invoice.status}
           </span>
         </div>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+          title="Delete invoice"
+        >
+          <Trash2 size={14} />
+        </button>
         {expanded ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
       </div>
 
@@ -436,6 +469,10 @@ function InvoiceRow({ invoice, onRefresh }) {
           {invoice.notes && <p className="text-xs text-muted-foreground italic">"{invoice.notes}"</p>}
 
           <div className="flex flex-wrap gap-2 pt-1">
+            <button onClick={() => onEdit(invoice)}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors">
+              Edit
+            </button>
             {!invoice.stripe_payment_link && (
               <button onClick={handleGenerateLink} disabled={generatingLink}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-muted rounded-lg hover:bg-muted/80 transition-colors">
@@ -448,7 +485,7 @@ function InvoiceRow({ invoice, onRefresh }) {
                 <ExternalLink size={11} /> View Link
               </a>
             )}
-            {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+            {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.customer_email && (
               <button onClick={handleSend} disabled={sending || !invoice.stripe_payment_link}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50">
                 <Send size={11} /> {sending ? 'Sending...' : 'Resend Invoice'}
@@ -471,6 +508,7 @@ export default function AdminInvoiceBuilder({ allJobs }) {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState(null);
 
   const loadInvoices = async () => {
     const data = await base44.entities.Invoice.list('-created_date');
@@ -492,11 +530,12 @@ export default function AdminInvoiceBuilder({ allJobs }) {
         </Button>
       </div>
 
-      {showForm && (
+      {(showForm || editingInvoice) && (
         <InvoiceForm
           jobs={allJobs || []}
           onSaved={loadInvoices}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => { setShowForm(false); setEditingInvoice(null); }}
+          editingInvoice={editingInvoice}
         />
       )}
 
@@ -511,7 +550,7 @@ export default function AdminInvoiceBuilder({ allJobs }) {
       ) : (
         <div className="space-y-3">
           {invoices.map(inv => (
-            <InvoiceRow key={inv.id} invoice={inv} onRefresh={loadInvoices} />
+            <InvoiceRow key={inv.id} invoice={inv} onRefresh={loadInvoices} onEdit={(inv) => { setEditingInvoice(inv); setShowForm(false); }}
           ))}
         </div>
       )}

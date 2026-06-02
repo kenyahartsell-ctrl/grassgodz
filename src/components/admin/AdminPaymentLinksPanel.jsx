@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Plus, ExternalLink, Send, CheckCircle2, Clock, XCircle, Link as LinkIcon, Copy } from 'lucide-react';
+import { Plus, ExternalLink, Send, CheckCircle2, Clock, XCircle, Link as LinkIcon, Copy, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import AdminInvoiceBuilder from './AdminInvoiceBuilder';
 
@@ -17,6 +17,21 @@ function PaymentLinkRow({ invoice, onRefresh }) {
   const [sending, setSending] = useState(false);
   const [marking, setMarking] = useState(false);
   const [generatingLink, setGeneratingLink] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete invoice for ${invoice.customer_name || invoice.customer_email}? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await base44.entities.Invoice.delete(invoice.id);
+      toast.success('Invoice deleted.');
+      onRefresh();
+    } catch {
+      toast.error('Failed to delete invoice.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const cfg = STATUS_CONFIG[invoice.status] || STATUS_CONFIG.draft;
   const Icon = cfg.icon;
@@ -154,6 +169,14 @@ function PaymentLinkRow({ invoice, onRefresh }) {
             No email — copy link to send manually
           </span>
         )}
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 ml-auto"
+          title="Delete invoice"
+        >
+          <Trash2 size={11} /> {deleting ? 'Deleting...' : 'Delete'}
+        </button>
         {invoice.status === 'sent' && (
           <button
             onClick={handleMarkPaid}

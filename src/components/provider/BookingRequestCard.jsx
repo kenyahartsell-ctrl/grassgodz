@@ -1,4 +1,5 @@
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, FileText, Ruler } from 'lucide-react';
+import { YARD_SIZES } from '@/lib/pricingFloors';
 
 export default function BookingRequestCard({ job, onAccept, onDecline }) {
   return (
@@ -36,6 +37,12 @@ export default function BookingRequestCard({ job, onAccept, onDecline }) {
           <MapPin size={12} className="text-primary flex-shrink-0" />
           <span className="truncate">{job.address}</span>
         </div>
+        {job.yard_size && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Ruler size={12} className="text-primary flex-shrink-0" />
+            <span>{YARD_SIZES.find(s => s.value === job.yard_size)?.label || job.yard_size}</span>
+          </div>
+        )}
         {job.customer_notes && (
           <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/40 rounded-lg p-2 mt-2">
             <FileText size={12} className="flex-shrink-0 mt-0.5" />

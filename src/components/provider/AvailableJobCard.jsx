@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { Calendar, MapPin, FileText, DollarSign, ChevronDown, ChevronUp, Send, AlertCircle, Banknote, Check } from 'lucide-react';
+import { Calendar, MapPin, FileText, DollarSign, ChevronDown, ChevronUp, Send, AlertCircle, Banknote, Check, Ruler } from 'lucide-react';
+import { getMinimumPrice, YARD_SIZES } from '@/lib/pricingFloors';
 
 export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, onboardingComplete = true }) {
   const [expanded, setExpanded] = useState(false);
   const [quoteForm, setQuoteForm] = useState({ price: '', message: '' });
   const [showForm, setShowForm] = useState(false);
+  const [priceError, setPriceError] = useState('');
   const isCash = job.is_cash_job || job.payment_method === 'cash';
   const adminPrice = job.quoted_price; // set by admin — provider cannot change
+  const minPrice = getMinimumPrice(job.service_name, job.yard_size);
+  const yardSizeLabel = YARD_SIZES.find(s => s.value === job.yard_size)?.label || null;
 
 
 
@@ -31,6 +35,12 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
               <MapPin size={11} />
               <span className="truncate">{job.address}</span>
             </div>
+            {yardSizeLabel && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Ruler size={11} />
+                <span>{yardSizeLabel}</span>
+              </div>
+            )}
           </div>
         </div>
         <button onClick={() => setExpanded(e => !e)} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -91,24 +101,37 @@ export default function AvailableJobCard({ job, onSubmitQuote, onAcceptCashJob, 
           ) : (
             <form onSubmit={(e) => {
               e.preventDefault();
+              setPriceError('');
               const price = adminPrice ? adminPrice : Number(quoteForm.price);
+              if (!adminPrice && minPrice && price < minPrice) {
+                setPriceError(`Your quote is below the minimum rate for this service and yard size. Minimum for this job is $${minPrice}.`);
+                return;
+              }
               onSubmitQuote(job, { price, message: quoteForm.message });
               setShowForm(false);
               setQuoteForm({ price: '', message: '' });
             }} className="space-y-3 bg-muted/30 rounded-xl p-3">
               {!adminPrice && (
               <div>
-                <label className="text-xs font-medium text-foreground mb-1 block">Your Price ($)</label>
+                <label className="text-xs font-medium text-foreground mb-1 block">
+                  Your Price ($){minPrice ? <span className="text-muted-foreground font-normal ml-1">— min ${minPrice}</span> : ''}
+                </label>
                 <input
                   type="number"
                   step="0.01"
-                  min="1"
+                  min={minPrice || 1}
                   value={quoteForm.price}
-                  onChange={e => setQuoteForm(f => ({ ...f, price: e.target.value }))}
-                  placeholder="e.g. 55.00"
+                  onChange={e => { setQuoteForm(f => ({ ...f, price: e.target.value })); setPriceError(''); }}
+                  placeholder={minPrice ? `min $${minPrice}` : 'e.g. 55.00'}
                   className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 />
+                {priceError && (
+                  <p className="text-xs text-red-600 mt-1 flex items-start gap-1">
+                    <AlertCircle size={11} className="flex-shrink-0 mt-0.5" />
+                    {priceError}
+                  </p>
+                )}
               </div>
               )}
               <div>

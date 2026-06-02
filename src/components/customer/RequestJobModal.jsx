@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, MapPin, Calendar, FileText, RefreshCw } from 'lucide-react';
+import { X, MapPin, Calendar, FileText, RefreshCw, Ruler } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { YARD_SIZES } from '@/lib/pricingFloors';
 
 const LAWN_KEYWORDS = ['mow', 'mowing', 'grass', 'lawn', 'cut'];
 const isLawnService = (name) => LAWN_KEYWORDS.some(k => name?.toLowerCase().includes(k));
@@ -14,6 +15,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
     scheduled_date: '',
     customer_notes: '',
     recurrence: 'one_time',
+    yard_size: '',
   });
 
   const handleSubmit = (e) => {
@@ -113,6 +115,22 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
               placeholder={t('notes_placeholder')}
               className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
+              <Ruler size={13} className="text-primary" /> Yard Size *
+            </label>
+            <select
+              value={form.yard_size}
+              onChange={e => setForm(f => ({ ...f, yard_size: e.target.value }))}
+              required
+              className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Select yard size…</option>
+              {YARD_SIZES.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
           {/* Quote disclaimer */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800 leading-relaxed"

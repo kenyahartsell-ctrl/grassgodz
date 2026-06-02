@@ -28,6 +28,18 @@
     "service_name": {
       "type": "string"
     },
+    "yard_size": {
+      "type": "string",
+      "enum": [
+        "small",
+        "medium",
+        "large",
+        "xl",
+        "commercial_small",
+        "commercial_large"
+      ],
+      "description": "Size of the yard/property for pricing purposes"
+    },
     "address": {
       "type": "string"
     },
@@ -225,6 +237,11 @@
       "type": "string",
       "format": "date-time",
       "description": "Timestamp when provider marked cash payment received"
+    },
+    "quote_nudge_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the 24-hour quote nudge notification was sent to the customer"
     }
   },
   "required": [

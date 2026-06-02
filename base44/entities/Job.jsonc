@@ -76,6 +76,7 @@
       "type": "string",
       "enum": [
         "pending_deposit",
+        "pending_payment",
         "requested",
         "quoted",
         "accepted",
@@ -242,6 +243,10 @@
       "type": "string",
       "format": "date-time",
       "description": "Timestamp when the 24-hour quote nudge notification was sent to the customer"
+    },
+    "pending_payment_link": {
+      "type": "string",
+      "description": "Stripe Checkout URL shown when customer has no email on file"
     }
   },
   "required": [

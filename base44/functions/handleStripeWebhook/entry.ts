@@ -21,44 +21,83 @@ Deno.serve(async (req) => {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        // Fired when a customer pays via a Payment Link
+        // Fired when a customer pays via a Payment Link or Checkout Session
         const session = event.data.object;
         const jobId = session.metadata?.job_id;
+        const quoteId = session.metadata?.quote_id;
         if (jobId) {
-          const payments = await base44.asServiceRole.entities.Payment.filter({ job_id: jobId });
-          const payment = payments[0];
-          if (payment) {
-            await base44.asServiceRole.entities.Payment.update(payment.id, {
+          // Fetch job
+          const jobs = await base44.asServiceRole.entities.Job.filter({ id: jobId });
+          const job = jobs[0];
+          if (!job) break;
+
+          const amount = job.quoted_price || 0;
+          const platformFee = amount * 0.10;
+          const payout = amount * 0.90;
+
+          // Check if a payment record already exists (e.g. charged card on file path)
+          const existingPayments = await base44.asServiceRole.entities.Payment.filter({ job_id: jobId });
+          if (existingPayments.length > 0) {
+            await base44.asServiceRole.entities.Payment.update(existingPayments[0].id, {
               status: 'captured',
               stripe_payment_intent_id: session.payment_intent || '',
             });
+          } else {
+            // Create payment record from checkout session
+            await base44.asServiceRole.entities.Payment.create({
+              job_id: jobId,
+              stripe_payment_intent_id: session.payment_intent || '',
+              amount,
+              platform_fee: platformFee,
+              payout_amount: payout,
+              status: 'captured',
+            });
           }
 
-          // Fetch job to get provider info
-          const jobs = await base44.asServiceRole.entities.Job.filter({ id: jobId });
-          const job = jobs[0];
-          if (job?.provider_email) {
-            const amount = payment?.amount || job.final_price || job.quoted_price || 0;
-            const payout = amount * 0.75;
+          // Move job to accepted/confirmed
+          await base44.asServiceRole.entities.Job.update(jobId, { status: 'accepted' });
+
+          // Mark quote as accepted if quoteId present
+          if (quoteId) {
+            await base44.asServiceRole.entities.Quote.update(quoteId, { status: 'accepted' });
+          }
+
+          // Notify provider
+          if (job.provider_email) {
             await base44.asServiceRole.integrations.Core.SendEmail({
               to: job.provider_email,
-              subject: `Payment received — your payout of $${payout.toFixed(2)} is being processed`,
+              subject: `Job confirmed — payment received for ${job.service_name}`,
               body: `
 <p>Hi ${job.provider_name || 'there'},</p>
-
-<p>Great news! The customer has completed payment for your <strong>${job.service_name}</strong> job.</p>
-
-<p><strong>Job Summary:</strong></p>
+<p>Great news! The customer has completed payment and your <strong>${job.service_name}</strong> job is now confirmed.</p>
 <ul>
   <li>Service: ${job.service_name}</li>
   <li>Customer: ${job.customer_name}</li>
+  <li>Address: ${job.address}</li>
   <li>Total Charged: $${amount.toFixed(2)}</li>
   <li>Your Payout: $${payout.toFixed(2)}</li>
 </ul>
+<p>Your payout will be deposited on your next weekly pay cycle.</p>
+<p>The Grassgodz Team</p>
+              `.trim(),
+            });
+          }
 
-<p>Your payout is being processed and will be deposited to your bank account on your next weekly pay cycle.</p>
-
-<p>Thank you for being a Grassgodz pro!</p>
+          // Notify customer
+          if (job.customer_email) {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: job.customer_email,
+              subject: `Your ${job.service_name} job is confirmed!`,
+              body: `
+<p>Hi ${job.customer_name || 'there'},</p>
+<p>Your payment was received and your job is now <strong>confirmed</strong>.</p>
+<ul>
+  <li>Service: ${job.service_name}</li>
+  <li>Provider: ${job.provider_name}</li>
+  <li>Address: ${job.address}</li>
+  <li>Amount Paid: $${amount.toFixed(2)}</li>
+</ul>
+<p>We'll keep you updated as your job progresses.</p>
 <p>The Grassgodz Team</p>
               `.trim(),
             });

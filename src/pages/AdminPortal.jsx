@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain, Copy, LinkIcon, UserPlus } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Trash2, Camera, SlidersHorizontal, CheckCircle, Banknote, Receipt, CalendarDays, CloudRain, Copy, LinkIcon, UserPlus, MapPin } from 'lucide-react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
 import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
@@ -25,6 +25,7 @@ import AdminGlobalSearch from '@/components/admin/AdminGlobalSearch';
 import JobsInvoicesDashboard from '@/components/admin/JobsInvoicesDashboard';
 import AdminPayoutsPanel from '@/components/admin/AdminPayoutsPanel';
 import AdminInviteModal from '@/components/admin/AdminInviteModal';
+import AdminZipLookup from '@/components/admin/AdminZipLookup';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { toast } from 'sonner';
@@ -44,6 +45,7 @@ const NAV = [
   { key: 'paymentlinks', label: 'Pay Links', icon: LinkIcon },
   { key: 'jobsdash', label: 'Jobs & Inv', icon: CalendarDays },
   { key: 'payouts', label: 'Payouts', icon: DollarSign },
+  { key: 'ziplookup', label: 'Zip Lookup', icon: MapPin },
 ];
 
 export default function AdminPortal() {
@@ -568,6 +570,10 @@ export default function AdminPortal() {
           <div>
             <AdminPayoutsPanel providers={providers} />
           </div>
+        )}
+
+        {tab === 'ziplookup' && (
+          <AdminZipLookup providers={providers} />
         )}
 
         {tab === 'reviews' && (

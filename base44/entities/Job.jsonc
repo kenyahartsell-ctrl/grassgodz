@@ -215,6 +215,16 @@
     "final_payment_intent_id": {
       "type": "string",
       "description": "Stripe payment intent ID for the remaining balance payment"
+    },
+    "cash_paid": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when customer has paid the provider in cash"
+    },
+    "cash_paid_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when provider marked cash payment received"
     }
   },
   "required": [

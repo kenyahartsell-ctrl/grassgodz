@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Camera, User, ClipboardList, MapPin, Calendar, DollarSign, AlertCircle, CheckCircle2, Wrench, Hash } from 'lucide-react';
+import { ArrowLeft, Loader2, Camera, User, ClipboardList, MapPin, Calendar, DollarSign, AlertCircle, CheckCircle2, Wrench, Hash, Banknote } from 'lucide-react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import JobChat from '@/components/shared/JobChat';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
@@ -33,6 +33,7 @@ export default function JobDetailPage() {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
+  const [markingCash, setMarkingCash] = useState(false);
   const isAdmin = user?.role === 'admin';
   const senderRole = user && job
     ? (isAdmin ? 'admin' : job.customer_email === user.email ? 'customer' : 'provider')
@@ -96,6 +97,27 @@ export default function JobDetailPage() {
     }
     load();
   }, [jobId]);
+
+  const handleMarkCashPaid = async () => {
+    if (!window.confirm('Mark this job as paid in cash? This will record the cash payment and mark the job as completed.')) return;
+    setMarkingCash(true);
+    try {
+      await base44.entities.Job.update(job.id, {
+        cash_paid: true,
+        cash_paid_date: new Date().toISOString(),
+        payment_method: 'cash',
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      });
+      const jobs = await base44.entities.Job.filter({ id: jobId });
+      setJob(jobs[0]);
+      toast.success('Cash payment recorded. Job marked as completed.');
+    } catch {
+      toast.error('Failed to record cash payment.');
+    } finally {
+      setMarkingCash(false);
+    }
+  };
 
   const handleMarkComplete = async (j, photos) => {
     if (j.status === 'completed') {
@@ -224,8 +246,13 @@ export default function JobDetailPage() {
                 <div className="flex-1">
                   <h2 className="text-base font-bold text-foreground">{job.service_name}</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">Job #{job.id?.slice(-8).toUpperCase()}</p>
-                  <div className="mt-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     <StatusBadge status={job.status} />
+                    {job.cash_paid && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200">
+                        <Banknote size={11} /> Cash Payment Received
+                      </span>
+                    )}
                   </div>
                 </div>
                 {job.quoted_price && (
@@ -390,6 +417,34 @@ export default function JobDetailPage() {
                   </div>
                 )}
               </div>
+
+              {/* Cash Payment — provider only, job not already cash paid */}
+              {senderRole === 'provider' && !job.cash_paid && ['accepted', 'scheduled', 'in_progress', 'completed'].includes(job.status) && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <button
+                    onClick={handleMarkCashPaid}
+                    disabled={markingCash}
+                    className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    {markingCash ? <Loader2 size={15} className="animate-spin" /> : <Banknote size={15} />}
+                    {markingCash ? 'Recording...' : 'Mark as Paid in Cash'}
+                  </button>
+                  <p className="text-xs text-muted-foreground text-center mt-1.5">Use this when the customer pays you directly in cash.</p>
+                </div>
+              )}
+
+              {/* Cash paid confirmation badge */}
+              {job.cash_paid && (
+                <div className="mt-4 pt-4 border-t border-border flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                  <Banknote size={16} className="text-green-700 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-green-800">Cash Payment Received</p>
+                    {job.cash_paid_date && (
+                      <p className="text-xs text-green-700">{format(new Date(job.cash_paid_date), 'MMM d, yyyy h:mm a')}</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>
@@ -501,6 +556,13 @@ export default function JobDetailPage() {
               <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-3">Pricing</p>
               <DetailRow label="Quoted Price" value={job.quoted_price ? `$${job.quoted_price}` : null} />
               <DetailRow label="Final Price" value={job.final_price ? `$${job.final_price}` : null} />
+              <DetailRow label="Payment Method" value={job.payment_method === 'cash' ? '💵 Cash' : job.payment_method === 'stripe' ? '💳 Stripe' : null} />
+              {job.cash_paid && (
+                <>
+                  <DetailRow label="Cash Paid" value="✅ Yes" />
+                  {job.cash_paid_date && <DetailRow label="Cash Paid Date" value={format(new Date(job.cash_paid_date), 'MMM d, yyyy h:mm a')} />}
+                </>
+              )}
               {payment && (
                 <>
                   <DetailRow label="Platform Fee" value={payment.platform_fee ? `$${payment.platform_fee.toFixed(2)}` : null} />

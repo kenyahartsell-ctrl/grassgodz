@@ -384,7 +384,14 @@ export default function AdminPortal() {
                     {/* Customer name */}
                     <p className="text-xs text-muted-foreground">{j.customer_name}</p>
                     {/* Status badge */}
-                    <div><StatusBadge status={j.status} /></div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <StatusBadge status={j.status} />
+                      {j.cash_paid && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200">
+                          💵 Cash Paid
+                        </span>
+                      )}
+                    </div>
                     {/* Action buttons */}
                     <div className="flex flex-wrap items-center gap-2">
                       <Link

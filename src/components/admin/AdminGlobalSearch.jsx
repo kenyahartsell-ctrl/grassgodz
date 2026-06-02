@@ -1,11 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Search, UserCircle, Users, MapPin, X } from 'lucide-react';
 
 export default function AdminGlobalSearch({ customers, providers, jobs, onNavigate }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const inputRef = useRef(null);
-  const containerRef = useRef(null);
 
   const q = query.trim().toLowerCase();
 
@@ -33,26 +32,21 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
 
   const hasResults = matchedCustomers.length > 0 || matchedProviders.length > 0 || matchedJobs.length > 0;
 
-  useEffect(() => {
-    function handleClick(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
-  }, []);
-
   const handleSelect = (tab) => {
     onNavigate(tab);
     setQuery('');
     setOpen(false);
   };
 
+  const handleBlur = () => {
+    // Delay so click on result fires first
+    setTimeout(() => setOpen(false), 200);
+  };
+
   const clear = () => { setQuery(''); inputRef.current?.focus(); };
 
   return (
-    <div ref={containerRef} className="relative flex-1 max-w-xs">
+    <div className="relative flex-1 max-w-xs">
       <div className="relative">
         <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         <input
@@ -61,6 +55,7 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
           value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
+          onBlur={handleBlur}
           placeholder="Search customers, providers, properties…"
           className="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
         />
@@ -83,7 +78,7 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedCustomers.map(c => (
                 <button
                   key={c.id}
-                  onMouseDown={e => { e.preventDefault(); handleSelect('customers'); }}
+                  onClick={() => handleSelect('customers')}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <UserCircle size={13} className="text-muted-foreground flex-shrink-0" />
@@ -102,7 +97,7 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedProviders.map(p => (
                 <button
                   key={p.id}
-                  onMouseDown={e => { e.preventDefault(); handleSelect('providers'); }}
+                  onClick={() => handleSelect('providers')}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <Users size={13} className="text-muted-foreground flex-shrink-0" />
@@ -121,7 +116,7 @@ export default function AdminGlobalSearch({ customers, providers, jobs, onNaviga
               {matchedJobs.map(j => (
                 <button
                   key={j.id}
-                  onMouseDown={e => { e.preventDefault(); handleSelect('jobs'); }}
+                  onClick={() => handleSelect('jobs')}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/60 text-left transition-colors"
                 >
                   <MapPin size={13} className="text-muted-foreground flex-shrink-0" />

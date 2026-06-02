@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, MapPin, ChevronDown, ChevronUp, CloudRain, MessageCircle } from 'lucide-react';
+import { Calendar, MapPin, ChevronDown, ChevronUp, CloudRain, MessageCircle, Star } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
 import JobCompletionPhotos from './JobCompletionPhotos';
 import JobQuotesPanel from './JobQuotesPanel';
@@ -11,7 +11,7 @@ import { base44 } from '@/api/base44Client';
 const CHAT_ENABLED_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed'];
 
 export default function JobCard({ job, customerProfile, onAcceptQuote, onReview, reviewed, onRescheduled, user }) {
-  const [expanded, setExpanded] = useState(job.status === 'quoted');
+  const [expanded, setExpanded] = useState(job.status === 'quoted' || (job.status === 'completed' && !reviewed));
   const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatUser, setChatUser] = useState(null);
@@ -112,18 +112,22 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
             </button>
           )}
 
-          {/* Review button for completed jobs */}
+          {/* Review prompt for completed jobs */}
           {job.status === 'completed' && !reviewed && onReview && (
-            <button
-              onClick={() => onReview(job)}
-              className="mt-2 w-full text-xs font-medium text-amber-700 border border-amber-200 bg-amber-50 rounded-lg px-3 py-2 hover:bg-amber-100 transition-colors"
-            >
-              Leave a Review
-            </button>
+            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-sm font-bold text-amber-900 mb-1">How did {job.provider_name || 'your provider'} do?</p>
+              <p className="text-xs text-amber-700 mb-3">Your feedback helps us maintain quality and rewards great providers.</p>
+              <button
+                onClick={() => onReview(job)}
+                className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors"
+              >
+                <Star size={14} className="fill-white" /> Leave a Review
+              </button>
+            </div>
           )}
           {job.status === 'completed' && reviewed && (
-            <div className="mt-2 text-center text-xs font-medium text-green-700 border border-green-200 bg-green-50 rounded-lg px-3 py-2">
-              ✓ Review submitted
+            <div className="mt-3 text-center text-xs font-semibold text-green-700 border border-green-200 bg-green-50 rounded-xl px-3 py-3 flex items-center justify-center gap-2">
+              <Star size={13} className="fill-green-600 text-green-600" /> Review submitted — thank you!
             </div>
           )}
 

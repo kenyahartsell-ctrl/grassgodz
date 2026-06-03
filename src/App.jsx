@@ -92,6 +92,8 @@ const AuthenticatedApp = () => {
       <Route path="/customer/*" element={<CustomerApp />} />
       <Route path="/provider/pending" element={<ProviderPendingPage />} />
       <Route path="/provider/suspended" element={<ProviderSuspendedPage />} />
+      <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
+      <Route path="/provider/financials" element={<ProviderFinancialsPage />} />
       <Route path="/pros/schedule" element={<ProSchedulePage />} />
       <Route path="/quotes" element={<MyQuotesPage />} />
       <Route path="/provider" element={<ProviderApp />} />
@@ -113,8 +115,7 @@ const AuthenticatedApp = () => {
       <Route path="/jobs/:jobId" element={<JobDetailPage />} />
       <Route path="/provider-links" element={<ProviderLinksPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
-      <Route path="/provider/financials" element={<ProviderFinancialsPage />} />
-      <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
+
 
       {/* City SEO landing pages */}
       <Route path="/lawn-care/washington-dc" element={<WashingtonDCPage />} />

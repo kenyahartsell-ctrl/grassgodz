@@ -4,8 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { format, isBefore, startOfDay, parseISO } from 'date-fns';
 import {
   CheckCircle2, AlertCircle, Clock, RefreshCw, ChevronLeft, ChevronRight,
-  Plus, DollarSign, CloudRain, CheckCircle, Trash2, Camera, MessageSquare,
+  Plus, DollarSign, CloudRain, CheckCircle, Trash2, Camera, MessageSquare, ImagePlus,
 } from 'lucide-react';
+import AdminPhotoUploadModal from '@/components/admin/AdminPhotoUploadModal';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -215,7 +216,18 @@ function AdminPaymentToggle({ job }) {
 }
 
 function CompletedJobsSection({ jobs }) {
-  const sorted = [...jobs].sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
+  const [uploadJob, setUploadJob] = useState(null);
+  const [localJobs, setLocalJobs] = useState(jobs);
+
+  // Keep in sync when parent jobs prop changes
+  useState(() => { setLocalJobs(jobs); }, [jobs]);
+
+  const sorted = [...localJobs].sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
+
+  const handleUploaded = (jobId, newAdminPhotos) => {
+    setLocalJobs(prev => prev.map(j => j.id === jobId ? { ...j, admin_photos: newAdminPhotos } : j));
+  };
+
   return (
     <div>
       <h3 className="text-base font-bold text-foreground mb-3">All Completed Jobs ({sorted.length})</h3>
@@ -232,6 +244,7 @@ function CompletedJobsSection({ jobs }) {
                 <th className="text-left px-4 py-2 font-semibold">Completed</th>
                 <th className="text-right px-4 py-2 font-semibold">Amount</th>
                 <th className="text-center px-4 py-2 font-semibold">Payment Status</th>
+                <th className="text-center px-4 py-2 font-semibold">Photos</th>
               </tr>
             </thead>
             <tbody>
@@ -247,11 +260,29 @@ function CompletedJobsSection({ jobs }) {
                   <td className="px-4 py-3 text-center">
                     <AdminPaymentToggle job={j} />
                   </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => setUploadJob(j)}
+                      title="Add admin photos"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
+                    >
+                      <ImagePlus size={10} />
+                      {j.admin_photos?.length ? `${j.admin_photos.length}` : 'Add'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {uploadJob && (
+        <AdminPhotoUploadModal
+          job={uploadJob}
+          onClose={() => setUploadJob(null)}
+          onUploaded={(newPhotos) => { handleUploaded(uploadJob.id, newPhotos); setUploadJob(null); }}
+        />
       )}
     </div>
   );

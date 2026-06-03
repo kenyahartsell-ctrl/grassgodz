@@ -111,7 +111,7 @@
     },
     "completion_photos": {
       "type": "object",
-      "description": "Before/after photos of each area.",
+      "description": "Before/after photos submitted by the provider.",
       "properties": {
         "front_before": {
           "type": "string"
@@ -136,6 +136,22 @@
         },
         "right_after": {
           "type": "string"
+        }
+      }
+    },
+    "admin_photos": {
+      "type": "array",
+      "description": "Photos uploaded by admin after job completion.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       }
     },

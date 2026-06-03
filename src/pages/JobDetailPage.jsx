@@ -471,8 +471,11 @@ export default function JobDetailPage() {
                 <Camera size={16} /> Add Photos
               </button>
             )}
-            {hasPhotos ? (
-              <>
+
+            {/* Provider photos */}
+            {hasPhotos && (
+              <div className="mb-5">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Provider Photos</p>
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {Object.entries(job.completion_photos)
                     .filter(([, url]) => url)
@@ -492,8 +495,27 @@ export default function JobDetailPage() {
                 >
                   View All Photos
                 </button>
-              </>
-            ) : (
+              </div>
+            )}
+
+            {/* Admin photos */}
+            {job.admin_photos?.length > 0 && (
+              <div className="mb-5">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Admin Uploads</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {job.admin_photos.map((photo, i) => (
+                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-blue-200">
+                      <img src={photo.url} alt={`Admin upload ${i + 1}`} className="w-full h-full object-cover" />
+                      <span className="absolute bottom-0 left-0 right-0 text-[9px] font-bold text-white bg-blue-600/80 text-center py-0.5">
+                        Admin Upload
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!hasPhotos && !job.admin_photos?.length && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Camera className="w-10 h-10 text-muted-foreground/20 mb-3" />
                 <p className="text-sm font-medium text-muted-foreground">No photos yet</p>

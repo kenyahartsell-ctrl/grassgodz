@@ -247,6 +247,14 @@
     "pending_payment_link": {
       "type": "string",
       "description": "Stripe Checkout URL shown when customer has no email on file"
+    },
+    "admin_payment_status": {
+      "type": "string",
+      "enum": [
+        "paid",
+        "payment_pending"
+      ],
+      "description": "Admin-controlled payment status override for completed jobs. Does not affect Stripe fields."
     }
   },
   "required": [

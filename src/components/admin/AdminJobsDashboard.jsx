@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { format, isBefore, startOfDay, parseISO } from 'date-fns';
@@ -178,6 +178,42 @@ function AllJobsSection({ jobs, setJobs, handlers }) {
 }
 
 // ─── Completed Jobs ──────────────────────────────────────────────────────────
+function AdminPaymentToggle({ job }) {
+  const current = job.admin_payment_status || (isPaid(job) ? 'paid' : 'payment_pending');
+  const [status, setStatus] = useState(current);
+  const [saving, setSaving] = useState(false);
+
+  const toggle = async () => {
+    const next = status === 'paid' ? 'payment_pending' : 'paid';
+    setSaving(true);
+    try {
+      await base44.entities.Job.update(job.id, { admin_payment_status: next });
+      setStatus(next);
+      job.admin_payment_status = next;
+      toast.success(`Payment status set to ${next === 'paid' ? 'Paid' : 'Payment Pending'}`);
+    } catch {
+      toast.error('Failed to update payment status');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={toggle}
+      disabled={saving}
+      title="Click to toggle payment status"
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold text-[10px] border transition-opacity ${saving ? 'opacity-50' : 'hover:opacity-80 cursor-pointer'} ${
+        status === 'paid'
+          ? 'bg-green-100 text-green-700 border-green-200'
+          : 'bg-amber-100 text-amber-700 border-amber-200'
+      }`}
+    >
+      {status === 'paid' ? <><CheckCircle2 size={10} /> Paid</> : <><Clock size={10} /> Payment Pending</>}
+    </button>
+  );
+}
+
 function CompletedJobsSection({ jobs }) {
   const sorted = [...jobs].sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
   return (
@@ -195,7 +231,7 @@ function CompletedJobsSection({ jobs }) {
                 <th className="text-left px-4 py-2 font-semibold hidden md:table-cell">Provider</th>
                 <th className="text-left px-4 py-2 font-semibold">Completed</th>
                 <th className="text-right px-4 py-2 font-semibold">Amount</th>
-                <th className="text-center px-4 py-2 font-semibold">Payment</th>
+                <th className="text-center px-4 py-2 font-semibold">Payment Status</th>
               </tr>
             </thead>
             <tbody>
@@ -209,15 +245,7 @@ function CompletedJobsSection({ jobs }) {
                   <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{fmtDate(j.completed_at)}</td>
                   <td className="px-4 py-3 text-right font-semibold text-foreground">{fmtAmt(j.final_price || j.quoted_price)}</td>
                   <td className="px-4 py-3 text-center">
-                    {isPaid(j) ? (
-                      <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold text-[10px]">
-                        <CheckCircle2 size={10} /> Paid
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold text-[10px]">
-                        <Clock size={10} /> Outstanding
-                      </span>
-                    )}
+                    <AdminPaymentToggle job={j} />
                   </td>
                 </tr>
               ))}

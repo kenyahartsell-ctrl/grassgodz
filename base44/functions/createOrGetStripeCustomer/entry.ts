@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       },
     });
 
-    await base44.entities.CustomerProfile.update(profile.id, {
+    await base44.asServiceRole.entities.CustomerProfile.update(profile.id, {
       stripe_customer_id: customer.id,
     });
 

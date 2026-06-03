@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { format, isBefore, startOfDay, parseISO } from 'date-fns';
 import {
   CheckCircle2, AlertCircle, Clock, RefreshCw, ChevronLeft, ChevronRight,
   Plus, DollarSign, CloudRain, CheckCircle, Trash2, Camera, MessageSquare, ImagePlus,
+  Banknote, CreditCard,
 } from 'lucide-react';
 import AdminPhotoUploadModal from '@/components/admin/AdminPhotoUploadModal';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -24,158 +25,6 @@ function fmtDate(val) {
 function fmtAmt(val) {
   if (val == null) return '—';
   return `$${Number(val).toFixed(2)}`;
-}
-
-// ─── All Jobs (management) ───────────────────────────────────────────────────
-function AllJobsSection({ jobs, setJobs, handlers }) {
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  const statuses = ['all', 'pending_deposit', 'requested', 'quoted', 'accepted', 'scheduled', 'in_progress', 'completed', 'cancelled'];
-
-  const filtered = statusFilter === 'all' ? jobs : jobs.filter(j => j.status === statusFilter);
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-bold text-foreground">All Jobs ({filtered.length})</h3>
-        <Button size="sm" onClick={handlers.onAddJob} className="flex items-center gap-2">
-          <Plus size={14} /> Add Job
-        </Button>
-      </div>
-
-      {/* Status filter */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {statuses.map(s => (
-          <button
-            key={s}
-            onClick={() => setStatusFilter(s)}
-            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold capitalize transition-colors ${
-              statusFilter === s
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            {s === 'all' ? 'All' : s.replace(/_/g, ' ')}
-          </button>
-        ))}
-      </div>
-
-      {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-10">No jobs found.</p>
-      ) : (
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          {filtered.map((j, i) => (
-            <div key={j.id} className={`px-5 py-4 flex flex-col gap-2 ${i < filtered.length - 1 ? 'border-b border-border' : ''}`}>
-              {/* Header row */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-foreground">{j.service_name}</p>
-                  <p className="text-xs text-muted-foreground">{j.customer_name}</p>
-                </div>
-                {/* Payment pill */}
-                <div className="flex-shrink-0">
-                  {j.status === 'completed' ? (
-                    isPaid(j) ? (
-                      <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold text-[10px]">
-                        <CheckCircle2 size={10} /> Paid
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold text-[10px]">
-                        <Clock size={10} /> Outstanding
-                      </span>
-                    )
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Status badges */}
-              <div className="flex flex-wrap gap-1.5">
-                <StatusBadge status={j.status} />
-                {j.cash_paid && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200">
-                    💵 Cash Paid
-                  </span>
-                )}
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  to={`/jobs/${j.id}`}
-                  className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
-                >
-                  View
-                </Link>
-                <button onClick={() => handlers.onEdit(j)} className="px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors">Edit</button>
-                <button
-                  onClick={() => handlers.onEditPrice(j)}
-                  className="px-2.5 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1"
-                >
-                  <DollarSign size={12} /> {j.quoted_price ? `$${j.quoted_price}` : 'Set Price'}
-                </button>
-                {!['completed', 'cancelled'].includes(j.status) && (
-                  <button onClick={() => handlers.onAssign(j)} className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
-                )}
-                {j.provider_id && !['completed', 'cancelled'].includes(j.status) && (
-                  <button
-                    onClick={() => handlers.onUnassign(j)}
-                    className="px-2.5 py-1 text-xs font-medium bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors"
-                  >
-                    Unassign
-                  </button>
-                )}
-                {!['completed', 'cancelled', 'requested'].includes(j.status) && (
-                  <button
-                    onClick={() => handlers.onWeather(j)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                  >
-                    <CloudRain size={12} /> Weather
-                  </button>
-                )}
-                {!['completed', 'cancelled'].includes(j.status) && (
-                  <button onClick={() => handlers.onComplete(j)} className="px-2.5 py-1 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center gap-1">
-                    <CheckCircle size={12} /> Complete
-                  </button>
-                )}
-                {!['completed', 'cancelled'].includes(j.status) && (
-                  <button onClick={() => handlers.onCancel(j)} className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
-                )}
-                <button onClick={() => handlers.onDelete(j)} className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1">
-                  <Trash2 size={12} /> Delete
-                </button>
-                {j.status === 'completed' && j.completion_photos && Object.keys(j.completion_photos).length > 0 && (
-                  <button
-                    onClick={() => handlers.onPhotos(j.completion_photos)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                  >
-                    <Camera size={12} /> Photos
-                  </button>
-                )}
-                <button
-                  onClick={() => handlers.onChat(j)}
-                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
-                >
-                  <MessageSquare size={12} /> Chat
-                </button>
-              </div>
-
-              {/* Footer meta */}
-              <p className="text-xs text-muted-foreground">
-                {j.provider_name || 'Unassigned'} · {j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString() : '—'} · {j.zip_code || '—'}
-                {j.final_price || j.quoted_price ? ` · ${fmtAmt(j.final_price || j.quoted_price)}` : ''}
-              </p>
-              {j.status === 'cancelled' && j.cancellation_reason && (
-                <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5 mt-1">
-                  <span className="font-semibold">Reason:</span> {j.cancellation_reason}
-                  {j.cancelled_by && <span className="text-red-400 ml-1">· by {j.cancelled_by}</span>}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ─── Completed Jobs ──────────────────────────────────────────────────────────
@@ -489,10 +338,90 @@ function CalendarSection({ scheduledJobs, allJobs }) {
   );
 }
 
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-const TABS = [
-  { key: 'all', label: 'All Jobs' },
-  { key: 'completed', label: 'Completed' },
+// ─── Job Card (shared between columns) ───────────────────────────────────────
+function JobCard({ job: j, handlers, isCompleted }) {
+  const isCash = j.cash_paid || j.payment_method === 'cash';
+  const price = j.final_price || j.quoted_price;
+  const payStatus = j.admin_payment_status || (isPaid(j) ? 'paid' : 'payment_pending');
+
+  return (
+    <div className="bg-card border border-border rounded-xl px-4 py-3 flex flex-col gap-2 shadow-sm">
+      {/* Top row: customer + payment type badge */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-foreground truncate">{j.service_name || '—'}</p>
+          <p className="text-xs text-muted-foreground truncate">{j.customer_name || '—'}</p>
+        </div>
+        {isCash
+          ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold text-[10px] flex-shrink-0"><Banknote size={9} /> Cash</span>
+          : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold text-[10px] flex-shrink-0"><CreditCard size={9} /> Card</span>
+        }
+      </div>
+
+      {/* Meta row */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+        <span>{j.provider_name || 'Unassigned'}</span>
+        <span>·</span>
+        <span>{j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</span>
+        {price != null && <><span>·</span><span className="font-semibold text-foreground">{fmtAmt(price)}</span></>}
+      </div>
+
+      {/* Status badges */}
+      <div className="flex flex-wrap gap-1.5 items-center">
+        <StatusBadge status={j.status} />
+        {isCompleted && (
+          <AdminPaymentToggle job={j} />
+        )}
+      </div>
+
+      {j.status === 'cancelled' && j.cancellation_reason && (
+        <p className="text-[11px] text-red-600 bg-red-50 border border-red-100 rounded-lg px-2 py-1">
+          <span className="font-semibold">Reason:</span> {j.cancellation_reason}
+        </p>
+      )}
+
+      {/* Actions */}
+      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+        <Link to={`/jobs/${j.id}`} className="px-2 py-1 text-[11px] font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors">View</Link>
+        <button onClick={() => handlers.onEdit(j)} className="px-2 py-1 text-[11px] font-medium bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors">Edit</button>
+        <button onClick={() => handlers.onEditPrice(j)} className="px-2 py-1 text-[11px] font-medium bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
+          <DollarSign size={11} /> {price ? fmtAmt(price) : 'Price'}
+        </button>
+        {!isCompleted && (
+          <>
+            <button onClick={() => handlers.onAssign(j)} className="px-2 py-1 text-[11px] font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Assign</button>
+            {j.provider_id && (
+              <button onClick={() => handlers.onUnassign(j)} className="px-2 py-1 text-[11px] font-medium bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition-colors">Unassign</button>
+            )}
+            {!['requested'].includes(j.status) && (
+              <button onClick={() => handlers.onWeather(j)} className="px-2 py-1 text-[11px] font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">
+                <CloudRain size={11} /> Weather
+              </button>
+            )}
+            <button onClick={() => handlers.onComplete(j)} className="px-2 py-1 text-[11px] font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center gap-1">
+              <CheckCircle size={11} /> Complete
+            </button>
+            <button onClick={() => handlers.onCancel(j)} className="px-2 py-1 text-[11px] font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
+          </>
+        )}
+        {isCompleted && j.completion_photos && Object.keys(j.completion_photos).length > 0 && (
+          <button onClick={() => handlers.onPhotos(j.completion_photos)} className="px-2 py-1 text-[11px] font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">
+            <Camera size={11} /> Photos
+          </button>
+        )}
+        <button onClick={() => handlers.onChat(j)} className="px-2 py-1 text-[11px] font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors flex items-center gap-1">
+          <MessageSquare size={11} /> Chat
+        </button>
+        <button onClick={() => handlers.onDelete(j)} className="px-2 py-1 text-[11px] font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1">
+          <Trash2 size={11} /> Delete
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Extra TABS (below columns) ───────────────────────────────────────────────
+const EXTRA_TABS = [
   { key: 'outstanding', label: 'Outstanding' },
   { key: 'recurring', label: 'Recurring' },
   { key: 'calendar', label: 'Calendar' },
@@ -500,9 +429,10 @@ const TABS = [
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
 export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState(null);
   const [scheduledJobs, setScheduledJobs] = useState([]);
   const [loadingScheduled, setLoadingScheduled] = useState(true);
+  const [pendingFilter, setPendingFilter] = useState('all');
 
   useEffect(() => {
     base44.entities.ScheduledJob.list('-created_date', 100)
@@ -510,42 +440,108 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
       .finally(() => setLoadingScheduled(false));
   }, []);
 
-  const completedJobs = jobs.filter(j => j.status === 'completed');
+  const pendingStatuses = ['pending_deposit', 'pending_payment', 'requested', 'quoted', 'accepted', 'scheduled', 'in_progress', 'cancelled'];
+  const pendingJobs = jobs
+    .filter(j => j.status !== 'completed')
+    .filter(j => pendingFilter === 'all' || j.status === pendingFilter)
+    .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+  const completedJobs = jobs
+    .filter(j => j.status === 'completed')
+    .sort((a, b) => new Date(b.completed_at || b.updated_date) - new Date(a.completed_at || a.updated_date));
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-bold text-foreground">Jobs & Invoices</h2>
-        <p className="text-sm text-muted-foreground">Manage all jobs, outstanding invoices, recurring schedules, and calendar.</p>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Jobs</h2>
+          <p className="text-sm text-muted-foreground">{pendingJobs.length} pending · {completedJobs.length} completed</p>
+        </div>
+        <Button size="sm" onClick={handlers.onAddJob} className="flex items-center gap-2 flex-shrink-0">
+          <Plus size={14} /> Add Job
+        </Button>
       </div>
 
-      {/* Sub-tabs */}
-      <div className="flex gap-1 bg-muted/40 p-1 rounded-xl w-full overflow-x-auto">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key)}
-            className={`flex-1 whitespace-nowrap text-xs font-semibold px-3 py-2 rounded-lg transition-all ${
-              activeTab === t.key ? 'bg-card shadow text-primary' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Two-column board */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+
+        {/* ── Pending Column ── */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+              Pending <span className="font-normal text-muted-foreground normal-case tracking-normal ml-1">({pendingJobs.length})</span>
+            </h3>
+          </div>
+          {/* Sub-filter pills */}
+          <div className="flex flex-wrap gap-1">
+            {['all', ...pendingStatuses].map(s => (
+              <button
+                key={s}
+                onClick={() => setPendingFilter(s)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize transition-colors ${
+                  pendingFilter === s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {s === 'all' ? 'All' : s.replace(/_/g, ' ')}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-col gap-2 max-h-[calc(100vh-260px)] overflow-y-auto pr-0.5">
+            {pendingJobs.length === 0 ? (
+              <div className="text-center py-10 bg-card border border-border rounded-xl">
+                <p className="text-sm text-muted-foreground">No pending jobs.</p>
+              </div>
+            ) : (
+              pendingJobs.map(j => <JobCard key={j.id} job={j} handlers={handlers} isCompleted={false} />)
+            )}
+          </div>
+        </div>
+
+        {/* ── Completed Column ── */}
+        <div className="flex flex-col gap-3">
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span>
+            Completed <span className="font-normal text-muted-foreground normal-case tracking-normal ml-1">({completedJobs.length})</span>
+          </h3>
+          <div className="flex flex-col gap-2 max-h-[calc(100vh-260px)] overflow-y-auto pr-0.5">
+            {completedJobs.length === 0 ? (
+              <div className="text-center py-10 bg-card border border-border rounded-xl">
+                <p className="text-sm text-muted-foreground">No completed jobs yet.</p>
+              </div>
+            ) : (
+              completedJobs.map(j => <JobCard key={j.id} job={j} handlers={handlers} isCompleted={true} />)
+            )}
+          </div>
+        </div>
       </div>
 
-      {activeTab === 'all' && <AllJobsSection jobs={jobs} setJobs={setJobs} handlers={handlers} />}
-      {activeTab === 'completed' && <CompletedJobsSection jobs={completedJobs} />}
-      {activeTab === 'outstanding' && <OutstandingInvoicesSection jobs={completedJobs} />}
-      {activeTab === 'recurring' && !loadingScheduled && (
-        <RecurringCustomersSection scheduledJobs={scheduledJobs} completedJobs={completedJobs} />
-      )}
-      {activeTab === 'calendar' && !loadingScheduled && (
-        <CalendarSection scheduledJobs={scheduledJobs} allJobs={jobs} />
-      )}
-      {(activeTab === 'recurring' || activeTab === 'calendar') && loadingScheduled && (
-        <p className="text-sm text-muted-foreground text-center py-10">Loading…</p>
-      )}
+      {/* Extra tools (Outstanding / Recurring / Calendar) */}
+      <div className="border-t border-border pt-4">
+        <div className="flex gap-1 bg-muted/40 p-1 rounded-xl w-full overflow-x-auto mb-4">
+          {EXTRA_TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(activeTab === t.key ? null : t.key)}
+              className={`flex-1 whitespace-nowrap text-xs font-semibold px-3 py-2 rounded-lg transition-all ${
+                activeTab === t.key ? 'bg-card shadow text-primary' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {activeTab === 'outstanding' && <OutstandingInvoicesSection jobs={completedJobs} />}
+        {activeTab === 'recurring' && !loadingScheduled && (
+          <RecurringCustomersSection scheduledJobs={scheduledJobs} completedJobs={completedJobs} />
+        )}
+        {activeTab === 'calendar' && !loadingScheduled && (
+          <CalendarSection scheduledJobs={scheduledJobs} allJobs={jobs} />
+        )}
+        {(activeTab === 'recurring' || activeTab === 'calendar') && loadingScheduled && (
+          <p className="text-sm text-muted-foreground text-center py-10">Loading…</p>
+        )}
+      </div>
     </div>
   );
 }

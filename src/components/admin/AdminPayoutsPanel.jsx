@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Briefcase, ChevronDown, ChevronRight, CheckCircle, Clock, List, Users } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { DollarSign, TrendingUp, Briefcase, ChevronDown, ChevronRight, CheckCircle, Clock, List, Users, Pencil, Camera, Banknote } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import AdminPayoutEditModal from './AdminPayoutEditModal';
 
 const fmt = (n) => `$${(n || 0).toFixed(2)}`;
 
@@ -18,25 +19,25 @@ export default function AdminPayoutsPanel({ providers }) {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState({});
   const [view, setView] = useState('jobs'); // 'jobs' | 'providers'
-  const [payoutFilter, setPayoutFilter] = useState('all'); // 'all' | 'processed' | 'pending'
+  const [payoutFilter, setPayoutFilter] = useState('all');
+  const [editingJob, setEditingJob] = useState(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [allJobs, allPayments] = await Promise.all([
-          base44.entities.Job.filter({ status: 'completed' }),
-          base44.entities.Payment.list(),
-        ]);
-        setJobs(allJobs);
-        setPayments(allPayments);
-      } catch {
-        toast.error('Failed to load payout data.');
-      } finally {
-        setLoading(false);
-      }
+  const load = useCallback(async () => {
+    try {
+      const [allJobs, allPayments] = await Promise.all([
+        base44.entities.Job.filter({ status: 'completed' }),
+        base44.entities.Payment.list(),
+      ]);
+      setJobs(allJobs);
+      setPayments(allPayments);
+    } catch {
+      toast.error('Failed to load payout data.');
+    } finally {
+      setLoading(false);
     }
-    load();
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   // Build payment lookup by job_id
   const paymentByJob = {};
@@ -173,13 +174,14 @@ export default function AdminPayoutsPanel({ providers }) {
               <span className="col-span-1 text-right">Job Price</span>
               <span className="col-span-1 text-right">Platform</span>
               <span className="col-span-1 text-right">Payout</span>
-              <span className="col-span-1 text-right">Status</span>
+              <span className="col-span-1 text-right">Edit</span>
             </div>
             <div className="divide-y divide-border">
               {filteredJobs.map(j => {
                 const price = j.final_price || j.quoted_price || 0;
                 const fee = j.platform_fee || 0;
                 const payout = j.provider_payout || 0;
+                const hasPhotos = j.completion_photos && Object.values(j.completion_photos).some(Boolean);
                 return (
                   <div key={j.id} className="grid grid-cols-2 sm:grid-cols-12 gap-2 px-4 py-3 hover:bg-muted/20 text-xs items-center">
                     <span className="col-span-1 sm:col-span-2 text-muted-foreground">
@@ -187,20 +189,22 @@ export default function AdminPayoutsPanel({ providers }) {
                     </span>
                     <span className="col-span-1 sm:col-span-2 font-medium text-foreground truncate">{j.provider_name || '—'}</span>
                     <span className="col-span-1 sm:col-span-2 text-muted-foreground truncate">{j.customer_name || '—'}</span>
-                    <span className="col-span-1 sm:col-span-2 text-muted-foreground truncate">{j.service_name || '—'}</span>
+                    <span className="col-span-1 sm:col-span-2 text-muted-foreground truncate flex items-center gap-1">
+                      {j.service_name || '—'}
+                      {j.cash_paid && <Banknote size={10} className="text-green-600 flex-shrink-0" title="Cash paid" />}
+                      {hasPhotos && <Camera size={10} className="text-primary flex-shrink-0" title="Has photos" />}
+                    </span>
                     <span className="col-span-1 sm:col-span-1 text-right font-medium text-foreground">{fmt(price)}</span>
                     <span className="col-span-1 sm:col-span-1 text-right text-red-600">-{fmt(fee)}</span>
                     <span className="col-span-1 sm:col-span-1 text-right font-bold text-primary">{fmt(payout)}</span>
                     <span className="col-span-1 sm:col-span-1 text-right">
-                      {j.isProcessed ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-800 rounded-full font-medium">
-                          <CheckCircle size={10} /> Processed
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full font-medium">
-                          <Clock size={10} /> Pending
-                        </span>
-                      )}
+                      <button
+                        onClick={() => setEditingJob(j)}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-muted/70 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                        title="Edit payout"
+                      >
+                        <Pencil size={10} /> Edit
+                      </button>
                     </span>
                   </div>
                 );
@@ -269,6 +273,7 @@ export default function AdminPayoutsPanel({ providers }) {
                                 <th className="text-right pb-1 font-medium">Job Price</th>
                                 <th className="text-right pb-1 font-medium">Platform Fee</th>
                                 <th className="text-right pb-1 font-medium">Provider Cut</th>
+                                <th className="text-right pb-1 font-medium">Edit</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -276,16 +281,31 @@ export default function AdminPayoutsPanel({ providers }) {
                                 const price = j.final_price || j.quoted_price || 0;
                                 const fee = j.platform_fee || 0;
                                 const payout = j.provider_payout || 0;
+                                const hasPhotos = j.completion_photos && Object.values(j.completion_photos).some(Boolean);
                                 return (
                                   <tr key={j.id} className="hover:bg-muted/20">
-                                    <td className="py-2 pr-3 font-medium text-foreground">{j.service_name || '—'}</td>
+                                    <td className="py-2 pr-3 font-medium text-foreground">
+                                      <span className="flex items-center gap-1">
+                                        {j.service_name || '—'}
+                                        {j.cash_paid && <Banknote size={10} className="text-green-600" title="Cash paid" />}
+                                        {hasPhotos && <Camera size={10} className="text-primary" title="Has photos" />}
+                                      </span>
+                                    </td>
                                     <td className="py-2 pr-3 text-muted-foreground">{j.customer_name || '—'}</td>
                                     <td className="py-2 pr-3 text-muted-foreground whitespace-nowrap">
                                       {j.completed_at ? new Date(j.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                                     </td>
                                     <td className="py-2 pr-3 text-right text-foreground">{fmt(price)}</td>
                                     <td className="py-2 pr-3 text-right text-red-600">-{fmt(fee)}</td>
-                                    <td className="py-2 text-right font-bold text-primary">{fmt(payout)}</td>
+                                    <td className="py-2 pr-3 text-right font-bold text-primary">{fmt(payout)}</td>
+                                    <td className="py-2 text-right">
+                                      <button
+                                        onClick={() => setEditingJob(j)}
+                                        className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-muted/70 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                                      >
+                                        <Pencil size={10} /> Edit
+                                      </button>
+                                    </td>
                                   </tr>
                                 );
                               })}
@@ -296,6 +316,7 @@ export default function AdminPayoutsPanel({ providers }) {
                                 <td className="pt-2 text-right text-foreground">{fmt(gmv)}</td>
                                 <td className="pt-2 text-right text-red-600">-{fmt(platformFees)}</td>
                                 <td className="pt-2 text-right text-primary">{fmt(totalEarned)}</td>
+                                <td />
                               </tr>
                             </tfoot>
                           </table>
@@ -331,6 +352,15 @@ export default function AdminPayoutsPanel({ providers }) {
             })}
           </div>
         )
+      )}
+
+      {/* Edit Payout Modal */}
+      {editingJob && (
+        <AdminPayoutEditModal
+          job={editingJob}
+          onClose={() => setEditingJob(null)}
+          onSaved={() => { setEditingJob(null); load(); }}
+        />
       )}
     </div>
   );

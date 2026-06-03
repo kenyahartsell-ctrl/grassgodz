@@ -18,7 +18,7 @@ export default function AdminPayoutsPanel({ providers }) {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState({});
-  const [view, setView] = useState('jobs'); // 'jobs' | 'providers'
+  const [view, setView] = useState('providers'); // 'jobs' | 'providers'
   const [payoutFilter, setPayoutFilter] = useState('all');
   const [editingJob, setEditingJob] = useState(null);
 
@@ -72,6 +72,9 @@ export default function AdminPayoutsPanel({ providers }) {
     return true;
   });
 
+  // Today's date in local format for filtering
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   // Provider map for provider view
   const providerMap = {};
   providers.forEach(p => {
@@ -79,6 +82,10 @@ export default function AdminPayoutsPanel({ providers }) {
   });
   jobs.forEach(j => {
     if (j.provider_id && providerMap[j.provider_id]) {
+      const pName = (j.provider_name || '').toLowerCase();
+      const isFreeman = pName.includes('freeman');
+      const completedToday = j.completed_at && j.completed_at.slice(0, 10) === todayStr;
+      if (isFreeman && completedToday) return; // exclude Ms. Freeman's jobs completed today
       providerMap[j.provider_id].completedJobs.push(j);
     }
   });

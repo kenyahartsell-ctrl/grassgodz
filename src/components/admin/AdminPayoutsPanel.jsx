@@ -257,42 +257,52 @@ export default function AdminPayoutsPanel({ providers }) {
                     <div><p className="text-muted-foreground">Pending</p><p className={`font-bold ${pending > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>{fmt(pending)}</p></div>
                   </div>
 
-                  {isExpanded && (
-                    <div className="border-t border-border">
-                      <div className="px-5 py-3">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Completed Jobs</p>
-                        {pJobs.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">No completed jobs</p>
-                        ) : (
+                  {isExpanded && (() => {
+                    const cardJobs = pJobs.filter(j => !j.cash_paid && j.payment_method !== 'cash');
+                    const cashJobs = pJobs.filter(j => j.cash_paid || j.payment_method === 'cash');
+
+                    const calcTotals = (jList) => {
+                      const total = jList.reduce((s, j) => s + (j.final_price || j.quoted_price || 0), 0);
+                      const fee = parseFloat((total * 0.10).toFixed(2));
+                      const payout = parseFloat((total * 0.90).toFixed(2));
+                      return { total, fee, payout };
+                    };
+
+                    const cardTotals = calcTotals(cardJobs);
+                    const cashTotals = calcTotals(cashJobs);
+                    const allTotals = calcTotals(pJobs);
+
+                    const JobTable = ({ jobList, label, accentClass }) => {
+                      if (jobList.length === 0) return null;
+                      const t = calcTotals(jobList);
+                      return (
+                        <div className="mb-4">
+                          <p className="text-[11px] font-bold uppercase tracking-wide mb-2 flex items-center gap-1.5" style={{color: 'inherit'}}>
+                            <span className={`inline-block w-2 h-2 rounded-full ${accentClass}`} />
+                            {label} ({jobList.length} job{jobList.length !== 1 ? 's' : ''})
+                          </p>
                           <table className="w-full text-xs">
                             <thead>
-                              <tr className="text-muted-foreground">
-                                <th className="text-left pb-1 font-medium">Service</th>
-                                <th className="text-left pb-1 font-medium">Customer</th>
-                                <th className="text-left pb-1 font-medium">Date</th>
-                                <th className="text-right pb-1 font-medium">Job Price</th>
-                                <th className="text-right pb-1 font-medium">Platform Fee</th>
-                                <th className="text-right pb-1 font-medium">Provider Cut</th>
-                                <th className="text-right pb-1 font-medium">Edit</th>
+                              <tr className="text-muted-foreground border-b border-border">
+                                <th className="text-left pb-1.5 font-medium">Service</th>
+                                <th className="text-left pb-1.5 font-medium hidden sm:table-cell">Customer</th>
+                                <th className="text-left pb-1.5 font-medium hidden sm:table-cell">Date</th>
+                                <th className="text-right pb-1.5 font-medium">Job Total</th>
+                                <th className="text-right pb-1.5 font-medium">Fee (10%)</th>
+                                <th className="text-right pb-1.5 font-medium">Payout (90%)</th>
+                                <th className="text-right pb-1.5 font-medium">Edit</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                              {pJobs.map(j => {
+                              {jobList.map(j => {
                                 const price = j.final_price || j.quoted_price || 0;
-                                const fee = j.platform_fee || 0;
-                                const payout = j.provider_payout || 0;
-                                const hasPhotos = j.completion_photos && Object.values(j.completion_photos).some(Boolean);
+                                const fee = parseFloat((price * 0.10).toFixed(2));
+                                const payout = parseFloat((price * 0.90).toFixed(2));
                                 return (
                                   <tr key={j.id} className="hover:bg-muted/20">
-                                    <td className="py-2 pr-3 font-medium text-foreground">
-                                      <span className="flex items-center gap-1">
-                                        {j.service_name || '—'}
-                                        {j.cash_paid && <Banknote size={10} className="text-green-600" title="Cash paid" />}
-                                        {hasPhotos && <Camera size={10} className="text-primary" title="Has photos" />}
-                                      </span>
-                                    </td>
-                                    <td className="py-2 pr-3 text-muted-foreground">{j.customer_name || '—'}</td>
-                                    <td className="py-2 pr-3 text-muted-foreground whitespace-nowrap">
+                                    <td className="py-2 pr-3 font-medium text-foreground">{j.service_name || '—'}</td>
+                                    <td className="py-2 pr-3 text-muted-foreground hidden sm:table-cell">{j.customer_name || '—'}</td>
+                                    <td className="py-2 pr-3 text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                                       {j.completed_at ? new Date(j.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                                     </td>
                                     <td className="py-2 pr-3 text-right text-foreground">{fmt(price)}</td>
@@ -311,42 +321,69 @@ export default function AdminPayoutsPanel({ providers }) {
                               })}
                             </tbody>
                             <tfoot>
-                              <tr className="border-t-2 border-border font-semibold">
-                                <td colSpan={3} className="pt-2 text-muted-foreground">Totals</td>
-                                <td className="pt-2 text-right text-foreground">{fmt(gmv)}</td>
-                                <td className="pt-2 text-right text-red-600">-{fmt(platformFees)}</td>
-                                <td className="pt-2 text-right text-primary">{fmt(totalEarned)}</td>
+                              <tr className="border-t-2 border-border font-semibold bg-muted/30">
+                                <td colSpan={3} className="pt-2 pb-1 text-muted-foreground hidden sm:table-cell">Subtotal</td>
+                                <td className="pt-2 pb-1 text-right text-foreground">{fmt(t.total)}</td>
+                                <td className="pt-2 pb-1 text-right text-red-600">-{fmt(t.fee)}</td>
+                                <td className="pt-2 pb-1 text-right text-primary">{fmt(t.payout)}</td>
                                 <td />
                               </tr>
                             </tfoot>
                           </table>
-                        )}
-                      </div>
-
-                      {pPayments.length > 0 && (
-                        <div className="px-5 py-3 border-t border-border bg-muted/20">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Payment Records</p>
-                          <div className="space-y-1.5">
-                            {pPayments.map(p => (
-                              <div key={p.id} className="flex items-center justify-between text-xs">
-                                <span className="text-muted-foreground">{new Date(p.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                <span className={`px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[p.status] || 'bg-gray-100 text-gray-600'}`}>{p.status}</span>
-                                <span className="text-muted-foreground">Total: {fmt(p.amount)}</span>
-                                <span className="font-bold text-primary">Payout: {fmt(p.payout_amount)}</span>
-                              </div>
-                            ))}
-                          </div>
                         </div>
-                      )}
+                      );
+                    };
 
-                      <div className="px-5 py-3 border-t border-border bg-primary/5 flex flex-wrap gap-4 text-xs">
-                        <span className="flex items-center gap-1.5"><CheckCircle size={13} className="text-green-600" /> Paid Out: <strong className="text-green-700">{fmt(totalPaid)}</strong></span>
-                        {pending > 0 && <span className="flex items-center gap-1.5"><Clock size={13} className="text-amber-600" /> Pending: <strong className="text-amber-600">{fmt(pending)}</strong></span>}
-                        <span className="flex items-center gap-1.5"><TrendingUp size={13} className="text-primary" /> Total Earned: <strong className="text-primary">{fmt(totalEarned)}</strong></span>
-                        <span className="flex items-center gap-1.5 text-muted-foreground"><Briefcase size={13} /> {pJobs.length} job{pJobs.length !== 1 ? 's' : ''}</span>
+                    return (
+                      <div className="border-t border-border">
+                        <div className="px-5 py-4 space-y-2">
+                          <JobTable jobList={cardJobs} label="💳 Card Payments" accentClass="bg-blue-500" />
+                          <JobTable jobList={cashJobs} label="💵 Cash Payments" accentClass="bg-green-500" />
+                        </div>
+
+                        {/* Summary row */}
+                        <div className="px-5 py-3 border-t border-border bg-primary/5">
+                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">Provider Earnings Summary</p>
+                          <div className="grid grid-cols-3 gap-3 text-xs mb-3">
+                            <div className="bg-card border border-border rounded-lg p-3 text-center">
+                              <p className="text-muted-foreground mb-0.5">Total Job Value</p>
+                              <p className="font-bold text-foreground text-sm">{fmt(allTotals.total)}</p>
+                            </div>
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                              <p className="text-red-600 mb-0.5">Grassgodz Fee (10%)</p>
+                              <p className="font-bold text-red-700 text-sm">-{fmt(allTotals.fee)}</p>
+                            </div>
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                              <p className="text-green-700 mb-0.5">Provider Payout (90%)</p>
+                              <p className="font-bold text-green-800 text-sm">{fmt(allTotals.payout)}</p>
+                            </div>
+                          </div>
+
+                          {/* Card vs Cash breakdown */}
+                          {cardJobs.length > 0 && cashJobs.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                                <p className="font-semibold text-blue-800 mb-1.5 flex items-center gap-1"><span>💳</span> Card</p>
+                                <div className="space-y-0.5 text-blue-700">
+                                  <div className="flex justify-between"><span>Job Total</span><span className="font-medium">{fmt(cardTotals.total)}</span></div>
+                                  <div className="flex justify-between"><span>Fee (10%)</span><span className="font-medium text-red-600">-{fmt(cardTotals.fee)}</span></div>
+                                  <div className="flex justify-between border-t border-blue-200 pt-0.5 mt-0.5"><span className="font-bold">Payout</span><span className="font-bold">{fmt(cardTotals.payout)}</span></div>
+                                </div>
+                              </div>
+                              <div className="bg-green-50 border border-green-200 rounded-lg p-2.5">
+                                <p className="font-semibold text-green-800 mb-1.5 flex items-center gap-1"><span>💵</span> Cash</p>
+                                <div className="space-y-0.5 text-green-700">
+                                  <div className="flex justify-between"><span>Job Total</span><span className="font-medium">{fmt(cashTotals.total)}</span></div>
+                                  <div className="flex justify-between"><span>Fee (10%)</span><span className="font-medium text-red-600">-{fmt(cashTotals.fee)}</span></div>
+                                  <div className="flex justify-between border-t border-green-200 pt-0.5 mt-0.5"><span className="font-bold">Payout</span><span className="font-bold">{fmt(cashTotals.payout)}</span></div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, CreditCard, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, SlidersHorizontal, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera } from 'lucide-react';
 import { useRef } from 'react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
@@ -39,7 +39,6 @@ const NAV = [
   { key: 'customers', label: 'Customers', icon: UserCircle },
   { key: 'providers', label: 'Providers', icon: Users },
   { key: 'jobs', label: 'Jobs', icon: Briefcase },
-  { key: 'payments', label: 'Payments', icon: CreditCard },
   { key: 'support', label: 'Support', icon: MessageSquare },
   { key: 'email', label: 'Email', icon: Mail },
   { key: 'manual', label: 'Manual', icon: Banknote },
@@ -439,51 +438,6 @@ export default function AdminPortal() {
               onChat: (j) => { setSupportJob(j); setTab('support'); },
             }}
           />
-        )}
-
-        {tab === 'payments' && (
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">Payments</h2>
-            {payments.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-10">No payments yet.</p>
-            ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                {payments.map((p, i) => (
-                  <div key={p.id} className={`flex items-center gap-3 px-5 py-4 ${i < payments.length - 1 ? 'border-b border-border' : ''}`}>
-                    <div className="flex-1 min-w-0">
-                      <Link to={`/jobs/${p.job_id}`} className="text-sm font-semibold text-primary hover:underline">View Job →</Link>
-                      <p className="text-xs text-muted-foreground">{new Date(p.created_date).toLocaleDateString()}</p>
-                    </div>
-                    <div className="text-right mr-3 hidden sm:block">
-                      <p className="text-xs text-muted-foreground">Platform: <span className="font-semibold text-foreground">${p.platform_fee?.toFixed(2) || '0.00'}</span></p>
-                      <p className="text-xs text-muted-foreground">Provider: <span className="font-semibold text-foreground">${p.payout_amount?.toFixed(2) || '0.00'}</span></p>
-                    </div>
-                    <span className="text-sm font-bold text-foreground">${p.amount?.toFixed(2)}</span>
-                    <StatusBadge status={p.status} />
-                    <button
-                      onClick={async () => {
-                        let matchedJob = jobs.find(j => j.id === p.job_id) || null;
-                        if (!matchedJob && p.job_id) {
-                          try {
-                            const fetched = await base44.entities.Job.list();
-                            matchedJob = fetched.find(j => j.id === p.job_id) || null;
-                          } catch {}
-                        }
-                        setAdjustingPayment({ payment: p, job: matchedJob });
-                      }}
-                      className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors"
-                      title="Adjust final price"
-                    >
-                      <SlidersHorizontal size={11} /> Adjust
-                    </button>
-                    {p.status === 'captured' && (
-                      <button onClick={() => handleRefund(p)} className="px-2.5 py-1 text-xs font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">Refund</button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         )}
 
         {tab === 'support' && (

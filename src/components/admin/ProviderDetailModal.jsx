@@ -1,4 +1,6 @@
-import { X, Phone, MapPin, Car, Wrench, Shield, Star, Mail, Calendar, FileText, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Phone, MapPin, Car, Wrench, Shield, Star, Mail, Calendar, FileText, User, AlertCircle, CheckCircle, DollarSign, Banknote, CreditCard, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import StarRating from '@/components/shared/StarRating';
 import StatusBadge from '@/components/shared/StatusBadge';
 
@@ -8,6 +10,128 @@ function InfoRow({ label, value, highlight }) {
       <p className="text-xs text-muted-foreground font-medium">{label}</p>
       <p className={`text-sm font-medium ${highlight ? highlight : 'text-foreground'}`}>{value || '—'}</p>
     </div>
+  );
+}
+
+const fmt = (n) => `$${(n || 0).toFixed(2)}`;
+
+function ProviderEarningsSection({ providerId, providerEmail }) {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    base44.entities.Job.filter({ status: 'completed', provider_email: providerEmail })
+      .then(setJobs)
+      .finally(() => setLoading(false));
+  }, [providerEmail]);
+
+  const cardJobs = jobs.filter(j => !j.cash_paid && j.payment_method !== 'cash');
+  const cashJobs = jobs.filter(j => j.cash_paid || j.payment_method === 'cash');
+
+  const calcTotals = (list) => {
+    const total = list.reduce((s, j) => s + (j.final_price || j.quoted_price || 0), 0);
+    return { total, fee: total * 0.10, payout: total * 0.90 };
+  };
+
+  const cardT = calcTotals(cardJobs);
+  const cashT = calcTotals(cashJobs);
+  const allT = calcTotals(jobs);
+
+  if (loading) return <div className="text-xs text-muted-foreground py-2">Loading earnings…</div>;
+
+  return (
+    <section>
+      <h3 className="text-xs font-bold text-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
+        <DollarSign size={13} className="text-primary" /> Earnings Summary
+      </h3>
+
+      {/* Cash fee notice */}
+      <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3.5 mb-4">
+        <Info size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-800 leading-relaxed">
+          <strong>Note:</strong> Any cash payments made in person directly to the provider are still subject to the Grassgodz 10% platform fee. These fees will be deducted and tracked accordingly.
+        </p>
+      </div>
+
+      {jobs.length === 0 ? (
+        <p className="text-xs text-muted-foreground bg-muted/30 rounded-xl p-4 text-center">No completed jobs yet.</p>
+      ) : (
+        <>
+          {/* Summary cards */}
+          <div className="grid grid-cols-3 gap-2 mb-4 text-xs">
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <p className="text-muted-foreground mb-0.5">Job Total</p>
+              <p className="font-bold text-foreground">{fmt(allT.total)}</p>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+              <p className="text-red-600 mb-0.5">Fee (10%)</p>
+              <p className="font-bold text-red-700">-{fmt(allT.fee)}</p>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+              <p className="text-green-700 mb-0.5">Payout (90%)</p>
+              <p className="font-bold text-green-800">{fmt(allT.payout)}</p>
+            </div>
+          </div>
+
+          {/* Card vs Cash sub-totals */}
+          {cardJobs.length > 0 && cashJobs.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="font-semibold text-blue-800 mb-1.5 flex items-center gap-1"><CreditCard size={11} /> Card ({cardJobs.length})</p>
+                <div className="space-y-0.5 text-blue-700">
+                  <div className="flex justify-between"><span>Total</span><span>{fmt(cardT.total)}</span></div>
+                  <div className="flex justify-between"><span>Fee</span><span className="text-red-600">-{fmt(cardT.fee)}</span></div>
+                  <div className="flex justify-between font-bold border-t border-blue-200 pt-0.5"><span>Payout</span><span>{fmt(cardT.payout)}</span></div>
+                </div>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="font-semibold text-green-800 mb-1.5 flex items-center gap-1"><Banknote size={11} /> Cash ({cashJobs.length})</p>
+                <div className="space-y-0.5 text-green-700">
+                  <div className="flex justify-between"><span>Total</span><span>{fmt(cashT.total)}</span></div>
+                  <div className="flex justify-between"><span>Fee</span><span className="text-red-600">-{fmt(cashT.fee)}</span></div>
+                  <div className="flex justify-between font-bold border-t border-green-200 pt-0.5"><span>Payout</span><span>{fmt(cashT.payout)}</span></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Job rows */}
+          <div className="bg-muted/30 rounded-xl overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border text-muted-foreground">
+                  <th className="text-left px-3 py-2 font-medium">Service</th>
+                  <th className="text-left px-3 py-2 font-medium">Type</th>
+                  <th className="text-right px-3 py-2 font-medium">Total</th>
+                  <th className="text-right px-3 py-2 font-medium">Fee (10%)</th>
+                  <th className="text-right px-3 py-2 font-medium">Payout</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {jobs.map(j => {
+                  const price = j.final_price || j.quoted_price || 0;
+                  const isCash = j.cash_paid || j.payment_method === 'cash';
+                  return (
+                    <tr key={j.id} className="hover:bg-muted/40">
+                      <td className="px-3 py-2 font-medium text-foreground">{j.service_name || '—'}</td>
+                      <td className="px-3 py-2">
+                        {isCash
+                          ? <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold"><Banknote size={9} /> Cash</span>
+                          : <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold"><CreditCard size={9} /> Card</span>
+                        }
+                      </td>
+                      <td className="px-3 py-2 text-right text-foreground">{fmt(price)}</td>
+                      <td className="px-3 py-2 text-right text-red-600">-{fmt(price * 0.10)}</td>
+                      <td className="px-3 py-2 text-right font-bold text-primary">{fmt(price * 0.90)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -139,6 +263,9 @@ export default function ProviderDetailModal({ provider: p, onClose }) {
               </div>
             )}
           </section>
+
+          {/* Earnings Summary (admin-only) */}
+          <ProviderEarningsSection providerId={p.id} providerEmail={p.user_email} />
 
           {/* Admin Notes */}
           {p.admin_notes && (

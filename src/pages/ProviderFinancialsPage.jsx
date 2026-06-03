@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, DollarSign, Briefcase, TrendingUp, Clock, CheckCircle, AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, DollarSign, Briefcase, TrendingUp, Clock, CheckCircle, AlertCircle, ExternalLink, Loader2, Banknote, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -88,6 +88,14 @@ export default function ProviderFinancialsPage() {
 
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
 
+        {/* Cash fee notice */}
+        <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-800 leading-relaxed">
+            <strong>Important:</strong> Cash payments received in person are subject to the Grassgodz 10% platform fee. This will be reflected in your earnings summary.
+          </p>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <StatCard title="Total Earned" value={`$${totalEarnings.toFixed(2)}`} sub={`${completedJobs.length} completed jobs`} icon={DollarSign} />
@@ -163,36 +171,52 @@ export default function ProviderFinancialsPage() {
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
                       <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Service</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Type</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Date</th>
-                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">Job Price</th>
-                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">Your Cut</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">Job Total</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">Fee (10%)</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">Your Payout (90%)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {completedJobs.map(job => (
-                      <tr key={job.id} className="hover:bg-muted/20 transition-colors">
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-foreground">{job.service_name || '—'}</p>
-                          <p className="text-xs text-muted-foreground">{job.customer_name || '—'}</p>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
-                          {job.completed_at
-                            ? new Date(job.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                            : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-right font-medium text-foreground">
-                          {job.final_price != null ? `$${job.final_price.toFixed(2)}` : job.quoted_price != null ? `$${job.quoted_price.toFixed(2)}` : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-right font-bold text-primary">
-                          {job.provider_payout != null ? `$${job.provider_payout.toFixed(2)}` : '—'}
-                        </td>
-                      </tr>
-                    ))}
+                    {completedJobs.map(job => {
+                      const price = job.final_price || job.quoted_price || 0;
+                      const fee = parseFloat((price * 0.10).toFixed(2));
+                      const payout = parseFloat((price * 0.90).toFixed(2));
+                      const isCash = job.cash_paid || job.payment_method === 'cash';
+                      return (
+                        <tr key={job.id} className="hover:bg-muted/20 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-foreground">{job.service_name || '—'}</p>
+                            <p className="text-xs text-muted-foreground">{job.customer_name || '—'}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            {isCash
+                              ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold"><Banknote size={9} /> Cash</span>
+                              : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold"><CreditCard size={9} /> Card</span>
+                            }
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
+                            {job.completed_at
+                              ? new Date(job.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-foreground">${price.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-right text-red-600 text-xs">-${fee.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-primary">${payout.toFixed(2)}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-border bg-muted/30">
-                      <td colSpan={3} className="px-4 py-3 text-sm font-semibold text-foreground">Total</td>
-                      <td className="px-4 py-3 text-right text-base font-bold text-primary">${totalEarnings.toFixed(2)}</td>
+                      <td colSpan={4} className="px-4 py-3 text-sm font-semibold text-foreground">Total</td>
+                      <td className="px-4 py-3 text-right text-sm font-bold text-red-600">
+                        -${completedJobs.reduce((s, j) => s + (j.final_price || j.quoted_price || 0) * 0.10, 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-base font-bold text-primary">
+                        ${completedJobs.reduce((s, j) => s + (j.final_price || j.quoted_price || 0) * 0.90, 0).toFixed(2)}
+                      </td>
                     </tr>
                   </tfoot>
                 </table>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DollarSign, TrendingUp, Briefcase, ChevronDown, ChevronRight, CheckCircle, Clock, List, Users, Pencil, Camera, Banknote } from 'lucide-react';
+import { DollarSign, TrendingUp, Briefcase, ChevronDown, ChevronRight, CheckCircle, Clock, List, Users, Pencil, Camera, Banknote, CreditCard } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import AdminPayoutEditModal from './AdminPayoutEditModal';
@@ -38,6 +38,20 @@ export default function AdminPayoutsPanel({ providers }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const toggleCash = async (job) => {
+    const isCash = job.cash_paid || job.payment_method === 'cash';
+    const update = isCash
+      ? { cash_paid: false, payment_method: 'stripe' }
+      : { cash_paid: true, payment_method: 'cash', cash_paid_date: new Date().toISOString() };
+    try {
+      await base44.entities.Job.update(job.id, update);
+      setJobs(prev => prev.map(j => j.id === job.id ? { ...j, ...update } : j));
+      toast.success(isCash ? 'Marked as card payment.' : 'Marked as cash payment.');
+    } catch {
+      toast.error('Failed to update payment type.');
+    }
+  };
 
   // Build payment lookup by job_id
   const paymentByJob = {};
@@ -172,16 +186,16 @@ export default function AdminPayoutsPanel({ providers }) {
               <span className="col-span-2">Customer</span>
               <span className="col-span-2">Service</span>
               <span className="col-span-1 text-right">Job Price</span>
-              <span className="col-span-1 text-right">Platform</span>
+              <span className="col-span-1 text-right">Fee (10%)</span>
               <span className="col-span-1 text-right">Payout</span>
-              <span className="col-span-1 text-right">Edit</span>
+              <span className="col-span-1 text-center">Type / Edit</span>
             </div>
             <div className="divide-y divide-border">
               {filteredJobs.map(j => {
                 const price = j.final_price || j.quoted_price || 0;
-                const fee = j.platform_fee || 0;
-                const payout = j.provider_payout || 0;
-                const hasPhotos = j.completion_photos && Object.values(j.completion_photos).some(Boolean);
+                const fee = parseFloat((price * 0.10).toFixed(2));
+                const payout = parseFloat((price * 0.90).toFixed(2));
+                const isCash = j.cash_paid || j.payment_method === 'cash';
                 return (
                   <div key={j.id} className="grid grid-cols-2 sm:grid-cols-12 gap-2 px-4 py-3 hover:bg-muted/20 text-xs items-center">
                     <span className="col-span-1 sm:col-span-2 text-muted-foreground">
@@ -189,15 +203,23 @@ export default function AdminPayoutsPanel({ providers }) {
                     </span>
                     <span className="col-span-1 sm:col-span-2 font-medium text-foreground truncate">{j.provider_name || '—'}</span>
                     <span className="col-span-1 sm:col-span-2 text-muted-foreground truncate">{j.customer_name || '—'}</span>
-                    <span className="col-span-1 sm:col-span-2 text-muted-foreground truncate flex items-center gap-1">
-                      {j.service_name || '—'}
-                      {j.cash_paid && <Banknote size={10} className="text-green-600 flex-shrink-0" title="Cash paid" />}
-                      {hasPhotos && <Camera size={10} className="text-primary flex-shrink-0" title="Has photos" />}
-                    </span>
+                    <span className="col-span-1 sm:col-span-2 text-muted-foreground truncate">{j.service_name || '—'}</span>
                     <span className="col-span-1 sm:col-span-1 text-right font-medium text-foreground">{fmt(price)}</span>
                     <span className="col-span-1 sm:col-span-1 text-right text-red-600">-{fmt(fee)}</span>
                     <span className="col-span-1 sm:col-span-1 text-right font-bold text-primary">{fmt(payout)}</span>
-                    <span className="col-span-1 sm:col-span-1 text-right">
+                    <span className="col-span-1 sm:col-span-1 flex items-center justify-end gap-1.5 flex-wrap">
+                      {/* Cash toggle */}
+                      <button
+                        onClick={() => toggleCash(j)}
+                        title={isCash ? 'Mark as card payment' : 'Mark as cash payment'}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full font-semibold text-[10px] border transition-colors ${
+                          isCash
+                            ? 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200'
+                            : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                        }`}
+                      >
+                        {isCash ? <><Banknote size={9} /> Cash</> : <><CreditCard size={9} /> Card</>}
+                      </button>
                       <button
                         onClick={() => setEditingJob(j)}
                         className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-muted/70 rounded-lg text-muted-foreground hover:text-foreground transition-colors"

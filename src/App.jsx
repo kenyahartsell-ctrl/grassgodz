@@ -9,6 +9,13 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { Toaster as Sonner } from 'sonner';
 
+import { Navigate } from 'react-router-dom';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+
 import JobDetailPage from '@/pages/JobDetailPage';
 import ProSchedulePage from '@/pages/ProSchedulePage';
 import MyQuotesPage from '@/pages/MyQuotesPage';
@@ -58,7 +65,7 @@ function AdminApp() {
 }
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -68,39 +75,15 @@ const AuthenticatedApp = () => {
     );
   }
 
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Allow public routes to render without redirecting to login
-      const publicPaths = ['/', '/pros', '/how-it-works', '/pricing', '/book', '/signup', '/signup/customer', '/signup/provider', '/become-provider', '/not-available', '/privacy', '/provider-links'];
-      const currentPath = window.location.pathname;
-      const isPublicPath = publicPaths.includes(currentPath) || currentPath.startsWith('/jobs/');
-      if (!isPublicPath) {
-        navigateToLogin();
-        return null;
-      }
-    }
-  }
-
   return (
     <Routes>
-      {/* Post-login smart redirect — determines portal based on role/profile */}
-      <Route path="/redirect" element={<SmartRedirect />} />
+      {/* Auth routes — public */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Role-specific portals */}
-      <Route path="/customer/*" element={<CustomerApp />} />
-      <Route path="/provider/pending" element={<ProviderPendingPage />} />
-      <Route path="/provider/suspended" element={<ProviderSuspendedPage />} />
-      <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
-      <Route path="/provider/financials" element={<ProviderFinancialsPage />} />
-      <Route path="/pros/schedule" element={<ProSchedulePage />} />
-      <Route path="/quotes" element={<MyQuotesPage />} />
-      <Route path="/provider" element={<ProviderApp />} />
-      <Route path="/provider/*" element={<ProviderApp />} />
-      <Route path="/admin/*" element={<AdminApp />} />
-
-      {/* Public routes */}
+      {/* Public / marketing routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/pros" element={<ProsLandingPage />} />
       <Route path="/become-provider" element={<BecomeProviderPage />} />
@@ -116,7 +99,6 @@ const AuthenticatedApp = () => {
       <Route path="/provider-links" element={<ProviderLinksPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
-
       {/* City SEO landing pages */}
       <Route path="/lawn-care/washington-dc" element={<WashingtonDCPage />} />
       <Route path="/lawn-care/arlington-va" element={<ArlingtonVAPage />} />
@@ -128,6 +110,21 @@ const AuthenticatedApp = () => {
       <Route path="/sitemap.xml" element={<SitemapPage />} />
       <Route path="/robots.txt" element={<RobotsPage />} />
       <Route path="/llms.txt" element={<LlmsPage />} />
+
+      {/* Protected app routes — redirect to /login if unauthenticated */}
+      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/redirect" element={<SmartRedirect />} />
+        <Route path="/customer/*" element={<CustomerApp />} />
+        <Route path="/provider/pending" element={<ProviderPendingPage />} />
+        <Route path="/provider/suspended" element={<ProviderSuspendedPage />} />
+        <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
+        <Route path="/provider/financials" element={<ProviderFinancialsPage />} />
+        <Route path="/pros/schedule" element={<ProSchedulePage />} />
+        <Route path="/quotes" element={<MyQuotesPage />} />
+        <Route path="/provider" element={<ProviderApp />} />
+        <Route path="/provider/*" element={<ProviderApp />} />
+        <Route path="/admin/*" element={<AdminApp />} />
+      </Route>
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

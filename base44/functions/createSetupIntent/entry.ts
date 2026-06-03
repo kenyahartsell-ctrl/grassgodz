@@ -10,7 +10,8 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
     // Find the customer profile for this user
-    const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+    // Use service role to bypass RLS — profiles may be created by admins or service accounts
+    const profiles = await base44.asServiceRole.entities.CustomerProfile.filter({ user_email: user.email });
     const profile = profiles[0];
     if (!profile) return Response.json({ error: 'Customer profile not found' }, { status: 404 });
 
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
         metadata: { grassgodz_customer_id: profile.id },
       });
       stripeCustomerId = customer.id;
-      await base44.entities.CustomerProfile.update(profile.id, { stripe_customer_id: stripeCustomerId });
+      await base44.asServiceRole.entities.CustomerProfile.update(profile.id, { stripe_customer_id: stripeCustomerId });
     }
 
     const setupIntent = await stripe.setupIntents.create({

@@ -77,8 +77,11 @@ Deno.serve(async (req) => {
       status: captureMethod === 'automatic' ? 'captured' : 'authorized',
     });
 
-    // Update job status
-    await base44.asServiceRole.entities.Job.update(job.id, { status: 'accepted' });
+    // Update job status and stamp accepted_at for the arrival window timer
+    await base44.asServiceRole.entities.Job.update(job.id, {
+      status: 'accepted',
+      accepted_at: new Date().toISOString(),
+    });
 
     return Response.json({ success: true, payment_intent_id: paymentIntent.id });
   } catch (error) {

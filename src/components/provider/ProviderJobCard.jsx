@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign, CloudRain, MessageCircle } from 'lucide-react';
+import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign, CloudRain, MessageCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
 import WeatherRescheduleModal from '../shared/WeatherRescheduleModal';
 import ChatDrawer from '../shared/ChatDrawer';
+import JobAcceptanceTimer from './JobAcceptanceTimer';
+import ProviderCancelJobModal from './ProviderCancelJobModal';
 import { base44 } from '@/api/base44Client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -54,11 +56,12 @@ function JobMiniMap({ address }) {
 
 const CHAT_ENABLED_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed'];
 
-export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete, onRescheduled }) {
+export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete, onRescheduled, onJobCancelled }) {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [chatUser, setChatUser] = useState(null);
   const chatAvailable = CHAT_ENABLED_STATUSES.includes(job.status);
 
@@ -118,6 +121,13 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
               )}
             </div>
           </div>
+
+          {/* Acceptance timer for accepted/scheduled jobs */}
+          {['accepted', 'scheduled'].includes(job.status) && (
+            <div className="mb-3">
+              <JobAcceptanceTimer job={job} />
+            </div>
+          )}
 
           {/* Show mini map for active jobs */}
           {['scheduled', 'in_progress', 'accepted'].includes(job.status) && job.address && (
@@ -234,6 +244,15 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
                 Mark In Progress
               </button>
             )}
+            {['accepted', 'scheduled'].includes(job.status) && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowCancelModal(true); }}
+                className="flex items-center justify-center gap-1.5 border border-red-300 bg-red-50 text-red-700 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-red-100 transition-colors"
+              >
+                <XCircle size={13} />
+                Can't Make It
+              </button>
+            )}
             {(['in_progress', 'accepted', 'scheduled'].includes(job.status) && onMarkComplete) || job.status === 'completed' ? (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPhotoModal(true); }}
@@ -261,6 +280,13 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
           job={job}
           onClose={() => setShowWeatherModal(false)}
           onRescheduled={onRescheduled}
+        />
+      )}
+      {showCancelModal && (
+        <ProviderCancelJobModal
+          job={job}
+          onClose={() => setShowCancelModal(false)}
+          onCancelled={onJobCancelled}
         />
       )}
       {showChat && chatUser && (

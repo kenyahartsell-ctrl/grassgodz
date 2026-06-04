@@ -58,6 +58,10 @@
       "type": "string",
       "format": "date"
     },
+    "scheduled_time": {
+      "type": "string",
+      "description": "HH:MM scheduled start time for the job (24h format)"
+    },
     "recurrence": {
       "type": "string",
       "enum": [
@@ -311,6 +315,26 @@
     "provider_payout_notes": {
       "type": "string",
       "description": "Admin notes about the provider payout"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the provider accepted/claimed the job. Used to enforce the 2-hour arrival window."
+    },
+    "acceptance_timer_flagged": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the 2-hour acceptance window expired with no provider action (no cancellation, no in-progress). Flags job for admin review."
+    },
+    "acceptance_timer_flagged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the acceptance timer flag was set."
+    },
+    "provider_cancellation_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this job has been cancelled by a provider after acceptance. Tracked for accountability."
     }
   },
   "required": [

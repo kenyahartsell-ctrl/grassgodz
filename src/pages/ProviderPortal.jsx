@@ -140,6 +140,7 @@ export default function ProviderPortal() {
       provider_email: user.email,
       status: 'scheduled',
       quoted_price: booking.base_price,
+      accepted_at: new Date().toISOString(),
     });
     await refreshJobs();
     toast.success(`Booking accepted! ${booking.service_name} for ${booking.customer_name} is now scheduled.`);
@@ -157,6 +158,7 @@ export default function ProviderPortal() {
       provider_name: providerProfile.business_name || providerProfile.name,
       provider_email: user.email,
       status: 'scheduled',
+      accepted_at: new Date().toISOString(),
     });
     await refreshJobs();
     toast.success(`Cash job accepted! ${job.service_name} for ${job.customer_name} is now scheduled.`);
@@ -366,7 +368,7 @@ export default function ProviderPortal() {
                 <h3 className="text-sm font-bold text-foreground mb-3">In Progress</h3>
                 <div className="space-y-3">
                   {inProgress.map(j => (
-                    <ProviderJobCard key={j.id} job={j} onMarkComplete={handleMarkComplete} />
+                    <ProviderJobCard key={j.id} job={j} onMarkComplete={handleMarkComplete} onJobCancelled={refreshJobs} />
                   ))}
                 </div>
               </div>
@@ -467,7 +469,7 @@ export default function ProviderPortal() {
                           Awaiting customer payment before job can begin.
                         </div>
                       )}
-                      <ProviderJobCard job={j} onMarkInProgress={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkInProgress} onMarkComplete={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkComplete} />
+                      <ProviderJobCard job={j} onMarkInProgress={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkInProgress} onMarkComplete={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkComplete} onJobCancelled={refreshJobs} />
                     </div>
                   ))}
                 </div>
@@ -477,7 +479,7 @@ export default function ProviderPortal() {
               <div>
                 <h3 className="text-sm font-semibold text-muted-foreground mb-3">Completed</h3>
                 <div className="space-y-3">
-                  {completed.map(j => <ProviderJobCard key={j.id} job={j} />)}
+                  {completed.map(j => <ProviderJobCard key={j.id} job={j} onJobCancelled={refreshJobs} />)}
                 </div>
               </div>
             )}

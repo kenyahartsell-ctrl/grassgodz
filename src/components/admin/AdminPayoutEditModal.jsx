@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, DollarSign, Camera, Upload, Check, Banknote } from 'lucide-react';
+import { X, DollarSign, Camera, Upload, Check, Banknote, CreditCard, ArrowRightLeft, CircleDollarSign } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
@@ -23,6 +23,13 @@ export default function AdminPayoutEditModal({ job, onClose, onSaved }) {
   const [uploading, setUploading] = useState({});
   const [saving, setSaving] = useState(false);
 
+  // Provider payout fields
+  const [providerPaidOut, setProviderPaidOut] = useState(job.provider_paid_out || false);
+  const [payoutMethod, setPayoutMethod] = useState(job.provider_payout_method || '');
+  const [payoutNotes, setPayoutNotes] = useState(job.provider_payout_notes || '');
+  const [payoutPhotos, setPayoutPhotos] = useState(job.provider_payout_photos || []);
+  const [uploadingPayout, setUploadingPayout] = useState(false);
+
   const handlePhotoUpload = async (slot, file) => {
     if (!file) return;
     setUploading(u => ({ ...u, [slot]: true }));
@@ -37,6 +44,20 @@ export default function AdminPayoutEditModal({ job, onClose, onSaved }) {
     }
   };
 
+  const handlePayoutPhotoUpload = async (file) => {
+    if (!file) return;
+    setUploadingPayout(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setPayoutPhotos(prev => [...prev, { url: file_url, uploaded_at: new Date().toISOString() }]);
+      toast.success('Payout photo uploaded');
+    } catch {
+      toast.error('Photo upload failed');
+    } finally {
+      setUploadingPayout(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -46,9 +67,19 @@ export default function AdminPayoutEditModal({ job, onClose, onSaved }) {
         platform_fee: parseFloat(platformFee) || 0,
         cash_paid: cashPaid,
         completion_photos: photos,
+        provider_paid_out: providerPaidOut,
+        provider_payout_method: payoutMethod || null,
+        provider_payout_notes: payoutNotes || null,
+        provider_payout_photos: payoutPhotos,
       };
       if (cashPaid && !job.cash_paid_date) {
         updates.cash_paid_date = new Date().toISOString();
+      }
+      if (providerPaidOut && !job.provider_payout_date) {
+        updates.provider_payout_date = new Date().toISOString();
+      }
+      if (!providerPaidOut) {
+        updates.provider_payout_date = null;
       }
       await base44.entities.Job.update(job.id, updates);
       toast.success('Payout record updated');
@@ -138,6 +169,111 @@ export default function AdminPayoutEditModal({ job, onClose, onSaved }) {
                 <p className="text-xs opacity-75">Provider collected cash payment directly from customer</p>
               </div>
             </button>
+          </div>
+
+          {/* Provider Payout Status */}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <CircleDollarSign size={14} className="text-primary" /> Provider Payout
+            </h3>
+
+            {/* Paid Out Toggle */}
+            <button
+              onClick={() => setProviderPaidOut(v => !v)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all w-full text-left mb-3 ${
+                providerPaidOut
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-border bg-card text-muted-foreground'
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${providerPaidOut ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
+                {providerPaidOut && <Check size={12} className="text-white" />}
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Mark Provider as Paid Out</p>
+                <p className="text-xs opacity-75">
+                  {job.provider_payout_date
+                    ? `Paid on ${new Date(job.provider_payout_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                    : 'Provider has received their payout'}
+                </p>
+              </div>
+            </button>
+
+            {/* Payout Method */}
+            {providerPaidOut && (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-2">Payment Method Used</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { value: 'cash', label: '💵 Cash', icon: Banknote },
+                      { value: 'card', label: '💳 Card', icon: CreditCard },
+                      { value: 'bank_transfer', label: '🏦 Bank Transfer', icon: ArrowRightLeft },
+                      { value: 'other', label: '📋 Other', icon: null },
+                    ].map(m => (
+                      <button
+                        key={m.value}
+                        onClick={() => setPayoutMethod(m.value)}
+                        className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${
+                          payoutMethod === m.value
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-card border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Payout Notes */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Payout Notes (optional)</label>
+                  <textarea
+                    value={payoutNotes}
+                    onChange={e => setPayoutNotes(e.target.value)}
+                    placeholder="e.g. Paid via Zelle, cash envelope, etc."
+                    rows={2}
+                    className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  />
+                </div>
+
+                {/* Payout Photos */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-2">Payout Proof Photos</label>
+                  <div className="flex flex-wrap gap-2">
+                    {payoutPhotos.map((p, i) => (
+                      <div key={i} className="relative group">
+                        <img src={p.url} alt="payout proof" className="w-20 h-20 object-cover rounded-lg border border-border" />
+                        <button
+                          onClick={() => setPayoutPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                          className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ))}
+                    <label className={`flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${uploadingPayout ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'}`}>
+                      {uploadingPayout ? (
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Upload size={14} className="text-muted-foreground mb-1" />
+                          <span className="text-[10px] text-muted-foreground text-center">Add Photo</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => handlePayoutPhotoUpload(e.target.files[0])}
+                        disabled={uploadingPayout}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Completion Photos */}

@@ -271,6 +271,46 @@
         "payment_pending"
       ],
       "description": "Admin-controlled payment status override for completed jobs. Does not affect Stripe fields."
+    },
+    "provider_paid_out": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the provider has been paid out by admin"
+    },
+    "provider_payout_method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "card",
+        "bank_transfer",
+        "other"
+      ],
+      "description": "Method used to pay out the provider"
+    },
+    "provider_payout_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when provider was paid out"
+    },
+    "provider_payout_photos": {
+      "type": "array",
+      "description": "Photos as proof of provider payout (e.g. cash handoff, Zelle screenshot).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "provider_payout_notes": {
+      "type": "string",
+      "description": "Admin notes about the provider payout"
     }
   },
   "required": [

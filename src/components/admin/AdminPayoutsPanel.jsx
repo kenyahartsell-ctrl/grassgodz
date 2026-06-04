@@ -215,6 +215,12 @@ export default function AdminPayoutsPanel({ providers }) {
                     <span className="col-span-1 sm:col-span-1 text-right text-red-600">-{fmt(fee)}</span>
                     <span className="col-span-1 sm:col-span-1 text-right font-bold text-primary">{fmt(payout)}</span>
                     <span className="col-span-1 sm:col-span-1 flex items-center justify-end gap-1.5 flex-wrap">
+                      {/* Provider paid out badge */}
+                      {j.provider_paid_out && (
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full font-semibold text-[10px] border bg-emerald-100 text-emerald-700 border-emerald-300`}>
+                          ✓ {j.provider_payout_method || 'Paid'}
+                        </span>
+                      )}
                       {/* Cash toggle */}
                       <button
                         onClick={() => toggleCash(j)}
@@ -338,12 +344,19 @@ export default function AdminPayoutsPanel({ providers }) {
                                     <td className="py-2 pr-3 text-right text-red-600">-{fmt(fee)}</td>
                                     <td className="py-2 pr-3 text-right font-bold text-primary">{fmt(payout)}</td>
                                     <td className="py-2 text-right">
-                                      <button
-                                        onClick={() => setEditingJob(j)}
-                                        className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-muted/70 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-                                      >
-                                        <Pencil size={10} /> Edit
-                                      </button>
+                                      <div className="flex items-center justify-end gap-1 flex-wrap">
+                                        {j.provider_paid_out && (
+                                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">
+                                            ✓ {j.provider_payout_method || 'Paid'}
+                                          </span>
+                                        )}
+                                        <button
+                                          onClick={() => setEditingJob(j)}
+                                          className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-muted/70 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                          <Pencil size={10} /> Edit
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 );

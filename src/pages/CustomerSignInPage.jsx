@@ -4,6 +4,7 @@ import { Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import GoogleIcon from '@/components/GoogleIcon';
 
 const LOGO_URL = 'https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png';
 
@@ -166,6 +167,20 @@ export default function CustomerSignInPage() {
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+            {/* Google Sign In */}
+            <button
+              type="button"
+              onClick={() => base44.auth.loginWithProvider('google', '/redirect')}
+              className="w-full flex items-center justify-center gap-2 border border-border rounded-xl py-3 text-sm font-medium hover:bg-muted transition-colors mb-4"
+            >
+              <GoogleIcon className="w-5 h-5" />
+              Continue with Google
+            </button>
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-3 text-muted-foreground">or</span></div>
+            </div>
+
             <form onSubmit={handleLogin} className="space-y-4" noValidate>
               <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Email Address</label>
@@ -180,7 +195,10 @@ export default function CustomerSignInPage() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">Password</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-muted-foreground">Password</label>
+                  <Link to="/forgot-password" className="text-xs text-primary font-semibold hover:underline">Forgot password?</Link>
+                </div>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}

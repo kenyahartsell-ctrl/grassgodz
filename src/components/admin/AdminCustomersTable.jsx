@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Eye, Mail, Trash2, Pencil } from 'lucide-react';
+import { ChevronDown, Eye, Mail, Trash2, Pencil, X, Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CustomerDetailModal from './CustomerDetailModal';
@@ -7,10 +7,82 @@ import AdminEditCustomerModal from './AdminEditCustomerModal';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
+function EmailComposeModal({ customer, onClose }) {
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    if (!subject.trim() || !body.trim()) { toast.error('Please fill in subject and message.'); return; }
+    setSending(true);
+    try {
+      const res = await base44.functions.invoke('adminSendEmail', {
+        to: customer.user_email,
+        subject: subject.trim(),
+        body: body.trim(),
+      });
+      if (res.data?.success) {
+        toast.success(`Email sent to ${customer.user_email}`);
+        onClose();
+      } else {
+        toast.error(res.data?.error || 'Failed to send email');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Email Customer</h3>
+            <p className="text-xs text-muted-foreground">{customer.user_email}</p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-4 space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1">Subject</label>
+            <input
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+              placeholder="Email subject..."
+              className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1">Message</label>
+            <textarea
+              value={body}
+              onChange={e => setBody(e.target.value)}
+              placeholder="Write your message..."
+              rows={6}
+              className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose} className="flex-1">Cancel</Button>
+            <Button size="sm" onClick={handleSend} disabled={sending} className="flex-1 gap-1">
+              {sending ? <><Loader2 size={13} className="animate-spin" /> Sending...</> : <><Send size={13} /> Send Email</>}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminCustomersTable({ customers, jobs, quotes, onCustomerDeleted }) {
   const [expandedId, setExpandedId] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [emailingCustomer, setEmailingCustomer] = useState(null);
   const [customerList, setCustomerList] = useState(customers);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -38,6 +110,9 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
           quotes={quotes}
           onClose={() => setSelectedCustomer(null)}
         />
+      )}
+      {emailingCustomer && (
+        <EmailComposeModal customer={emailingCustomer} onClose={() => setEmailingCustomer(null)} />
       )}
       {editingCustomer && (
         <AdminEditCustomerModal
@@ -131,11 +206,9 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
                     <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEditingCustomer(c)}>
                       <Pencil size={12} /> Edit
                     </Button>
-                    <a href={`mailto:${c.user_email}`}>
-                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
-                        <Mail size={12} /> Email
-                      </Button>
-                    </a>
+                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEmailingCustomer(c)}>
+                      <Mail size={12} /> Email
+                    </Button>
                     <Button 
                       size="sm" 
                       variant="outline" 

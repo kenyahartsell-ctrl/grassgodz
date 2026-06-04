@@ -88,11 +88,21 @@ export default function ProviderFinancialsPage() {
 
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
 
+        {/* Independent Contractor Tax Notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-1">
+          <p className="text-sm font-semibold text-blue-900">Independent Contractor — Tax Reminder</p>
+          <p className="text-sm text-blue-800 leading-relaxed">
+            You operate as an independent contractor. Grassgodz does <strong>not</strong> withhold taxes from your payouts.
+            You are responsible for reporting and paying your own taxes, including self-employment tax.
+            Stripe automatically handles 1099-K reporting per IRS thresholds.
+          </p>
+        </div>
+
         {/* Cash fee notice */}
         <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-4">
           <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-amber-800 leading-relaxed">
-            <strong>Important:</strong> Cash payments received in person are subject to the Grassgodz 10% platform fee. This will be reflected in your earnings summary.
+            <strong>Platform Fee:</strong> Grassgodz retains 10% of each job total as a platform fee. You receive 90% of all completed jobs, for both card and cash payments.
           </p>
         </div>
 
@@ -101,7 +111,7 @@ export default function ProviderFinancialsPage() {
           <StatCard title="Total Earned" value={`$${totalEarnings.toFixed(2)}`} sub={`${completedJobs.length} completed jobs`} icon={DollarSign} />
           <StatCard title="Paid Out" value={`$${paidOut.toFixed(2)}`} sub="via Stripe Connect" icon={CheckCircle} color="text-green-600" bg="bg-green-100" />
           <StatCard title="Pending Payout" value={`$${Math.max(0, pending).toFixed(2)}`} sub="Awaiting capture" icon={Clock} color="text-amber-600" bg="bg-amber-100" />
-          <StatCard title="Avg per Job" value={completedJobs.length ? `$${(totalEarnings / completedJobs.length).toFixed(2)}` : '—'} sub="Provider share (75%)" icon={TrendingUp} color="text-blue-600" bg="bg-blue-100" />
+          <StatCard title="Avg per Job" value={completedJobs.length ? `$${(totalEarnings / completedJobs.length).toFixed(2)}` : '—'} sub="Provider share (90%)" icon={TrendingUp} color="text-blue-600" bg="bg-blue-100" />
         </div>
 
         {/* Stripe Connect Status */}

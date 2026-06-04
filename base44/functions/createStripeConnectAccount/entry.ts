@@ -23,24 +23,33 @@ Deno.serve(async (req) => {
     let accountId = profile.stripe_connect_account_id;
 
     if (!accountId) {
-      const account = await stripe.accounts.create({
+      const hasBusinessName = !!profile.business_name;
+      const accountPayload = {
         type: 'express',
         email: user.email,
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
         },
-        business_type: 'individual',
-        individual: {
-          email: user.email,
-          first_name: profile.name?.split(' ')[0] || '',
-          last_name: profile.name?.split(' ').slice(1).join(' ') || '',
-        },
         metadata: {
           grassgodz_provider_id: profile.id,
           grassgodz_user_email: user.email,
         },
-      });
+      };
+
+      if (hasBusinessName) {
+        accountPayload.business_type = 'company';
+        accountPayload.company = { name: profile.business_name };
+      } else {
+        accountPayload.business_type = 'individual';
+        accountPayload.individual = {
+          email: user.email,
+          first_name: profile.name?.split(' ')[0] || '',
+          last_name: profile.name?.split(' ').slice(1).join(' ') || '',
+        };
+      }
+
+      const account = await stripe.accounts.create(accountPayload);
       accountId = account.id;
       await base44.entities.ProviderProfile.update(profile.id, {
         stripe_connect_account_id: accountId,

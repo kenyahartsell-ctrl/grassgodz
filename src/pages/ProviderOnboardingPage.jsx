@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, AlertCircle, Globe } from "lucide-react";
+import { Loader2, AlertCircle, Globe, FileText, ShieldCheck } from "lucide-react";
 
 export default function ProviderOnboardingPage() {
   const [loading, setLoading] = useState(true);
@@ -33,19 +33,54 @@ export default function ProviderOnboardingPage() {
       <div className="max-w-md w-full text-center space-y-4">
         <h1 className="text-2xl font-bold text-foreground">Set Up Your Payout Account</h1>
 
-        {/* Stripe Setup Instructions */}
+        {/* Independent Contractor Notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-left space-y-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <h2 className="text-sm font-bold text-blue-900">Independent Contractor Status</h2>
+          </div>
+          <p className="text-sm text-blue-800 leading-relaxed">
+            You operate as an <strong>independent contractor</strong> on Grassgodz, not an employee.
+            You are responsible for your own taxes, including self-employment tax.
+            Grassgodz does <strong>not</strong> withhold taxes from your payouts.
+            1099-K reporting is handled automatically by Stripe per IRS thresholds.
+          </p>
+        </div>
+
+        {/* Tax ID Instructions */}
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-left space-y-3">
           <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <h2 className="text-sm font-bold text-amber-900">Setting Up Your Stripe Account</h2>
+            <FileText className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <h2 className="text-sm font-bold text-amber-900">Tax ID Required</h2>
           </div>
           <p className="text-sm text-amber-800 leading-relaxed">
-            When signing up for Stripe, you will be asked to provide a <strong>website</strong>. Enter{' '}
-            <span className="font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">grassgodz.com</span>{' '}
-            as your website URL.
+            Stripe will ask for your <strong>Tax ID</strong> during setup. Please use the following:
           </p>
-          <p className="text-sm text-amber-800 leading-relaxed">
-            This is the platform you are operating under and is the correct answer for that field.
+          <ul className="text-sm text-amber-800 space-y-1 list-none">
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-amber-900 mt-0.5">•</span>
+              <span><strong>Have an LLC or registered business?</strong> Enter your <strong>EIN (Employer Identification Number)</strong>.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-amber-900 mt-0.5">•</span>
+              <span><strong>Operating as an individual with no business entity?</strong> Your <strong>SSN (Social Security Number)</strong> is acceptable.</span>
+            </li>
+          </ul>
+          <p className="text-xs text-amber-700 border-t border-amber-200 pt-2">
+            Onboarding cannot be completed without a valid Tax ID. This is required by Stripe and the IRS.
+          </p>
+        </div>
+
+        {/* Website Instructions */}
+        <div className="bg-muted border border-border rounded-xl p-4 text-left space-y-1">
+          <div className="flex items-center gap-2">
+            <Globe className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <h2 className="text-sm font-bold text-foreground">Website Field</h2>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            When Stripe asks for a website, enter{' '}
+            <span className="font-bold text-foreground bg-muted px-1.5 py-0.5 rounded border border-border">grassgodz.com</span>{' '}
+            — this is the platform you operate under.
           </p>
         </div>
 

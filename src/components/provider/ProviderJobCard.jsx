@@ -209,11 +209,11 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
             </div>
           )}
 
-          {job.status === 'completed' && job.completion_photos && Object.keys(job.completion_photos).length > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-green-600 mb-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <Image size={12} />
-              <span>Completion photos submitted</span>
-            </div>
+          {job.status === 'completed' && (
+          <div className="flex items-center gap-1.5 text-xs text-green-600 mb-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+            <Image size={12} />
+            <span>Photos submitted — visible to customer</span>
+          </div>
           )}
 
           <div className="flex gap-2 flex-wrap" onClick={e => e.preventDefault()}>
@@ -253,13 +253,13 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
                 Can't Make It
               </button>
             )}
-            {(['in_progress', 'accepted', 'scheduled'].includes(job.status) && onMarkComplete) || job.status === 'completed' ? (
+            {['in_progress', 'accepted', 'scheduled'].includes(job.status) && onMarkComplete ? (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPhotoModal(true); }}
                 className="flex items-center justify-center gap-1.5 border border-primary bg-primary/10 text-primary rounded-lg px-3 py-2 text-xs font-semibold hover:bg-primary/20 transition-colors"
               >
                 <Image size={13} />
-                {job.status === 'completed' ? 'Add Photos' : 'Photos & Complete'}
+                Photos & Complete
               </button>
             ) : null}
           </div>

@@ -131,9 +131,10 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
             </div>
           )}
 
-          {/* Completion photos */}
-          {job.status === 'completed' && job.completion_photos && (
+          {/* Finished yard photos — visible to customer once job is completed */}
+          {job.status === 'completed' && job.completion_photos && Object.keys(job.completion_photos).length > 0 && (
             <div className="mt-3">
+              <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-2">Finished Yard Photos</p>
               <JobCompletionPhotos photos={job.completion_photos} />
             </div>
           )}

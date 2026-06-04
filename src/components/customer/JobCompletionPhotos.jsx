@@ -30,7 +30,7 @@ export default function JobCompletionPhotos({ photos, onViewPhotos }) {
   return (
     <>
       <div className="mt-4 pt-4 border-t border-border">
-        <h4 className="text-xs font-bold text-foreground uppercase tracking-wide mb-3">Completion Photos</h4>
+        
         
         {Object.entries(photosByArea).map(([area, slots]) => {
           const hasPhotos = slots.some(s => photos[s.key]);

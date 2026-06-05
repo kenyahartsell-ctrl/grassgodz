@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { format, isBefore, startOfDay, parseISO } from 'date-fns';
+import { format, isBefore, isToday, isFuture, startOfDay, parseISO, differenceInCalendarDays } from 'date-fns';
 import {
   CheckCircle2, AlertCircle, Clock, RefreshCw, ChevronLeft, ChevronRight,
   Plus, DollarSign, CloudRain, CheckCircle, Trash2, Camera, MessageSquare, ImagePlus,
-  Banknote, CreditCard,
+  Banknote, CreditCard, CalendarDays, Sun,
 } from 'lucide-react';
+import BiweeklyPrompt from '@/components/admin/BiweeklyPrompt';
 import AdminPhotoUploadModal from '@/components/admin/AdminPhotoUploadModal';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,107 @@ function fmtDate(val) {
 function fmtAmt(val) {
   if (val == null) return '—';
   return `$${Number(val).toFixed(2)}`;
+}
+
+// ─── Due Today / Upcoming ────────────────────────────────────────────────────
+function ScheduledJobsAtAGlance({ jobs }) {
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+  const dueToday = jobs.filter(j =>
+    !['completed', 'cancelled'].includes(j.status) &&
+    j.scheduled_date === todayStr
+  );
+
+  const upcoming = jobs
+    .filter(j =>
+      !['completed', 'cancelled'].includes(j.status) &&
+      j.scheduled_date &&
+      j.scheduled_date > todayStr
+    )
+    .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+
+  if (dueToday.length === 0 && upcoming.length === 0) return null;
+
+  return (
+    <div className="space-y-4 pb-2">
+      {/* Due Today */}
+      {dueToday.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Sun size={15} className="text-amber-500" />
+            <h3 className="text-sm font-bold text-foreground">Due Today <span className="font-normal text-muted-foreground ml-1">({dueToday.length})</span></h3>
+          </div>
+          <div className="bg-card border border-amber-200 rounded-xl overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-amber-100 text-muted-foreground bg-amber-50/50">
+                  <th className="text-left px-4 py-2 font-semibold">Customer</th>
+                  <th className="text-left px-4 py-2 font-semibold hidden sm:table-cell">Address</th>
+                  <th className="text-left px-4 py-2 font-semibold hidden md:table-cell">Provider</th>
+                  <th className="text-left px-4 py-2 font-semibold">Service</th>
+                  <th className="text-center px-4 py-2 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dueToday.map((j, i) => (
+                  <tr key={j.id} className={`${i < dueToday.length - 1 ? 'border-b border-border' : ''} hover:bg-amber-50/40 transition-colors`}>
+                    <td className="px-4 py-2.5 font-medium text-foreground">
+                      <Link to={`/jobs/${j.id}`} className="hover:text-primary hover:underline">{j.customer_name || '—'}</Link>
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground hidden sm:table-cell max-w-[160px] truncate">{j.address || '—'}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground hidden md:table-cell">{j.provider_name || 'Unassigned'}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{j.service_name || '—'}</td>
+                    <td className="px-4 py-2.5 text-center"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-semibold">{j.status?.replace(/_/g, ' ')}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming Jobs */}
+      {upcoming.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarDays size={15} className="text-blue-500" />
+            <h3 className="text-sm font-bold text-foreground">Upcoming Jobs <span className="font-normal text-muted-foreground ml-1">({upcoming.length})</span></h3>
+          </div>
+          <div className="bg-card border border-blue-200 rounded-xl overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-blue-100 text-muted-foreground bg-blue-50/50">
+                  <th className="text-left px-4 py-2 font-semibold">Customer</th>
+                  <th className="text-left px-4 py-2 font-semibold hidden sm:table-cell">Address</th>
+                  <th className="text-left px-4 py-2 font-semibold hidden md:table-cell">Provider</th>
+                  <th className="text-left px-4 py-2 font-semibold">Service</th>
+                  <th className="text-center px-4 py-2 font-semibold">Status</th>
+                  <th className="text-center px-4 py-2 font-semibold">In</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcoming.map((j, i) => {
+                  const days = differenceInCalendarDays(new Date(j.scheduled_date), new Date());
+                  return (
+                    <tr key={j.id} className={`${i < upcoming.length - 1 ? 'border-b border-border' : ''} hover:bg-blue-50/30 transition-colors`}>
+                      <td className="px-4 py-2.5 font-medium text-foreground">
+                        <Link to={`/jobs/${j.id}`} className="hover:text-primary hover:underline">{j.customer_name || '—'}</Link>
+                      </td>
+                      <td className="px-4 py-2.5 text-muted-foreground hidden sm:table-cell max-w-[160px] truncate">{j.address || '—'}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground hidden md:table-cell">{j.provider_name || 'Unassigned'}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{j.service_name || '—'}</td>
+                      <td className="px-4 py-2.5 text-center"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold">{j.status?.replace(/_/g, ' ')}</span></td>
+                      <td className="px-4 py-2.5 text-center font-semibold text-blue-700 whitespace-nowrap">{days}d</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Completed Jobs ──────────────────────────────────────────────────────────
@@ -340,6 +442,7 @@ function CalendarSection({ scheduledJobs, allJobs }) {
 
 // ─── Job Card (shared between columns) ───────────────────────────────────────
 function JobCard({ job: j, handlers, isCompleted }) {
+  const [showBiweekly, setShowBiweekly] = useState(isCompleted);
   const isCash = j.cash_paid || j.payment_method === 'cash';
   const price = j.final_price || j.quoted_price;
   const payStatus = j.admin_payment_status || (isPaid(j) ? 'paid' : 'payment_pending');
@@ -416,6 +519,11 @@ function JobCard({ job: j, handlers, isCompleted }) {
           <Trash2 size={11} /> Delete
         </button>
       </div>
+
+      {/* Bi-weekly prompt for newly completed jobs */}
+      {isCompleted && showBiweekly && (
+        <BiweeklyPrompt job={j} onDismiss={() => setShowBiweekly(false)} />
+      )}
     </div>
   );
 }
@@ -461,6 +569,9 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
           <Plus size={14} /> Add Job
         </Button>
       </div>
+
+      {/* Due Today + Upcoming */}
+      <ScheduledJobsAtAGlance jobs={jobs} />
 
       {/* Two-column board */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">

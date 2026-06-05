@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera, UserCheck } from 'lucide-react';
+import AdminDuplicatesPanel from '@/components/admin/AdminDuplicatesPanel';
 import { useRef } from 'react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
@@ -46,6 +47,7 @@ const NAV = [
   { key: 'paymentlinks', label: 'Pay Links', icon: LinkIcon },
   { key: 'payouts', label: 'Payouts', icon: DollarSign },
   { key: 'ziplookup', label: 'Zip Lookup', icon: MapPin },
+  { key: 'accounts', label: 'Accounts', icon: UserCheck },
 ];
 
 export default function AdminPortal() {
@@ -486,6 +488,16 @@ export default function AdminPortal() {
 
         {tab === 'ziplookup' && (
           <AdminZipLookup providers={providers} />
+        )}
+
+        {tab === 'accounts' && (
+          <AdminDuplicatesPanel
+            customers={customers}
+            onRefresh={async () => {
+              const allCustomers = await base44.entities.CustomerProfile.list();
+              setCustomers(allCustomers);
+            }}
+          />
         )}
 
         {tab === 'reviews' && (

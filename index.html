@@ -1,6 +1,92 @@
 <!doctype html>
 <html lang="en">
-  <head><script src="https://grassgodz-support-widget.vercel.app/grassgodz-support.js" async></script>
+  <head>
+    <script src="https://grassgodz-support-widget.vercel.app/grassgodz-support.js" async></script>
+    <script>
+      (function () {
+        function initDrag() {
+          var fab = document.getElementById('gg-fab');
+          var panel = document.getElementById('gg-panel');
+          if (!fab) return setTimeout(initDrag, 200);
+
+          // Restore saved position
+          var saved = JSON.parse(localStorage.getItem('gg-fab-pos') || 'null');
+          if (saved) {
+            fab.style.bottom = 'auto';
+            fab.style.right = 'auto';
+            fab.style.left = saved.left + 'px';
+            fab.style.top = saved.top + 'px';
+          }
+
+          var dragging = false, startX, startY, origLeft, origTop, moved;
+
+          function getPos() {
+            var rect = fab.getBoundingClientRect();
+            return { left: rect.left, top: rect.top };
+          }
+
+          function onStart(cx, cy) {
+            dragging = true;
+            moved = false;
+            var pos = getPos();
+            origLeft = pos.left;
+            origTop = pos.top;
+            startX = cx;
+            startY = cy;
+            fab.style.transition = 'none';
+            fab.style.bottom = 'auto';
+            fab.style.right = 'auto';
+            fab.style.left = origLeft + 'px';
+            fab.style.top = origTop + 'px';
+          }
+
+          function onMove(cx, cy) {
+            if (!dragging) return;
+            var dx = cx - startX, dy = cy - startY;
+            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+            var newLeft = Math.max(0, Math.min(window.innerWidth - 56, origLeft + dx));
+            var newTop = Math.max(0, Math.min(window.innerHeight - 56, origTop + dy));
+            fab.style.left = newLeft + 'px';
+            fab.style.top = newTop + 'px';
+            if (panel) {
+              panel.style.bottom = 'auto';
+              panel.style.right = 'auto';
+              panel.style.left = Math.max(0, Math.min(window.innerWidth - 360, newLeft - 302)) + 'px';
+              panel.style.top = Math.max(0, newTop - 528) + 'px';
+            }
+          }
+
+          function onEnd() {
+            if (!dragging) return;
+            dragging = false;
+            fab.style.transition = '';
+            var rect = fab.getBoundingClientRect();
+            localStorage.setItem('gg-fab-pos', JSON.stringify({ left: rect.left, top: rect.top }));
+            if (moved) {
+              // Suppress the next click so panel doesn't toggle after drag
+              fab.addEventListener('click', function suppress(e) {
+                e.stopImmediatePropagation();
+                fab.removeEventListener('click', suppress, true);
+              }, true);
+            }
+          }
+
+          fab.addEventListener('mousedown', function (e) { e.preventDefault(); onStart(e.clientX, e.clientY); });
+          document.addEventListener('mousemove', function (e) { onMove(e.clientX, e.clientY); });
+          document.addEventListener('mouseup', onEnd);
+
+          fab.addEventListener('touchstart', function (e) { var t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
+          document.addEventListener('touchmove', function (e) { var t = e.touches[0]; onMove(t.clientX, t.clientY); }, { passive: true });
+          document.addEventListener('touchend', onEnd);
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initDrag);
+        } else {
+          initDrag();
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 

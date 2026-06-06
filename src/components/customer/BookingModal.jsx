@@ -337,9 +337,9 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
                   </div>
                 </div>
               </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 flex items-start gap-2">
-                <span className="text-amber-500 flex-shrink-0 mt-0.5">⚠️</span>
-                <span><strong>A saved payment card is required</strong> to complete your booking. After submitting, you will be prompted to add a card if one is not already on file. Your card will be authorized once a provider accepts your request.</span>
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-xs text-foreground flex items-start gap-2">
+                <span className="flex-shrink-0 mt-0.5">✅</span>
+                <span>Your request will be sent to local providers for a quote. <strong>No payment needed now</strong> — you'll only be asked for a card when you choose to accept a quote.</span>
               </div>
             </div>
           )}

@@ -6,7 +6,7 @@ import QuoteCard from './QuoteCard';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
 
-export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) {
+export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote, onCardSaved }) {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [declining, setDeclining] = useState(null);
@@ -59,6 +59,7 @@ export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) 
               onDecline={handleDecline}
               decliningId={declining}
               customerProfile={customerProfile}
+              onCardSaved={onCardSaved}
             />
           ))}
         </div>

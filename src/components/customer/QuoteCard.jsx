@@ -1,16 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle, Star, Clock, CreditCard, Loader2, Lock, ExternalLink, Copy, X } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
+import SaveCardModal from './SaveCardModal';
 import { base44 } from '@/api/base44Client';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
 
-export default function QuoteCard({ quote, onAccept, onDecline, decliningId, customerProfile }) {
+// Inline card collection before approving quote
+function InlineCardCollect({ customerProfile, onCardSaved, onCancel }) {
+  const [stripePromise, setStripePromise] = useState(null);
+
+  useEffect(() => {
+    base44.functions.invoke('getStripePublishableKey', {})
+      .then(res => { if (res.data?.publishable_key) setStripePromise(loadStripe(res.data.publishable_key)); });
+  }, []);
+
+  if (!stripePromise) return <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
+
+  return (
+    <Elements stripe={stripePromise}>
+      <CardCollectForm customerProfile={customerProfile} onCardSaved={onCardSaved} onCancel={onCancel} />
+    </Elements>
+  );
+}
+
+function CardCollectForm({ customerProfile, onCardSaved, onCancel }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setSaving(true);
+    try {
+      const res = await base44.functions.invoke('createSetupIntent', {});
+      if (res.data?.error) throw new Error(res.data.error);
+      const result = await stripe.confirmCardSetup(res.data.client_secret, {
+        payment_method: { card: elements.getElement(CardElement) },
+      });
+      if (result.error) throw new Error(result.error.message);
+      const pmId = result.setupIntent.payment_method;
+      await base44.entities.CustomerProfile.update(customerProfile.id, { default_payment_method_id: pmId });
+      toast.success('Card saved!');
+      onCardSaved(pmId);
+    } catch (err) {
+      toast.error(err.message || 'Failed to save card.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSave} className="mt-3 bg-muted/30 border border-border rounded-xl p-4 space-y-3">
+      <p className="text-xs font-bold text-foreground">Add a card to confirm your booking</p>
+      <div className="border border-border rounded-lg p-3 bg-card">
+        <CardElement options={{ style: { base: { fontSize: '14px', color: '#1a1a1a', '::placeholder': { color: '#9ca3af' } } } }} />
+      </div>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <Lock size={10} /> <span>Secured by Stripe. Only charged after job completion.</span>
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={onCancel} className="flex-1 border border-border rounded-lg py-2 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">Cancel</button>
+        <button type="submit" disabled={!stripe || saving} className="flex-1 bg-primary text-primary-foreground rounded-lg py-2 text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+          {saving ? <><Loader2 size={13} className="animate-spin" /> Saving...</> : <><CreditCard size={13} /> Save & Confirm</>}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export default function QuoteCard({ quote, onAccept, onDecline, decliningId, customerProfile, onCardSaved }) {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
-  const [paymentLink, setPaymentLink] = useState(null); // shown when customer has no email
+  const [showCardCollect, setShowCardCollect] = useState(false);
+  const [paymentLink, setPaymentLink] = useState(null);
 
-  const handleApprove = async () => {
+  const proceedWithApproval = async () => {
     setLoading(true);
     try {
       const res = await base44.functions.invoke('acceptQuoteAndGeneratePaymentLink', {
@@ -19,21 +87,17 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
 
       if (res.data?.error) throw new Error(res.data.error);
 
-      // If card on file was charged successfully — job is confirmed immediately
       if (res.data?.charged_card_on_file) {
         toast.success('Payment collected from card on file — job confirmed!');
         onAccept && onAccept(quote);
         return;
       }
 
-      // Has a checkout URL — redirect customer if they have an email, otherwise show link
       if (res.data?.payment_link) {
         const hasEmail = !!customerProfile?.user_email;
         if (hasEmail) {
-          // Redirect customer to Stripe Checkout
           window.location.href = res.data.payment_link;
         } else {
-          // No email — display link so admin/provider can text it
           setPaymentLink(res.data.payment_link);
           toast.info('No customer email on file. Copy and text them the payment link below.');
         }
@@ -45,12 +109,28 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
     }
   };
 
+  const handleApprove = () => {
+    const hasCard = !!customerProfile?.default_payment_method_id;
+    if (!hasCard) {
+      setShowCardCollect(true);
+    } else {
+      proceedWithApproval();
+    }
+  };
+
+  const handleCardSaved = async (pmId) => {
+    setShowCardCollect(false);
+    onCardSaved && onCardSaved(pmId);
+    await proceedWithApproval();
+  };
+
   const copyLink = () => {
     navigator.clipboard.writeText(paymentLink);
     toast.success('Link copied!');
   };
 
   return (
+
     <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all">
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -105,7 +185,15 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
         </div>
       )}
 
-      {quote.status === 'pending' && !paymentLink && (
+      {showCardCollect && customerProfile && (
+        <InlineCardCollect
+          customerProfile={customerProfile}
+          onCardSaved={handleCardSaved}
+          onCancel={() => setShowCardCollect(false)}
+        />
+      )}
+
+      {quote.status === 'pending' && !paymentLink && !showCardCollect && (
         <div className="mt-3 space-y-2">
           <div className="flex gap-2">
             {onDecline && (
@@ -124,9 +212,9 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
               className="flex-1 bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {loading ? (
-                <><Loader2 size={15} className="animate-spin" /> Generating payment link...</>
+                <><Loader2 size={15} className="animate-spin" /> Processing...</>
               ) : (
-                <><CreditCard size={15} /> Approve &amp; Pay</>
+                <><CheckCircle size={15} /> Accept Quote</>
               )}
             </button>
           </div>

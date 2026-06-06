@@ -43,7 +43,11 @@ export default function JobChat({ job, user, senderRole, otherPartyName }) {
 
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['messages', job.id],
-    queryFn: () => base44.entities.Message.filter({ job_id: job.id }),
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getJobMessages', { job_id: job.id });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data?.messages || [];
+    },
     enabled: chatEnabled,
     refetchInterval: 15000,
     refetchIntervalInBackground: false,

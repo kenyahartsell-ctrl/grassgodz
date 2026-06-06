@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Calendar, MapPin, FileText, Clock, ChevronLeft, ChevronRight, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
+import { X, Calendar, MapPin, FileText, Clock, ChevronLeft, ChevronRight, CheckCircle2, Loader2, RefreshCw, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
@@ -31,6 +31,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
     address: customerProfile?.service_address || '',
     zip_code: customerProfile?.zip_code || '',
     notes: '',
+    customer_budget: '',
   });
 
   const { data: services = [], isLoading: servicesLoading } = useQuery({
@@ -94,6 +95,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
       scheduled_time: selectedTime,
       customer_notes: form.notes,
       recurrence,
+      customer_budget: form.customer_budget ? Number(form.customer_budget) : null,
     });
     onClose();
   };
@@ -301,6 +303,21 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
                   className="w-full border border-input rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                 />
               </div>
+              <div>
+                <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
+                  <DollarSign size={13} className="text-primary" /> Your Budget (optional)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  value={form.customer_budget}
+                  onChange={e => setForm(f => ({ ...f, customer_budget: e.target.value }))}
+                  placeholder="e.g. 60"
+                  className="w-full border border-input rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Helps providers give you an accurate quote.</p>
+              </div>
             </div>
           )}
 
@@ -335,6 +352,12 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
                     <span className="text-muted-foreground">Estimated Price</span>
                     <span className="font-bold text-primary">From ${selectedService?.base_price_estimate}</span>
                   </div>
+                  {form.customer_budget && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Your Budget</span>
+                      <span className="font-bold text-foreground">${form.customer_budget}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-xs text-foreground flex items-start gap-2">

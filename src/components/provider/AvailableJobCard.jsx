@@ -4,7 +4,8 @@ import { getMinimumPrice, YARD_SIZES } from '@/lib/pricingFloors';
 
 export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, onAcceptCashJob, onboardingComplete = true }) {
   const [expanded, setExpanded] = useState(false);
-  const [quoteForm, setQuoteForm] = useState({ price: '', message: '' });
+  const suggestedPrice = job.customer_budget && (!minPrice || job.customer_budget >= minPrice) ? String(job.customer_budget) : '';
+  const [quoteForm, setQuoteForm] = useState({ price: suggestedPrice, message: '' });
   const [showForm, setShowForm] = useState(false);
   const [priceError, setPriceError] = useState('');
   const isCash = job.is_cash_job || job.payment_method === 'cash';
@@ -63,6 +64,13 @@ export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, 
             <div className="flex gap-2 text-xs text-muted-foreground bg-muted/40 rounded-lg p-2.5">
               <FileText size={12} className="flex-shrink-0 mt-0.5" />
               <span>{job.customer_notes}</span>
+            </div>
+          )}
+
+          {job.customer_budget && (
+            <div className="flex items-center gap-2 text-xs bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <DollarSign size={12} className="text-blue-700 flex-shrink-0" />
+              <span className="text-blue-800">Customer's budget: <strong>${job.customer_budget}</strong></span>
             </div>
           )}
 

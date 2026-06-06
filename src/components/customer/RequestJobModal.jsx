@@ -26,7 +26,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl">
+      <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
             <h2 className="text-lg font-bold text-foreground">{t('request_quote')}</h2>
@@ -36,7 +36,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
             <X size={18} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
               <MapPin size={13} className="text-primary" /> {t('service_address')}

@@ -10,9 +10,27 @@ export default function JobAcceptanceTimer({ job }) {
   const [timeLeft, setTimeLeft] = useState(null);
   const [expired, setExpired] = useState(false);
 
+  const parseTime = (timeStr) => {
+    if (!timeStr) return { h: NaN, m: NaN };
+    const amPm = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (amPm) {
+      let h = parseInt(amPm[1]);
+      const m = parseInt(amPm[2]);
+      const period = amPm[3].toUpperCase();
+      if (period === 'PM' && h !== 12) h += 12;
+      if (period === 'AM' && h === 12) h = 0;
+      return { h, m };
+    }
+    const parts = timeStr.split(':').map(Number);
+    return { h: parts[0], m: parts[1] };
+  };
+
   const getDeadline = () => {
     if (job.scheduled_date && job.scheduled_time) {
-      const [h, m] = job.scheduled_time.split(':').map(Number);
+      const { h, m } = parseTime(job.scheduled_time);
+      if (isNaN(h) || isNaN(m)) {
+        return job.accepted_at ? new Date(new Date(job.accepted_at).getTime() + 2 * 60 * 60 * 1000) : null;
+      }
       const start = new Date(job.scheduled_date);
       start.setHours(h, m, 0, 0);
       return new Date(start.getTime() + 30 * 60 * 1000);

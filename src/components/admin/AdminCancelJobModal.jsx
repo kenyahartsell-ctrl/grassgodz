@@ -56,8 +56,9 @@ export default function AdminCancelJobModal({ job, onClose, onCancelled }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="bg-card rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <AlertTriangle size={16} className="text-red-500" />
             <h2 className="font-bold text-foreground">Cancel Job</h2>
@@ -67,7 +68,8 @@ export default function AdminCancelJobModal({ job, onClose, onCancelled }) {
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        {/* Scrollable body */}
+        <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
           {/* Job summary */}
           <div className="bg-muted/40 rounded-xl px-4 py-3 text-sm">
             <p className="font-semibold text-foreground">{job.service_name}</p>
@@ -97,8 +99,10 @@ export default function AdminCancelJobModal({ job, onClose, onCancelled }) {
 
           {/* Reason selector */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-2">Reason for cancellation <span className="text-red-500">*</span></label>
-            <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground block mb-2">
+              Reason for cancellation <span className="text-red-500">*</span>
+            </label>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
               {CANCEL_REASONS.map(r => (
                 <button
                   key={r}
@@ -131,7 +135,8 @@ export default function AdminCancelJobModal({ job, onClose, onCancelled }) {
           )}
         </div>
 
-        <div className="flex gap-2 px-5 pb-5">
+        {/* Footer */}
+        <div className="flex gap-2 px-5 pb-5 pt-3 border-t border-border shrink-0">
           <Button variant="outline" onClick={onClose} className="flex-1">Keep Job</Button>
           <Button
             onClick={handleCancel}

@@ -87,12 +87,31 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
 
       if (res.data?.error) throw new Error(res.data.error);
 
-      if (res.data?.charged_card_on_file) {
-        toast.success('Payment collected from card on file — job confirmed!');
+      // Authorization hold placed (card on file) — job confirmed
+      if (res.data?.authorized || (res.data?.success && !res.data?.requires_card)) {
+        toast.success('Payment authorized — job confirmed!');
         onAccept && onAccept(quote);
         return;
       }
 
+      // No card on file — need to collect payment
+      if (res.data?.requires_card) {
+        if (res.data?.payment_link) {
+          const hasEmail = !!customerProfile?.user_email;
+          if (hasEmail) {
+            window.location.href = res.data.payment_link;
+          } else {
+            setPaymentLink(res.data.payment_link);
+            toast.info('No customer email on file. Copy and text them the payment link below.');
+          }
+        } else {
+          // No payment link generated — show inline card form
+          setShowCardCollect(true);
+        }
+        return;
+      }
+
+      // Legacy fallback: direct payment link
       if (res.data?.payment_link) {
         const hasEmail = !!customerProfile?.user_email;
         if (hasEmail) {
@@ -103,7 +122,7 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
         }
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to generate payment link. Please try again.');
+      toast.error(err.message || 'Failed to process payment. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -130,7 +149,6 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
   };
 
   return (
-
     <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all">
       <div className="flex items-start justify-between gap-3">
         <div>

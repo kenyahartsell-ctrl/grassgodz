@@ -11,7 +11,8 @@ import { base44 } from '@/api/base44Client';
 const CHAT_ENABLED_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed'];
 
 export default function JobCard({ job, customerProfile, onAcceptQuote, onReview, reviewed, onRescheduled, user }) {
-  const [expanded, setExpanded] = useState(job.status === 'quoted' || (job.status === 'completed' && !reviewed));
+  const [expanded, setExpanded] = useState(job.status === 'quoted' || job.status === 'pending_payment' || (job.status === 'completed' && !reviewed));
+  const isQuoted = job.status === 'quoted';
   const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatUser, setChatUser] = useState(null);
@@ -70,9 +71,9 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
                 <MessageCircle size={11} /> Chat
               </button>
             )}
-            {job.status === 'quoted' && !expanded && (
-              <span className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
-                Respond →
+            {job.status === 'quoted' && (
+              <span className="text-xs font-semibold text-white bg-blue-500 rounded-full px-3 py-1 animate-pulse">
+                Quote Ready!
               </span>
             )}
             {expanded ? <ChevronUp size={15} className="text-muted-foreground mt-1" /> : <ChevronDown size={15} className="text-muted-foreground mt-1" />}

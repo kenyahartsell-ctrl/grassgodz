@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, FileQuestion } from 'lucide-react';
+import { Loader2, FileQuestion } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import QuoteCard from './QuoteCard';
@@ -8,8 +8,6 @@ import { useLanguage } from '@/lib/LanguageContext';
 
 export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) {
   const { t } = useLanguage();
-  // Auto-expand when there are quotes pending response
-  const [open, setOpen] = useState(job?.status === 'quoted' || job?.status === 'requested');
   const queryClient = useQueryClient();
   const [declining, setDeclining] = useState(null);
 
@@ -20,7 +18,7 @@ export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) 
       return res.data?.quotes || [];
     },
     refetchOnWindowFocus: true,
-    refetchInterval: 15000, // poll every 15s so customer sees new quotes
+    refetchInterval: 15000,
   });
 
   const handleDecline = async (quote) => {
@@ -38,38 +36,32 @@ export default function JobQuotesPanel({ job, customerProfile, onAcceptQuote }) 
 
   return (
     <div className="mt-3 border-t border-border pt-3">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between text-xs font-semibold text-primary mb-2"
-      >
-        <span>{t('provider_quotes')} {quotes.length > 0 ? `(${quotes.length})` : ''}</span>
-        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-      </button>
+      <p className="text-xs font-semibold text-primary mb-2">
+        {t('provider_quotes')} {quotes.length > 0 ? `(${quotes.length})` : ''}
+      </p>
 
-      {open && (
-        isLoading ? (
-          <div className="flex justify-center py-4">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-          </div>
-        ) : quotes.length === 0 ? (
-          <div className="flex flex-col items-center py-4 text-center">
-            <FileQuestion className="w-7 h-7 text-muted-foreground/30 mb-2" />
-            <p className="text-xs text-muted-foreground">{t('no_quotes_yet')}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {quotes.map(q => (
-              <QuoteCard
-                key={q.id}
-                quote={q}
-                onAccept={onAcceptQuote}
-                onDecline={handleDecline}
-                decliningId={declining}
-                customerProfile={customerProfile}
-              />
-            ))}
-          </div>
-        )
+      {isLoading ? (
+        <div className="flex justify-center py-4">
+          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        </div>
+      ) : quotes.length === 0 ? (
+        <div className="flex flex-col items-center py-4 text-center">
+          <FileQuestion className="w-7 h-7 text-muted-foreground/30 mb-2" />
+          <p className="text-xs text-muted-foreground">{t('no_quotes_yet')}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {quotes.map(q => (
+            <QuoteCard
+              key={q.id}
+              quote={q}
+              onAccept={onAcceptQuote}
+              onDecline={handleDecline}
+              decliningId={declining}
+              customerProfile={customerProfile}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

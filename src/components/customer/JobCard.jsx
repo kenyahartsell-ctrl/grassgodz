@@ -6,6 +6,7 @@ import JobQuotesPanel from './JobQuotesPanel';
 import DepositBanner from './DepositBanner';
 import WeatherRescheduleModal from '../shared/WeatherRescheduleModal';
 import ChatDrawer from '../shared/ChatDrawer';
+import CardRequiredBanner from './CardRequiredBanner';
 import { base44 } from '@/api/base44Client';
 
 const CHAT_ENABLED_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed'];
@@ -15,6 +16,7 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
   const isQuoted = job.status === 'quoted';
   const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [cardSaved, setCardSaved] = useState(false);
   const [chatUser, setChatUser] = useState(null);
   const chatAvailable = CHAT_ENABLED_STATUSES.includes(job.status) && !!job.provider_id;
 
@@ -87,6 +89,14 @@ export default function JobCard({ job, customerProfile, onAcceptQuote, onReview,
           job={job}
           customerProfile={customerProfile}
           onDepositPaid={onAcceptQuote}
+        />
+      )}
+
+      {/* Card required banner — shown for scheduled jobs without a card on file */}
+      {job.status === 'scheduled' && !cardSaved && !customerProfile?.default_payment_method_id && (
+        <CardRequiredBanner
+          customerProfile={customerProfile}
+          onCardSaved={() => setCardSaved(true)}
         />
       )}
 

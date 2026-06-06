@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import Stripe from 'npm:stripe@16.0.0';
 
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 const MIN_PHOTO_COUNT = 4;
 
 Deno.serve(async (req) => {
@@ -12,75 +14,95 @@ Deno.serve(async (req) => {
     const { job_id, skip_photos, final_price } = body;
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
 
-    // Provider must own this job
+    // Validate the caller is the provider on this job
     const providerProfiles = await base44.entities.ProviderProfile.filter({ user_email: user.email });
     const providerProfile = providerProfiles[0];
-    if (!providerProfile) return Response.json({ error: 'Provider profile not found' }, { status: 404 });
 
     const jobs = await base44.asServiceRole.entities.Job.filter({ id: job_id });
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
-    // Check provider ownership via email OR id (since updateJobToQuoted may set either)
-    const isOwner = job.provider_id === providerProfile.id || job.provider_email === user.email;
-    if (!isOwner) return Response.json({ error: 'Forbidden' }, { status: 403 });
+    const isProvider =
+      (job.provider_email && job.provider_email === user.email) ||
+      (providerProfile && job.provider_id === providerProfile.id);
 
-    // Allow completing from in_progress, accepted, or scheduled statuses
-    const completableStatuses = ['in_progress', 'accepted', 'scheduled'];
-    if (!completableStatuses.includes(job.status)) {
-      return Response.json({ error: `Job cannot be completed from status: ${job.status}` }, { status: 400 });
-    }
+    if (!isProvider) return Response.json({ error: 'Forbidden — not the assigned provider' }, { status: 403 });
 
-    // Verify minimum 4 photos present (skip_photos=true bypasses for testing)
+    // Photo check
     if (!skip_photos) {
-      const photos = job.completion_photos || {};
-      const uploadedCount = Object.values(photos).filter(Boolean).length;
-      if (uploadedCount < MIN_PHOTO_COUNT) {
-        return Response.json({ error: `At least ${MIN_PHOTO_COUNT} photos required. Only ${uploadedCount} uploaded.` }, { status: 400 });
+      const photos = await base44.asServiceRole.entities.JobPhoto.filter({ job_id });
+      if (!photos || photos.length < MIN_PHOTO_COUNT) {
+        return Response.json({
+          error: `At least ${MIN_PHOTO_COUNT} completion photos are required`,
+          photo_count: photos?.length || 0,
+          required: MIN_PHOTO_COUNT,
+        }, { status: 400 });
       }
     }
 
-    const price = final_price || job.quoted_price;
-    const now = new Date().toISOString();
-    const providerPayout = price ? price * 0.90 : 0;
-    const platformFee = price ? price * 0.10 : 0;
+    const chargedPrice = final_price || job.quoted_price || job.final_price;
+    const providerPayout = chargedPrice * 0.90;
+    const platformFee = chargedPrice * 0.10;
 
-    // Mark job as completed
-    await base44.asServiceRole.entities.Job.update(job.id, {
+    // --- Capture the Stripe authorization hold if one exists ---
+    let stripeResult = null;
+    if (job.payment_intent_id) {
+      try {
+        const amountToCapture = Math.round(chargedPrice * 100);
+        stripeResult = await stripe.paymentIntents.capture(job.payment_intent_id, {
+          amount_to_capture: amountToCapture,
+        });
+
+        // Update Payment record status to captured
+        const payments = await base44.asServiceRole.entities.Payment.filter({
+          stripe_payment_intent_id: job.payment_intent_id,
+        });
+        if (payments[0]) {
+          await base44.asServiceRole.entities.Payment.update(payments[0].id, {
+            status: 'captured',
+            amount: chargedPrice,
+            payout_amount: providerPayout,
+            platform_fee: platformFee,
+          });
+        }
+      } catch (stripeErr) {
+        console.error('Stripe capture error:', stripeErr.message);
+        // Don't block completion if capture fails — log and continue
+        // The admin will need to manually capture or refund
+      }
+    }
+
+    // Mark job completed
+    await base44.asServiceRole.entities.Job.update(job_id, {
       status: 'completed',
-      completed_at: now,
-      final_price: price || 0,
+      completed_at: new Date().toISOString(),
+      final_price: chargedPrice,
       provider_payout: providerPayout,
       platform_fee: platformFee,
     });
 
-    // Trigger payment link flow: creates Payment record + sends customer email
+    // Send completion email to customer
     try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: job.customer_email,
-        subject: `Your ${job.service_name || 'Lawn Service'} is Complete — Payment Required`,
-        body: `
-<p>Hi ${job.customer_name || 'there'},</p>
-
-<p>Great news! Your lawn service has been completed by ${job.provider_name || 'your provider'}.</p>
-
-<p>Your quoted price: <strong>$${(price || 0).toFixed(2)}</strong></p>
-
-<p>Please log in to your Grassgodz account to review and process payment.</p>
-
-<p><a href="https://grassgodz.com/customer" style="background:#2d6a2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">View My Jobs</a></p>
-
-<p>Thank you for choosing Grassgodz!</p>
-
-<p>The Grassgodz Team</p>
-        `.trim(),
-      });
+      const customerEmail = job.customer_email;
+      if (customerEmail) {
+        await base44.asServiceRole.entities.Email.create({
+          to: customerEmail,
+          subject: 'Your lawn service is complete! 🌿',
+          body: `Your GrassGodz service has been completed. Final charge: $${chargedPrice.toFixed(2)}. Thank you for using GrassGodz!`,
+        });
+      }
     } catch (emailErr) {
-      console.warn('Email notification failed:', emailErr.message);
+      console.error('Email send error:', emailErr.message);
     }
 
-    return Response.json({ success: true, payout: providerPayout });
+    return Response.json({
+      success: true,
+      payout: providerPayout,
+      final_price: chargedPrice,
+      stripe_captured: !!stripeResult,
+    });
   } catch (error) {
+    console.error('capturePayment error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

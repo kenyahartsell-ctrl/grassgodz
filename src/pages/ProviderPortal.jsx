@@ -134,32 +134,22 @@ export default function ProviderPortal() {
     : providerProfile?.avg_rating || '—';
 
   const handleAcceptBooking = async (booking) => {
-    await base44.entities.Job.update(booking.id, {
-      provider_id: providerProfile.id,
-      provider_name: providerProfile.business_name,
-      provider_email: user.email,
-      status: 'scheduled',
-      quoted_price: booking.base_price,
-      accepted_at: new Date().toISOString(),
-    });
+    const res = await base44.functions.invoke('providerAcceptJob', { job_id: booking.id, action: 'accept' });
+    if (res.data?.error) { toast.error(res.data.error); return; }
     await refreshJobs();
     toast.success(`Booking accepted! ${booking.service_name} for ${booking.customer_name} is now scheduled.`);
   };
 
   const handleDeclineBooking = async (booking) => {
-    await base44.entities.Job.update(booking.id, { status: 'cancelled' });
+    const res = await base44.functions.invoke('providerAcceptJob', { job_id: booking.id, action: 'decline' });
+    if (res.data?.error) { toast.error(res.data.error); return; }
     await refreshJobs();
     toast.error(`Booking for ${booking.customer_name} declined.`);
   };
 
   const handleAcceptCashJob = async (job) => {
-    await base44.entities.Job.update(job.id, {
-      provider_id: providerProfile.id,
-      provider_name: providerProfile.business_name || providerProfile.name,
-      provider_email: user.email,
-      status: 'scheduled',
-      accepted_at: new Date().toISOString(),
-    });
+    const res = await base44.functions.invoke('providerAcceptJob', { job_id: job.id, action: 'accept' });
+    if (res.data?.error) { toast.error(res.data.error); return; }
     await refreshJobs();
     toast.success(`Cash job accepted! ${job.service_name} for ${job.customer_name} is now scheduled.`);
   };

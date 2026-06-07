@@ -430,6 +430,11 @@ function InvoiceRow({ invoice, onRefresh, onEdit }) {
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[invoice.status] || STATUS_COLORS.draft}`}>
             {invoice.status}
           </span>
+          {invoice.viewed_at ? (
+            <p className="text-xs text-green-600 mt-0.5">👁 Viewed {new Date(invoice.viewed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+          ) : invoice.status === 'sent' ? (
+            <p className="text-xs text-muted-foreground mt-0.5">Not viewed yet</p>
+          ) : null}
         </div>
         <button
           onClick={handleDelete}

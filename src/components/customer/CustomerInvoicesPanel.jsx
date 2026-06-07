@@ -13,9 +13,18 @@ function InvoiceCard({ invoice }) {
   const [expanded, setExpanded] = useState(false);
   const cfg = STATUS_CONFIG[invoice.status] || STATUS_CONFIG.sent;
 
+  const handleExpand = async () => {
+    if (!expanded && !invoice.viewed_at) {
+      // Stamp viewed_at on first open
+      base44.entities.Invoice.update(invoice.id, { viewed_at: new Date().toISOString() }).catch(() => {});
+      invoice.viewed_at = new Date().toISOString(); // optimistic local update
+    }
+    setExpanded(e => !e);
+  };
+
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => setExpanded(e => !e)}>
+      <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={handleExpand}>
         <FileText size={16} className="text-muted-foreground flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-foreground">{invoice.service_description || 'Invoice'}</p>

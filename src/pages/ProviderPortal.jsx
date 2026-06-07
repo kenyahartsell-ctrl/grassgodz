@@ -384,7 +384,7 @@ export default function ProviderPortal() {
                   <BookingRequestCard
                     key={b.id}
                     job={b}
-                    onAccept={handleAcceptBooking}
+                    onSubmitQuote={handleSubmitQuote}
                     onDecline={handleDeclineBooking}
                   />
                 ))}

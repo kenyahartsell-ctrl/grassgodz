@@ -3,15 +3,15 @@ import { Calendar, MapPin, FileText, DollarSign, ChevronDown, ChevronUp, Send, A
 import { getMinimumPrice, YARD_SIZES } from '@/lib/pricingFloors';
 
 export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, onAcceptCashJob, onboardingComplete = true }) {
-  const [expanded, setExpanded] = useState(false);
-  const suggestedPrice = job.customer_budget && (!minPrice || job.customer_budget >= minPrice) ? String(job.customer_budget) : '';
-  const [quoteForm, setQuoteForm] = useState({ price: suggestedPrice, message: '' });
-  const [showForm, setShowForm] = useState(false);
-  const [priceError, setPriceError] = useState('');
   const isCash = job.is_cash_job || job.payment_method === 'cash';
   const adminPrice = job.quoted_price; // set by admin — provider cannot change
   const minPrice = getMinimumPrice(job.service_name, job.yard_size);
   const yardSizeLabel = YARD_SIZES.find(s => s.value === job.yard_size)?.label || null;
+  const suggestedPrice = job.customer_budget && (!minPrice || job.customer_budget >= minPrice) ? String(job.customer_budget) : '';
+  const [expanded, setExpanded] = useState(false);
+  const [quoteForm, setQuoteForm] = useState({ price: suggestedPrice, message: '' });
+  const [showForm, setShowForm] = useState(false);
+  const [priceError, setPriceError] = useState('');
 
   // Compute hauling fee to show/add to quote
   const haulingApplies = providerProfile?.hauling_fees_apply;

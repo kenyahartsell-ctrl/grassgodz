@@ -32,7 +32,19 @@ Deno.serve(async (req) => {
               return j.scheduled_date <= cutoffISO;
       });
 
-      return Response.json({ jobs: visible });
+      // Count completed card-paying jobs for this provider
+      const completedCardJobs = await base44.asServiceRole.entities.Job.filter({
+              provider_id: profile.id,
+              status: 'completed',
+      });
+      const cardCutCount = completedCardJobs.filter(j => !j.is_cash_job && j.payment_method !== 'cash').length;
+
+      // Hide cash jobs until provider has at least 5 completed card-paying cuts
+      const filtered = cardCutCount >= 5
+              ? visible
+              : visible.filter(j => !j.is_cash_job && j.payment_method !== 'cash');
+
+      return Response.json({ jobs: filtered });
     } catch (error) {
           return Response.json({ error: error.message }, { status: 500 });
     }

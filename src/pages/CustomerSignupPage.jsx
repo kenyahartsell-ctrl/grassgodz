@@ -105,10 +105,11 @@ export default function CustomerSignupPage() {
     if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Valid email required';
     const phoneDigits = form.phone.replace(/\D/g, '');
     if (phoneDigits.length !== 10) errs.phone = 'Phone must be 10 digits';
-    if (!form.password || form.password.length < 8) errs.password = 'Password must be at least 8 characters';
-    if (!/[A-Z]/.test(form.password)) errs.password = 'Password needs an uppercase letter';
-    if (!/[a-z]/.test(form.password)) errs.password = 'Password needs a lowercase letter';
-    if (!/[0-9]/.test(form.password)) errs.password = 'Password needs a number';
+if (!form.password) errs.password = 'Password is required';
+    else if (form.password.length < 8) errs.password = 'Password must be at least 8 characters';
+        else if (!/[A-Z]/.test(form.password)) errs.password = 'Password needs an uppercase letter';
+            else if (!/[a-z]/.test(form.password)) errs.password = 'Password needs a lowercase letter';
+                else if (!/[0-9]/.test(form.password)) errs.password = 'Password needs a number';
     if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match';
     if (!form.serviceAddress.trim()) errs.serviceAddress = 'Service address is required';
     if (!/^\d{5}$/.test(form.zip)) errs.zip = 'Valid 5-digit ZIP required';

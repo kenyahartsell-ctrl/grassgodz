@@ -105,12 +105,7 @@ function CardGate({ customerProfile, onCardSaved, onCancel }) {
 
   return (
     <Elements stripe={stripePromise}>
-{cashApproved && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-3">
-            <p className="text-green-700 text-xs font-semibold">✓ Cash payment approved by admin — no card required.</p>
-          </div>
-        )}
-              <CardGateForm customerProfile={customerProfile} onCardSaved={onCardSaved} onCancel={onCancel} />
+      <CardGateForm customerProfile={customerProfile} onCardSaved={onCardSaved} onCancel={onCancel} />
     </Elements>
   );
 }

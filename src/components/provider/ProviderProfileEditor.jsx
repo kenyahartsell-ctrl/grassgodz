@@ -284,13 +284,13 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
               <label className="text-xs font-medium text-muted-foreground">Bio</label>
               <textarea value={form.bio} onChange={e => set('bio', e.target.value)}
                 rows={3} placeholder="Tell customers about yourself..."
+                className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+            </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">Website <span className="text-muted-foreground/60">(optional — used for Stripe onboarding)</span></label>
               <input value={form.website} onChange={e => set('website', e.target.value)}
                 placeholder="https://yourbusiness.com (leave blank to use grassgodz.com)"
                 className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
-            </div>
-                className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
             </div>
 
             <div className="flex gap-2 pt-1">

@@ -505,8 +505,15 @@ export default function AdminPortal() {
         )}
 
         {tab === 'complaints' && (
-<AdminComplaintsPanel providers={providers} />
-)}
+          <AdminComplaintsPanel providers={providers} />
+        )}
+
+        {tab === 'cash' && (
+          <AdminCashOverridePanel jobs={jobs} providers={providers} customers={customers} onRefresh={async () => {
+            const allJobs = await base44.entities.Job.list('-created_date', 100);
+            setJobs(allJobs);
+          }} />
+        )}
 
 {tab === 'reviews' && (
           <div>
@@ -649,7 +656,6 @@ export default function AdminPortal() {
                 tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-        {tab === 'cash' && <AdminCashOverridePanel jobs={jobs} providers={providers} customers={customers} onRefresh={loadAll} />}
               <Icon size={18} />
               <span className="whitespace-nowrap">{label}</span>
             </button>

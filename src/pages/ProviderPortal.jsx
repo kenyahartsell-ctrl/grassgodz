@@ -211,6 +211,17 @@ export default function ProviderPortal() {
     if (res.data?.error) { toast.error(res.data.error); return; }
     await refreshJobs();
     toast.success(`Booking accepted! ${booking.service_name} for ${booking.customer_name} is now scheduled.`);
+    // SMS customer on booking confirmation
+    try {
+      const profiles = await base44.entities.CustomerProfile.filter({ user_email: booking.customer_email });
+      const phone = profiles?.[0]?.phone;
+      if (phone) {
+        await base44.functions.invoke('sendSMS', {
+          to: phone,
+          body: 'Hi ' + (booking.customer_name || 'there') + '! Your ' + (booking.service_name || 'lawn service') + ' with Grassgodz is confirmed by ' + (providerProfile.business_name || 'your provider') + '. See you soon! 🌿',
+        });
+      }
+    } catch {}
   };
 
   const handleDeclineBooking = async (booking) => {
@@ -272,6 +283,17 @@ export default function ProviderPortal() {
       const payout = res.data.payout != null ? Number(res.data.payout).toFixed(2) : ((job.quoted_price || 0) * 0.90).toFixed(2);
       await refreshJobs();
       toast.success(`Job completed! $${payout} payout — customer has been notified.`);
+    // SMS customer on job completion + payment
+    try {
+      const profiles = await base44.entities.CustomerProfile.filter({ user_email: job.customer_email });
+      const phone = profiles?.[0]?.phone;
+      if (phone) {
+        await base44.functions.invoke('sendSMS', {
+          to: phone,
+          body: 'Hi ' + (job.customer_name || 'there') + '! Your ' + (job.service_name || 'lawn service') + ' is complete and payment of $' + payout + ' has been processed. Thanks for choosing Grassgodz! 🌿',
+        });
+      }
+    } catch {}
     } else {
       toast.error(res.data?.error || 'Failed to complete job. Please try again.');
     }

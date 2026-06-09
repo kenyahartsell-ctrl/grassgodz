@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, MapPin, Calendar, FileText, RefreshCw, Ruler } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { YARD_SIZES } from '@/lib/pricingFloors';
+import YardPhotoUpload from '@/components/shared/YardPhotoUpload';
 
 const LAWN_KEYWORDS = ['mow', 'mowing', 'grass', 'lawn', 'cut'];
 const isLawnService = (name) => LAWN_KEYWORDS.some(k => name?.toLowerCase().includes(k));
@@ -17,10 +18,12 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
     recurrence: 'one_time',
     yard_size: '',
   });
+  const [yardPhotos, setYardPhotos] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...form, service_id: service.id, service_name: service.name });
+    if (yardPhotos.length === 0) return;
+    onSubmit({ ...form, service_id: service.id, service_name: service.name, customer_yard_photos: yardPhotos });
     onClose();
   };
 
@@ -132,6 +135,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
               ))}
             </select>
           </div>
+          <YardPhotoUpload photos={yardPhotos} onChange={setYardPhotos} />
           {/* Quote disclaimer */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: t('quote_disclaimer') }} />
@@ -139,7 +143,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
             <button type="button" onClick={onClose} className="flex-1 border border-border rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
               {t('cancel')}
             </button>
-            <button type="submit" className="flex-1 bg-primary text-primary-foreground rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors">
+            <button type="submit" disabled={yardPhotos.length === 0} className="flex-1 bg-primary text-primary-foreground rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               {t('submit_request')}
             </button>
           </div>

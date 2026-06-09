@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Camera, User, ClipboardList, MapPin, Calendar, DollarSign, AlertCircle, CheckCircle2, Wrench, Hash, Banknote } from 'lucide-react';
+import { ArrowLeft, Loader2, Camera, User, ClipboardList, MapPin, Calendar, DollarSign, AlertCircle, CheckCircle2, Wrench, Hash, Banknote, Image } from 'lucide-react';
 import StatusBadge from '@/components/shared/StatusBadge';
 import JobChat from '@/components/shared/JobChat';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
@@ -334,6 +334,22 @@ export default function JobDetailPage() {
               )}
             </div>
 
+            {/* Yard Photos — visible to provider and admin */}
+            {(senderRole === 'provider' || isAdmin) && job.customer_yard_photos?.length > 0 && (
+              <div className="bg-card border border-border rounded-xl p-4">
+                <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <Image size={13} className="text-primary" /> Yard Photos (Uploaded by Customer)
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {job.customer_yard_photos.map((url, i) => (
+                    <a key={i} href={url} target="_blank" rel="noreferrer" className="aspect-square rounded-lg overflow-hidden border border-border block">
+                      <img src={url} alt={`Yard photo ${i + 1}`} className="w-full h-full object-cover" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Customer Instructions */}
             <div className="bg-card border border-border rounded-xl p-4">
               <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-3">
@@ -515,7 +531,21 @@ export default function JobDetailPage() {
               </div>
             )}
 
-            {!hasPhotos && !job.admin_photos?.length && (
+            {/* Customer yard photos */}
+            {job.customer_yard_photos?.length > 0 && (
+              <div className="mb-5">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Yard Photos (Uploaded by Customer)</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {job.customer_yard_photos.map((url, i) => (
+                    <a key={i} href={url} target="_blank" rel="noreferrer" className="aspect-square rounded-lg overflow-hidden border border-border block">
+                      <img src={url} alt={`Yard photo ${i + 1}`} className="w-full h-full object-cover" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!hasPhotos && !job.admin_photos?.length && !job.customer_yard_photos?.length && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Camera className="w-10 h-10 text-muted-foreground/20 mb-3" />
                 <p className="text-sm font-medium text-muted-foreground">No photos yet</p>

@@ -97,6 +97,13 @@
     "provider_notes": {
       "type": "string"
     },
+    "customer_yard_photos": {
+      "type": "array",
+      "description": "Photos of the yard uploaded by the customer at booking time",
+      "items": {
+        "type": "string"
+      }
+    },
     "quoted_price": {
       "type": "number"
     },

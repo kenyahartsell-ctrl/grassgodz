@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Calendar, MapPin, FileText, Clock, ChevronLeft, ChevronRight, CheckCircle2, Loader2, RefreshCw, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import YardPhotoUpload from '@/components/shared/YardPhotoUpload';
 
 const RECURRENCE_OPTIONS = [
   { value: 'one_time',  label: 'One Time Visit',                  sub: 'Single service, no repeat' },
@@ -33,6 +34,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
     notes: '',
     customer_budget: '',
   });
+  const [yardPhotos, setYardPhotos] = useState([]);
 
   const { data: services = [], isLoading: servicesLoading } = useQuery({
     queryKey: ['services'],
@@ -96,6 +98,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
       customer_notes: form.notes,
       recurrence,
       customer_budget: form.customer_budget ? Number(form.customer_budget) : null,
+      customer_yard_photos: yardPhotos,
     });
     onClose();
   };
@@ -318,6 +321,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
                 />
                 <p className="text-xs text-muted-foreground mt-1">Helps providers give you an accurate quote.</p>
               </div>
+              <YardPhotoUpload photos={yardPhotos} onChange={setYardPhotos} />
             </div>
           )}
 
@@ -383,7 +387,7 @@ export default function BookingModal({ onClose, onSubmit, preselectedService = n
             disabled={
               (step === 1 && !selectedService) ||
               (step === 3 && (!selectedDate || !selectedTime)) ||
-              (step === 4 && (!form.address || !form.zip_code))
+              (step === 4 && (!form.address || !form.zip_code || yardPhotos.length === 0))
             }
             className="flex-1 bg-primary text-primary-foreground rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >

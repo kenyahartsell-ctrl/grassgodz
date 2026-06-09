@@ -4,10 +4,6 @@ import Stripe from 'npm:stripe@16.0.0';
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
 Deno.serve(async (req) => {
-  console.log('KEY:',
-  Deno.env.get('STRIPE_SECRET_KEY')?.
-  substring(0,15));
-
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -23,10 +19,37 @@ Deno.serve(async (req) => {
     let accountId = profile.stripe_connect_account_id;
 
     if (!accountId) {
-      const hasBusinessName = !!profile.business_name;
+      // Parse name into first/last
+      const nameParts = (profile.name || user.full_name || '').trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Normalize phone to E.164 (strip non-digits, add +1 for US)
+      const rawPhone = (profile.phone || '').replace(/\D/g, '');
+      const e164Phone = rawPhone.length === 10 ? '+1' + rawPhone : rawPhone.length === 11 && rawPhone.startsWith('1') ? '+' + rawPhone : undefined;
+
+      // Always use individual — most providers are sole proprietors.
+      // business_profile.name lets them still brand themselves without triggering
+      // Stripe's full company verification flow.
       const accountPayload = {
         type: 'express',
         email: user.email,
+        business_type: 'individual',
+        individual: {
+          email: user.email,
+          first_name: firstName,
+          last_name: lastName,
+          ...(e164Phone && { phone: e164Phone }),
+        },
+        business_profile: {
+          // Pre-fill their business name so Stripe doesn't ask for it
+          name: profile.business_name || (firstName + (lastName ? ' ' + lastName : '') + ' Lawn Care'),
+          // Pre-fill website so they don't have to look it up
+          url: 'https://grassgodz.com',
+          // Lawn care / landscaping MCC
+          mcc: '0780',
+          product_description: 'Residential lawn care and landscaping services provided through the Grassgodz marketplace.',
+        },
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
@@ -36,18 +59,6 @@ Deno.serve(async (req) => {
           grassgodz_user_email: user.email,
         },
       };
-
-      if (hasBusinessName) {
-        accountPayload.business_type = 'company';
-        accountPayload.company = { name: profile.business_name };
-      } else {
-        accountPayload.business_type = 'individual';
-        accountPayload.individual = {
-          email: user.email,
-          first_name: profile.name?.split(' ')[0] || '',
-          last_name: profile.name?.split(' ').slice(1).join(' ') || '',
-        };
-      }
 
       const account = await stripe.accounts.create(accountPayload);
       accountId = account.id;
@@ -66,8 +77,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ url: accountLink.url, account_id: accountId });
   } catch (error) {
-    console.error('ERROR:',error.message,error.code,error.type);
-    return Response.json({error:error.message},{status:500});
-
+    console.error('createStripeConnectAccount error:', error.message, error.code, error.type);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });

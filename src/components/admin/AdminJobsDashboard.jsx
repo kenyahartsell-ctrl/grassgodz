@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { format, isBefore, isToday, isFuture, startOfDay, parseISO, differenceInCalendarDays } from 'date-fns';
+import { format, isBefore, isToday, isFuture, startOfDay, parseISO, differenceInCalendarDays } from 'date-fns';, addDays
 import {
   CheckCircle2, AlertCircle, Clock, RefreshCw, ChevronLeft, ChevronRight,
   Plus, DollarSign, CloudRain, CheckCircle, Trash2, Camera, MessageSquare, ImagePlus,
@@ -85,45 +85,6 @@ function ScheduledJobsAtAGlance({ jobs }) {
         </div>
       )}
 
-      {/* Upcoming Jobs */}
-      {upcoming.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <CalendarDays size={15} className="text-blue-500" />
-            <h3 className="text-sm font-bold text-foreground">Upcoming Jobs <span className="font-normal text-muted-foreground ml-1">({upcoming.length})</span></h3>
-          </div>
-          <div className="bg-card border border-blue-200 rounded-xl overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-blue-100 text-muted-foreground bg-blue-50/50">
-                  <th className="text-left px-4 py-2 font-semibold">Customer</th>
-                  <th className="text-left px-4 py-2 font-semibold hidden sm:table-cell">Address</th>
-                  <th className="text-left px-4 py-2 font-semibold hidden md:table-cell">Provider</th>
-                  <th className="text-left px-4 py-2 font-semibold">Service</th>
-                  <th className="text-center px-4 py-2 font-semibold">Status</th>
-                  <th className="text-center px-4 py-2 font-semibold">In</th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcoming.map((j, i) => {
-                  const days = differenceInCalendarDays(new Date(j.scheduled_date), new Date());
-                  return (
-                    <tr key={j.id} className={`${i < upcoming.length - 1 ? 'border-b border-border' : ''} hover:bg-blue-50/30 transition-colors`}>
-                      <td className="px-4 py-2.5 font-medium text-foreground">
-                        <Link to={`/jobs/${j.id}`} className="hover:text-primary hover:underline">{j.customer_name || '—'}</Link>
-                      </td>
-                      <td className="px-4 py-2.5 text-muted-foreground hidden sm:table-cell max-w-[160px] truncate">{j.address || '—'}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground hidden md:table-cell">{j.provider_name || 'Unassigned'}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{j.service_name || '—'}</td>
-                      <td className="px-4 py-2.5 text-center"><span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-semibold">{j.status?.replace(/_/g, ' ')}</span></td>
-                      <td className="px-4 py-2.5 text-center font-semibold text-blue-700 whitespace-nowrap">{days}d</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
       )}
     </div>
   );
@@ -438,6 +399,41 @@ function CalendarSection({ scheduledJobs, allJobs }) {
       </div>
     </div>
   );
+
+      {/* Biweekly Jobs — release to make visible in daily list */}
+      {(() => {
+        const biweeklyPending = allJobs.filter(j => j.recurrence === 'biweekly' && !['completed','cancelled'].includes(j.status)).sort((a,b) => (a.scheduled_date||'').localeCompare(b.scheduled_date||''));
+        if (biweeklyPending.length === 0) return null;
+        return (
+          <div className="mt-5">
+            <h4 className="text-sm font-bold text-foreground mb-2">Biweekly Jobs ({biweeklyPending.length})</h4>
+            <p className="text-xs text-muted-foreground mb-3">These jobs only appear in the daily list after you release them.</p>
+            <div className="space-y-2">
+              {biweeklyPending.map(j => (
+                <div key={j.id} className="flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3 gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{j.service_name} — {j.customer_name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}) : "No date"} · {j.provider_name || "Unassigned"}</p>
+                  </div>
+                  {j.biweekly_released ? (
+                    <span className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-3 py-1 rounded-full flex-shrink-0">Released ✓</span>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        await (await import('@/api/base44Client')).base44.entities.Job.update(j.id, { biweekly_released: true });
+                        window.location.reload();
+                      }}
+                      className="text-xs font-semibold bg-primary text-primary-foreground px-3 py-1 rounded-full hover:bg-primary/90 transition-colors flex-shrink-0"
+                    >
+                      Release
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 }
 
 // ─── Job Card (shared between columns) ───────────────────────────────────────
@@ -541,6 +537,7 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
   const [scheduledJobs, setScheduledJobs] = useState([]);
   const [loadingScheduled, setLoadingScheduled] = useState(true);
   const [pendingFilter, setPendingFilter] = useState('all');
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
     base44.entities.ScheduledJob.list('-created_date', 100)
@@ -551,8 +548,15 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
   const pendingStatuses = ['pending_deposit', 'pending_payment', 'requested', 'quoted', 'accepted', 'scheduled', 'in_progress', 'cancelled'];
   const pendingJobs = jobs
     .filter(j => j.status !== 'completed')
-    .filter(j => pendingFilter === 'all' || j.status === pendingFilter)
+    .filter(j => {
+      // Biweekly jobs only appear after release
+      if (j.recurrence === 'biweekly' && !j.biweekly_released) return false;
+      // Date filter: show jobs for selected date, or unscheduled jobs
+      if (j.scheduled_date && j.scheduled_date !== selectedDate) return false;
+      return pendingFilter === 'all' || j.status === pendingFilter;
+    })
     .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+  const biweeklyHiddenCount = jobs.filter(j => j.recurrence === 'biweekly' && !j.biweekly_released && !['completed','cancelled'].includes(j.status)).length;
   const completedJobs = jobs
     .filter(j => j.status === 'completed')
     .sort((a, b) => new Date(b.completed_at || b.updated_date) - new Date(a.completed_at || a.updated_date));
@@ -576,7 +580,27 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
       {/* Two-column board */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
-        {/* ── Pending Column ── */}
+        {/* Date navigator */}
+            <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-xl px-4 py-2.5">
+              <button onClick={() => setSelectedDate(d => format(addDays(new Date(d + "T12:00:00"), -1), "yyyy-MM-dd"))}
+                className="p-1.5 rounded-lg hover:bg-card transition-colors"><ChevronLeft size={16} /></button>
+              <button onClick={() => setSelectedDate(format(new Date(), "yyyy-MM-dd"))}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${selectedDate === format(new Date(),"yyyy-MM-dd") ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}>
+                Today
+              </button>
+              <span className="flex-1 text-center text-sm font-bold text-foreground">
+                {format(new Date(selectedDate + "T12:00:00"), "EEEE, MMMM d")}
+              </span>
+              <button onClick={() => setSelectedDate(d => format(addDays(new Date(d + "T12:00:00"), 1), "yyyy-MM-dd"))}
+                className="p-1.5 rounded-lg hover:bg-card transition-colors"><ChevronRight size={16} /></button>
+            </div>
+            {biweeklyHiddenCount > 0 && (
+              <button onClick={() => setActiveTab("calendar")} className="w-full text-xs text-center text-primary font-semibold py-1.5 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">
+                {biweeklyHiddenCount} biweekly job{biweeklyHiddenCount > 1 ? "s" : ""} hidden — view & release on Calendar ↗
+              </button>
+            )}
+      
+            {/* ── Pending Column ── */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex items-center gap-2">

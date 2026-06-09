@@ -156,18 +156,21 @@ if (!form.password) errs.password = 'Password is required';
       // Set role to 'user' (customer)
       await base44.auth.updateMe({ role: 'user' });
 
-      // Create the customer profile
-      const profileData = {
-        name: form.name,
-        phone: form.phone,
-        service_address: form.serviceAddress,
-        billing_address: form.billingSame ? form.serviceAddress : form.billingAddress,
-        zip_code: form.zip,
-        user_email: form.email,
-        sms_opt_in: form.smsOptIn,
-        sms_opt_in_date: form.smsOptIn ? new Date().toISOString() : null,
-      };
-      await base44.functions.invoke('createCustomerProfile', profileData);
+      // Create the customer profile — guard against duplicates (e.g. OTP retry)
+      const existing = await base44.entities.CustomerProfile.filter({ user_email: form.email });
+      if (!existing || existing.length === 0) {
+        const profileData = {
+          name: form.name,
+          phone: form.phone,
+          service_address: form.serviceAddress,
+          billing_address: form.billingSame ? form.serviceAddress : form.billingAddress,
+          zip_code: form.zip,
+          user_email: form.email,
+          sms_opt_in: form.smsOptIn,
+          sms_opt_in_date: form.smsOptIn ? new Date().toISOString() : null,
+        };
+        await base44.functions.invoke('createCustomerProfile', profileData);
+      }
 
       // Navigate to dashboard
       navigate('/customer', { replace: true });

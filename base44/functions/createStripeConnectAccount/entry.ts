@@ -16,40 +16,51 @@ Deno.serve(async (req) => {
     if (!profile) return Response.json({ error: 'Provider profile not found' }, { status: 404 });
     if (profile.id !== provider_id) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
+    const hasBusinessName = !!profile.business_name;
+    const firstName = profile.name?.split(' ')[0] || '';
+    const lastName  = profile.name?.split(' ').slice(1).join(' ') || '';
+    const phone     = profile.phone || undefined;
+    const firstZip  = profile.service_zip_codes?.[0];
+    const siteUrl   = profile.website ? profile.website : 'https://grassgodz.com';
+
+    // Data pre-filled into Stripe — reduces provider friction
+    const prefill = {
+      business_profile: {
+        url: siteUrl,
+        name: profile.business_name || profile.name || undefined,
+        product_description: 'Professional lawn care and landscaping services provided through the Grassgodz platform.',
+        mcc: '0780', // Landscape and Horticultural Services
+      },
+      settings: {
+        payouts: {
+          schedule: { interval: 'weekly', weekly_anchor: 'friday' },
+        },
+      },
+    };
+
+    if (hasBusinessName) {
+      prefill.business_type = 'company';
+      prefill.company = {
+        name: profile.business_name,
+        ...(phone ? { phone } : {}),
+      };
+    } else {
+      prefill.business_type = 'individual';
+      prefill.individual = {
+        email: user.email,
+        first_name: firstName,
+        last_name: lastName,
+        ...(phone ? { phone } : {}),
+        ...(firstZip ? { address: { postal_code: firstZip, country: 'US' } } : {}),
+      };
+    }
+
     let accountId = profile.stripe_connect_account_id;
 
     if (!accountId) {
-      // Parse name into first/last
-      const nameParts = (profile.name || user.full_name || '').trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
-      // Normalize phone to E.164 (strip non-digits, add +1 for US)
-      const rawPhone = (profile.phone || '').replace(/\D/g, '');
-      const e164Phone = rawPhone.length === 10 ? '+1' + rawPhone : rawPhone.length === 11 && rawPhone.startsWith('1') ? '+' + rawPhone : undefined;
-
-      // Always use individual — most providers are sole proprietors.
-      // business_profile.name lets them still brand themselves without triggering
-      // Stripe's full company verification flow.
-      const accountPayload = {
+      const account = await stripe.accounts.create({
         type: 'express',
         email: user.email,
-        business_type: 'individual',
-        individual: {
-          email: user.email,
-          first_name: firstName,
-          last_name: lastName,
-          ...(e164Phone && { phone: e164Phone }),
-        },
-        business_profile: {
-          // Pre-fill their business name so Stripe doesn't ask for it
-          name: profile.business_name || (firstName + (lastName ? ' ' + lastName : '') + ' Lawn Care'),
-          // Pre-fill website so they don't have to look it up
-          url: 'https://grassgodz.com',
-          // Lawn care / landscaping MCC
-          mcc: '0780',
-          product_description: 'Residential lawn care and landscaping services provided through the Grassgodz marketplace.',
-        },
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
@@ -58,13 +69,15 @@ Deno.serve(async (req) => {
           grassgodz_provider_id: profile.id,
           grassgodz_user_email: user.email,
         },
-      };
-
-      const account = await stripe.accounts.create(accountPayload);
+        ...prefill,
+      });
       accountId = account.id;
       await base44.entities.ProviderProfile.update(profile.id, {
         stripe_connect_account_id: accountId,
       });
+    } else {
+      // Refresh pre-filled data on the existing account (non-blocking)
+      stripe.accounts.update(accountId, prefill).catch(() => {});
     }
 
     const origin = return_url || req.headers.get('origin') + '/provider';
@@ -77,7 +90,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ url: accountLink.url, account_id: accountId });
   } catch (error) {
-    console.error('createStripeConnectAccount error:', error.message, error.code, error.type);
+    console.error('Stripe connect error:', error.message, error.code);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

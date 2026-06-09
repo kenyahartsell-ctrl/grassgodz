@@ -34,6 +34,7 @@ import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import AdminCashOverridePanel from '@/components/admin/AdminCashOverridePanel';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -50,6 +51,7 @@ const NAV = [
   { key: 'ziplookup', label: 'Zip Lookup', icon: MapPin },
   { key: 'accounts', label: 'Accounts', icon: UserCheck },
 { key: 'complaints', label: 'Complaints', icon: Flag },
+  { key: 'cash', label: 'Cash OK', icon: DollarSign },
 ];
 
 export default function AdminPortal() {
@@ -647,6 +649,7 @@ export default function AdminPortal() {
                 tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
+        {tab === 'cash' && <AdminCashOverridePanel jobs={jobs} providers={providers} customers={customers} onRefresh={loadAll} />}
               <Icon size={18} />
               <span className="whitespace-nowrap">{label}</span>
             </button>

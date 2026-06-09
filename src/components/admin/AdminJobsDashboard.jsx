@@ -5,10 +5,11 @@ import { format, isBefore, isToday, isFuture, startOfDay, parseISO, differenceIn
 import {
   CheckCircle2, AlertCircle, Clock, RefreshCw, ChevronLeft, ChevronRight,
   Plus, DollarSign, CloudRain, CheckCircle, Trash2, Camera, MessageSquare, ImagePlus,
-  Banknote, CreditCard, CalendarDays, Sun,
+  Banknote, CreditCard, CalendarDays, Sun, Receipt,
 } from 'lucide-react';
 import BiweeklyPrompt from '@/components/admin/BiweeklyPrompt';
 import AdminPhotoUploadModal from '@/components/admin/AdminPhotoUploadModal';
+import AdminProviderPayoutModal from '@/components/admin/AdminProviderPayoutModal';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -320,6 +321,114 @@ function RecurringCustomersSection({ scheduledJobs, completedJobs }) {
   );
 }
 
+// ─── Provider Payouts Summary ───────────────────────────────────────────────
+function ProviderPayoutsSummary({ jobs }) {
+  const [payoutJob, setPayoutJob] = useState(null);
+  const [localJobs, setLocalJobs] = useState(jobs);
+  useState(() => { setLocalJobs(jobs); }, [jobs]);
+
+  const completed = [...localJobs]
+    .filter(j => j.status === 'completed')
+    .sort((a, b) => (a.provider_name || '').localeCompare(b.provider_name || ''));
+
+  const paidOut   = completed.filter(j => j.provider_payout_status === 'paid_out').length;
+  const notPaidOut = completed.filter(j => j.provider_payout_status !== 'paid_out').length;
+
+  const handleSaved = (updated) => {
+    setLocalJobs(prev => prev.map(j => j.id === updated.id ? { ...j, ...updated } : j));
+  };
+
+  return (
+    <div>
+      <h3 className='text-base font-bold text-foreground mb-1'>Provider Payouts</h3>
+      <div className='flex gap-3 mb-4'>
+        <div className='flex-1 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-center'>
+          <p className='text-2xl font-bold text-green-700'>{paidOut}</p>
+          <p className='text-xs text-green-600 font-semibold mt-0.5'>Paid Out</p>
+        </div>
+        <div className='flex-1 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-center'>
+          <p className='text-2xl font-bold text-amber-700'>{notPaidOut}</p>
+          <p className='text-xs text-amber-600 font-semibold mt-0.5'>Not Paid Out</p>
+        </div>
+      </div>
+      {completed.length === 0 ? (
+        <p className='text-sm text-muted-foreground text-center py-10'>No completed jobs yet.</p>
+      ) : (
+        <div className='bg-card border border-border rounded-xl overflow-x-auto'>
+          <table className='w-full text-xs'>
+            <thead>
+              <tr className='border-b border-border text-muted-foreground'>
+                <th className='text-left px-4 py-2 font-semibold'>Provider</th>
+                <th className='text-left px-4 py-2 font-semibold hidden sm:table-cell'>Customer</th>
+                <th className='text-left px-4 py-2 font-semibold hidden md:table-cell'>Completed</th>
+                <th className='text-right px-4 py-2 font-semibold'>Job Amount</th>
+                <th className='text-right px-4 py-2 font-semibold'>Provider Share</th>
+                <th className='text-center px-4 py-2 font-semibold'>Payout Status</th>
+                <th className='text-center px-4 py-2 font-semibold'>Receipt</th>
+                <th className='text-center px-4 py-2 font-semibold'>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {completed.map((j, i) => {
+                const amount = j.final_price || j.quoted_price;
+                const share  = amount ? (Number(amount) * 0.9).toFixed(2) : null;
+                const isPaidOut = j.provider_payout_status === 'paid_out';
+                return (
+                  <tr key={j.id} className={`${i < completed.length - 1 ? 'border-b border-border' : ''} ${isPaidOut ? 'hover:bg-muted/20' : 'bg-amber-50/30 hover:bg-amber-50/60'} transition-colors`}>
+                    <td className='px-4 py-3 font-semibold text-foreground'>{j.provider_name || 'Unassigned'}</td>
+                    <td className='px-4 py-3 text-muted-foreground hidden sm:table-cell'>{j.customer_name || '—'}</td>
+                    <td className='px-4 py-3 text-muted-foreground hidden md:table-cell whitespace-nowrap'>{j.completed_at ? new Date(j.completed_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+                    <td className='px-4 py-3 text-right font-semibold text-foreground'>{amount ? `$${Number(amount).toFixed(2)}` : '—'}</td>
+                    <td className='px-4 py-3 text-right font-bold text-green-700'>{share ? `$${share}` : '—'}</td>
+                    <td className='px-4 py-3 text-center'>
+                      {isPaidOut ? (
+                        <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold text-[10px] border border-green-200'>
+                          <CheckCircle2 size={9} /> Paid Out
+                        </span>
+                      ) : (
+                        <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold text-[10px] border border-amber-200'>
+                          <Clock size={9} /> Pending
+                        </span>
+                      )}
+                      {isPaidOut && j.provider_payout_date && (
+                        <p className='text-[10px] text-muted-foreground mt-0.5'>{new Date(j.provider_payout_date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</p>
+                      )}
+                    </td>
+                    <td className='px-4 py-3 text-center'>
+                      {j.provider_payout_receipt?.url ? (
+                        <a href={j.provider_payout_receipt.url} target='_blank' rel='noopener noreferrer'
+                          className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-semibold border border-blue-200 hover:bg-blue-100'>
+                          <Receipt size={9} /> View
+                        </a>
+                      ) : (
+                        <span className='text-[10px] text-muted-foreground'>—</span>
+                      )}
+                    </td>
+                    <td className='px-4 py-3 text-center'>
+                      <button
+                        onClick={() => setPayoutJob(j)}
+                        className='px-2 py-1 text-[10px] font-semibold bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors'
+                      >
+                        {isPaidOut ? 'Edit' : 'Record Payout'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {payoutJob && (
+        <AdminProviderPayoutModal
+          job={payoutJob}
+          onClose={() => setPayoutJob(null)}
+          onSaved={(updated) => { handleSaved(updated); setPayoutJob(null); }}
+        />
+      )}
+    </div>
+  );
+}
 // ─── Calendar ────────────────────────────────────────────────────────────────
 function CalendarSection({ scheduledJobs, allJobs }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -439,6 +548,8 @@ function CalendarSection({ scheduledJobs, allJobs }) {
 // ─── Job Card (shared between columns) ───────────────────────────────────────
 function JobCard({ job: j, handlers, isCompleted }) {
   const [showBiweekly, setShowBiweekly] = useState(isCompleted);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [localPayoutStatus, setLocalPayoutStatus] = useState(j.provider_payout_status || 'pending');
   const isCash = j.cash_paid || j.payment_method === 'cash';
   const price = j.final_price || j.quoted_price;
   const payStatus = j.admin_payment_status || (isPaid(j) ? 'paid' : 'payment_pending');
@@ -469,8 +580,17 @@ function JobCard({ job: j, handlers, isCompleted }) {
       <div className="flex flex-wrap gap-1.5 items-center">
         <StatusBadge status={j.status} />
         {isCompleted && (
-          <AdminPaymentToggle job={j} />
-        )}
+                  <AdminPaymentToggle job={j} />
+                )}
+                {isCompleted && (
+                  <button
+                    onClick={() => setShowPayoutModal(true)}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold text-[10px] border transition-colors cursor-pointer hover:opacity-80 ${localPayoutStatus === 'paid_out' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}
+                  >
+                    <Receipt size={10} />
+                    {localPayoutStatus === 'paid_out' ? 'Payout ✓' : 'Payout Pending'}
+                  </button>
+                )}
       </div>
 
       {j.status === 'cancelled' && j.cancellation_reason && (
@@ -516,7 +636,16 @@ function JobCard({ job: j, handlers, isCompleted }) {
         </button>
       </div>
 
-      {/* Bi-weekly prompt for newly completed jobs */}
+      {/* Provider payout modal */}
+            {showPayoutModal && (
+              <AdminProviderPayoutModal
+                job={j}
+                onClose={() => setShowPayoutModal(false)}
+                onSaved={(updated) => { setLocalPayoutStatus(updated.provider_payout_status || 'pending'); setShowPayoutModal(false); }}
+              />
+            )}
+      
+            {/* Bi-weekly prompt for newly completed jobs */}
       {isCompleted && showBiweekly && (
         <BiweeklyPrompt job={j} onDismiss={() => setShowBiweekly(false)} />
       )}
@@ -529,6 +658,7 @@ const EXTRA_TABS = [
   { key: 'outstanding', label: 'Outstanding' },
   { key: 'recurring', label: 'Recurring' },
   { key: 'calendar', label: 'Calendar' },
+  { key: 'payouts', label: 'Payouts' },
 ];
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
@@ -670,6 +800,7 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
         {activeTab === 'recurring' && !loadingScheduled && (
           <RecurringCustomersSection scheduledJobs={scheduledJobs} completedJobs={completedJobs} />
         )}
+        {activeTab === 'payouts' && <ProviderPayoutsSummary jobs={jobs} />}
         {activeTab === 'calendar' && !loadingScheduled && (
           <CalendarSection scheduledJobs={scheduledJobs} allJobs={jobs} />
         )}

@@ -10,10 +10,20 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true });
     }
 
+    // Skip payments not linked to a job (e.g. invoice-only payments)
+    if (!data.job_id) {
+      return Response.json({ skipped: true, reason: 'no job_id on payment' });
+    }
+
     // Fetch the related job to get customer info
-    const job = await base44.asServiceRole.entities.Job.get(data.job_id);
+    let job;
+    try {
+      job = await base44.asServiceRole.entities.Job.get(data.job_id);
+    } catch (_) {
+      return Response.json({ skipped: true, reason: 'job lookup failed' });
+    }
     if (!job || !job.customer_email) {
-      return Response.json({ error: 'Job or customer email not found' }, { status: 404 });
+      return Response.json({ skipped: true, reason: 'job or customer email not found' });
     }
 
     await base44.asServiceRole.integrations.Core.SendEmail({

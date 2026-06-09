@@ -101,7 +101,25 @@ export default function CustomerPortal() {
   };
 
   const reviewedJobIds = new Set(reviews.map(r => r.job_id));
-  const upcomingJobs = jobs.filter(j => ['scheduled', 'accepted', 'in_progress', 'quoted', 'requested'].includes(j.status));
+
+  // For recurring jobs, only show the next upcoming one (the earliest scheduled_date per recurrence group)
+  const deduplicatedUpcoming = (() => {
+    const active = jobs.filter(j => ['scheduled', 'accepted', 'in_progress', 'quoted', 'requested'].includes(j.status));
+    const seen = new Set();
+    const result = [];
+    // Sort by date so we pick the earliest per recurrence group
+    const sorted = [...active].sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+    for (const j of sorted) {
+      const groupKey = j.recurrence_parent_id || j.id;
+      if (!seen.has(groupKey)) {
+        seen.add(groupKey);
+        result.push(j);
+      }
+    }
+    return result;
+  })();
+
+  const upcomingJobs = deduplicatedUpcoming;
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
   const activeScheduledJobs = scheduledJobs.filter(sj => sj.status !== 'stopped');
 

@@ -105,7 +105,12 @@ function CardGate({ customerProfile, onCardSaved, onCancel }) {
 
   return (
     <Elements stripe={stripePromise}>
-      <CardGateForm customerProfile={customerProfile} onCardSaved={onCardSaved} onCancel={onCancel} />
+{cashApproved && (
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-3">
+            <p className="text-green-700 text-xs font-semibold">✓ Cash payment approved by admin — no card required.</p>
+          </div>
+        )}
+              <CardGateForm customerProfile={customerProfile} onCardSaved={onCardSaved} onCancel={onCancel} />
     </Elements>
   );
 }
@@ -130,7 +135,8 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
   const handleSubmit = (e) => {
     e.preventDefault();
     const hasCard = !!(savedPmId || customerProfile?.default_payment_method_id);
-    if (!hasCard) {
+  const cashApproved = customerProfile?.allow_cash_payment;
+    if (!hasCard && !cashApproved) {
       // Save form and show card gate
       setPendingForm({ ...form, service_id: service.id, service_name: service.name });
       setShowCardGate(true);

@@ -4,6 +4,7 @@ import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
 import BookingRequestCard from '../components/provider/BookingRequestCard';
 import ProviderJobMap from '../components/provider/ProviderJobMap';
+import ScheduledJobsMap from '../components/provider/ScheduledJobsMap';
 import StarRating from '../components/shared/StarRating';
 import MetricCard from '../components/shared/MetricCard';
 import MyQuotesPanel from '@/components/provider/MyQuotesPanel';
@@ -441,6 +442,8 @@ export default function ProviderPortal() {
         {tab === 'myjobs' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">My Jobs</h2>
+            <ScheduledJobsMap jobs={myJobs} />
+
             {inProgress.length > 0 && (
               <div className="mb-5">
                 <h3 className="text-sm font-semibold text-orange-700 mb-3">In Progress</h3>

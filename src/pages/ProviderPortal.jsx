@@ -163,6 +163,8 @@ export default function ProviderPortal() {
       price: quoteData.price,
       message: quoteData.message,
       status: 'pending',
+      provider_avg_rating: providerProfile.avg_rating || null,
+      provider_total_jobs: providerProfile.total_jobs_completed || 0,
     });
     // Update job status to 'quoted' so the customer sees the provider responded
     await base44.functions.invoke('updateJobToQuoted', {

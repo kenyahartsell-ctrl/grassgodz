@@ -64,6 +64,7 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
     notify_job_updates: profile?.notify_job_updates ?? true,
     notify_payment_received: profile?.notify_payment_received ?? true,
     notify_promotions: profile?.notify_promotions ?? false,
+    website: profile?.website || '',
   });
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
@@ -114,6 +115,7 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
         notify_job_updates: form.notify_job_updates,
         notify_payment_received: form.notify_payment_received,
         notify_promotions: form.notify_promotions,
+        website: form.website,
       };
       if (profile?.id) {
         const res = await base44.functions.invoke('updateMyProviderProfile', { profile_id: profile.id, ...payload });
@@ -145,6 +147,7 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
       notify_job_updates: profile?.notify_job_updates ?? true,
       notify_payment_received: profile?.notify_payment_received ?? true,
       notify_promotions: profile?.notify_promotions ?? false,
+      website: profile?.website || '',
     });
     setEditing(false);
   };
@@ -201,6 +204,7 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
               { label: 'Full Name', value: profile?.name || user?.full_name || '—' },
               { label: 'Business Name', value: profile?.business_name || '—' },
               { label: 'Phone', value: profile?.phone || '—' },
+              { label: 'Website', value: profile?.website || '—' },
               { label: 'Years of Experience', value: profile?.years_experience ? `${profile.years_experience} years` : '—' },
               { label: 'Vehicle', value: [profile?.vehicle_year, profile?.vehicle_make, profile?.vehicle_model].filter(Boolean).join(' ') || '—' },
               { label: 'Service ZIPs', value: profile?.service_zip_codes?.join(', ') || '—' },
@@ -280,6 +284,12 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
               <label className="text-xs font-medium text-muted-foreground">Bio</label>
               <textarea value={form.bio} onChange={e => set('bio', e.target.value)}
                 rows={3} placeholder="Tell customers about yourself..."
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Website <span className="text-muted-foreground/60">(optional — used for Stripe onboarding)</span></label>
+              <input value={form.website} onChange={e => set('website', e.target.value)}
+                placeholder="https://yourbusiness.com (leave blank to use grassgodz.com)"
+                className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
+            </div>
                 className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
             </div>
 

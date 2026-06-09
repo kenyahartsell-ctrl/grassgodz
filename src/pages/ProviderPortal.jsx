@@ -27,6 +27,77 @@ const NAV = [
   { key: 'profile', label: 'Profile', icon: User },
 ];
 
+
+function BiWeeklyCalendar({ jobs }) {
+  const [viewDate, setViewDate] = useState(new Date());
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const scheduledDays = new Set(
+    jobs.filter(j => j.scheduled_date).map(j => {
+      const d = new Date(j.scheduled_date);
+      return d.getFullYear() === year && d.getMonth() === month ? d.getDate() : null;
+    }).filter(Boolean)
+  );
+  const jobsByDay = {};
+  jobs.forEach(j => {
+    if (!j.scheduled_date) return;
+    const d = new Date(j.scheduled_date);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate();
+      if (!jobsByDay[day]) jobsByDay[day] = [];
+      jobsByDay[day].push(j);
+    }
+  });
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  const today = new Date();
+  const isToday = (d) => today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+  return (
+    <div className="bg-card border border-border rounded-xl p-4">
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground text-lg leading-none">‹</button>
+        <p className="text-sm font-bold text-foreground">{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+        <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground text-lg leading-none">›</button>
+      </div>
+      <div className="grid grid-cols-7 mb-1">
+        {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
+          <div key={d} className="text-center text-[10px] font-semibold text-muted-foreground py-1">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-0.5">
+        {cells.map((day, idx) => (
+          <div key={idx} className={`aspect-square flex flex-col items-center justify-center rounded-lg text-xs ${!day ? '' : isToday(day) ? 'bg-primary text-primary-foreground font-bold' : scheduledDays.has(day) ? 'bg-green-100 text-green-800 font-semibold ring-1 ring-green-400' : 'text-foreground'}`}>
+            {day && <span>{day}</span>}
+            {day && scheduledDays.has(day) && <span className="w-1 h-1 rounded-full bg-green-600 mt-0.5" />}
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 border-t border-border pt-3">
+        <p className="text-xs font-semibold text-foreground mb-2">Bi-Weekly Jobs This Month</p>
+        {Object.keys(jobsByDay).length === 0 ? (
+          <p className="text-xs text-muted-foreground">No bi-weekly jobs this month.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {Object.entries(jobsByDay).sort(([a],[b]) => Number(a)-Number(b)).flatMap(([day, dayJobs]) =>
+              dayJobs.map(j => (
+                <div key={j.id} className="flex items-center gap-2 text-xs">
+                  <span className="w-16 flex-shrink-0 font-medium text-foreground">
+                    {new Date(year, month, Number(day)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                  <span className="text-muted-foreground truncate">{j.service_name} — {j.customer_name}</span>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ProviderPortal() {
   const [tab, setTab] = useState('dashboard');
   const [user, setUser] = useState(null);
@@ -431,8 +502,6 @@ export default function ProviderPortal() {
         {tab === 'myjobs' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">My Jobs</h2>
-            <ScheduledJobsMap jobs={myJobs} />
-
             {inProgress.length > 0 && (
               <div className="mb-5">
                 <h3 className="text-sm font-semibold text-orange-700 mb-3">In Progress</h3>
@@ -441,24 +510,45 @@ export default function ProviderPortal() {
                 </div>
               </div>
             )}
-            {scheduled.length > 0 && (
-              <div className="mb-5">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Scheduled</h3>
-                <div className="space-y-3">
-                  {scheduled.map(j => (
-                    <div key={j.id}>
-                      {unpaidInvoiceJobIds.has(j.id) && (
-                        <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-t-xl px-3 py-2 -mb-1">
-                          <Clock size={12} className="flex-shrink-0" />
-                          Awaiting customer payment before job can begin.
-                        </div>
-                      )}
-                      <ProviderJobCard job={j} onMarkInProgress={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkInProgress} onMarkComplete={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkComplete} onJobCancelled={refreshJobs} />
+            {(() => {
+              const pendingJobs = scheduled.filter(j => !j.recurrence || j.recurrence !== 'biweekly');
+              const biweeklyJobs = scheduled.filter(j => j.recurrence === 'biweekly');
+              return (
+                <>
+                  {pendingJobs.length > 0 && (
+                    <div className="mb-5">
+                      <h3 className="text-sm font-semibold text-foreground mb-3">Scheduled Jobs</h3>
+                      <div className="space-y-3">
+                        {pendingJobs.map(j => (
+                          <div key={j.id}>
+                            {unpaidInvoiceJobIds.has(j.id) && (
+                              <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-t-xl px-3 py-2 -mb-1">
+                                <Clock size={12} className="flex-shrink-0" />
+                                Awaiting customer payment before job can begin.
+                              </div>
+                            )}
+                            <ProviderJobCard job={j} onMarkInProgress={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkInProgress} onMarkComplete={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkComplete} onJobCancelled={refreshJobs} />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  )}
+                  {biweeklyJobs.length > 0 && (
+                    <div className="mb-5">
+                      <h3 className="text-sm font-semibold text-foreground mb-3">Bi-Weekly Schedule</h3>
+                      <BiWeeklyCalendar jobs={biweeklyJobs} />
+                    </div>
+                  )}
+                  {pendingJobs.length === 0 && biweeklyJobs.length === 0 && inProgress.length === 0 && completed.length === 0 && (
+                    <div className="text-center py-16">
+                      <CalendarDays className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-muted-foreground font-medium">No jobs yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">Accept bookings or submit quotes to get started.</p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
             {completed.length > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-muted-foreground mb-3">Completed</h3>
@@ -467,16 +557,9 @@ export default function ProviderPortal() {
                 </div>
               </div>
             )}
-            {myJobs.length === 0 && (
-              <div className="text-center py-16">
-                <CalendarDays className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground font-medium">No jobs yet</p>
-                <p className="text-sm text-muted-foreground mt-1">Accept bookings or submit quotes to get started.</p>
-              </div>
-            )}
           </div>
         )}
-
+        
         {tab === 'earnings' && (
           <div>
             <div className="flex items-center justify-between mb-5">

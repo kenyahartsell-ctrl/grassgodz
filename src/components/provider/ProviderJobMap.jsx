@@ -53,6 +53,8 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
     maxDistance: 100,
     serviceType: '',
   });
+  const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/satellite-streets-v12');
+  const isSatellite = mapStyle === 'mapbox://styles/mapbox/satellite-streets-v12';
 
   // Geolocate provider
   useEffect(() => {
@@ -244,12 +246,22 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
             </div>
           )}
 
+          {/* Map style toggle */}
+          <div className="absolute top-3 left-3 z-20">
+            <button
+              onClick={() => setMapStyle(isSatellite ? 'mapbox://styles/mapbox/streets-v12' : 'mapbox://styles/mapbox/satellite-streets-v12')}
+              className="bg-white rounded-lg shadow px-3 py-2 flex items-center gap-2 text-xs font-semibold text-foreground hover:bg-gray-50 transition-colors border border-border"
+            >
+              {isSatellite ? '🗺 Street View' : '🛰 Satellite View'}
+            </button>
+          </div>
+
           <Map
             ref={mapRef}
             {...viewState}
             onMove={(evt) => setViewState(evt.viewState)}
             mapboxAccessToken={MAPBOX_TOKEN}
-            mapStyle="mapbox://styles/mapbox/light-v11"
+            mapStyle={mapStyle}
             style={{ width: '100%', height: '100%' }}
           >
             <NavigationControl position="top-right" />

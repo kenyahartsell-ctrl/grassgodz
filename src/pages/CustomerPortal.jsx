@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PageMeta from '@/components/shared/PageMeta';
-import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt } from 'lucide-react';
+import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt, RefreshCw } from 'lucide-react';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { useLanguage } from '@/lib/LanguageContext';
 import CustomerInvoicesPanel from '@/components/customer/CustomerInvoicesPanel';
@@ -33,6 +33,7 @@ export default function CustomerPortal() {
   const [services, setServices] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [scheduledJobs, setScheduledJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedJobForQuotes, setSelectedJobForQuotes] = useState(null);
@@ -45,22 +46,23 @@ export default function CustomerPortal() {
         const me = await base44.auth.me();
         setUser(me);
 
-        const [profiles, allServices, myJobs, myReviews] = await Promise.all([
+        const [profiles, allServices, myJobs, myReviews, myScheduledJobs] = await Promise.all([
           base44.entities.CustomerProfile.filter({ user_email: me.email }),
           base44.entities.Service.filter({ active: true }),
           base44.entities.Job.filter({ customer_email: me.email }),
           base44.entities.Review.filter({ customer_id: me.email }),
+          base44.entities.ScheduledJob.filter({ client_email: me.email }),
         ]);
 
         const profile = profiles[0] || null;
         setCustomerProfile(profile);
-        // Load language preference from profile
         if (profile?.language) {
           setLang(profile.language);
         }
         setServices(allServices);
         setJobs(myJobs.map(j => ({ ...j, _providerProfile: null })));
         setReviews(myReviews);
+        setScheduledJobs(myScheduledJobs || []);
       } catch (err) {
         toast.error('Failed to load data.');
       } finally {
@@ -76,11 +78,32 @@ export default function CustomerPortal() {
     setJobs(myJobs);
   };
 
+  const handleToggleSchedule = async (sj) => {
+    const newStatus = sj.status === 'active' ? 'paused' : 'active';
+    try {
+      await base44.entities.ScheduledJob.update(sj.id, { status: newStatus });
+      setScheduledJobs(prev => prev.map(s => s.id === sj.id ? { ...s, status: newStatus } : s));
+      toast.success(newStatus === 'paused' ? 'Recurring service paused.' : 'Recurring service resumed.');
+    } catch (err) {
+      toast.error('Could not update schedule: ' + err.message);
+    }
+  };
+
+  const handleCancelSchedule = async (sj) => {
+    if (!confirm('Cancel recurring ' + (sj.service_type || 'service') + '? This cannot be undone.')) return;
+    try {
+      await base44.entities.ScheduledJob.update(sj.id, { status: 'stopped' });
+      setScheduledJobs(prev => prev.map(s => s.id === sj.id ? { ...s, status: 'stopped' } : s));
+      toast.success('Recurring service cancelled.');
+    } catch (err) {
+      toast.error('Could not cancel schedule: ' + err.message);
+    }
+  };
+
   const reviewedJobIds = new Set(reviews.map(r => r.job_id));
   const upcomingJobs = jobs.filter(j => ['scheduled', 'accepted', 'in_progress', 'quoted', 'requested'].includes(j.status));
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
-
-
+  const activeScheduledJobs = scheduledJobs.filter(sj => sj.status !== 'stopped');
 
   const handleRequestJob = async (data) => {
     const baseJobData = {
@@ -93,7 +116,6 @@ export default function CustomerPortal() {
 
     const job = await base44.entities.Job.create(baseJobData);
 
-    // Auto-create recurring future jobs (4 occurrences ahead)
     const newJobs = [{ ...job, _providerProfile: null }];
     if (data.recurrence === 'weekly' || data.recurrence === 'biweekly') {
       const intervalDays = data.recurrence === 'weekly' ? 7 : 14;
@@ -121,12 +143,10 @@ export default function CustomerPortal() {
 
     setJobs(prev => [...prev, ...newJobs]);
     setTab('quotes');
-    toast.success('Request submitted! You\'ll see provider quotes here as they come in. Check your email for confirmation.');
+    toast.success("Request submitted! You'll see provider quotes here as they come in. Check your email for confirmation.");
   };
 
   const handleAcceptQuote = async (quote) => {
-    // Payment authorization is handled inside QuoteCard via authorizePayment backend function.
-    // Here we update quote status via the backend function (customers can't write quotes directly via RLS).
     await base44.functions.invoke('updateQuoteStatus', { quote_id: quote.id, status: 'accepted' });
     await base44.functions.invoke('notifyCustomerJobAccepted', { data: { job_id: quote.job_id } });
     await refreshJobs();
@@ -175,7 +195,6 @@ export default function CustomerPortal() {
         description="Book vetted local lawn care pros in the DC metro area. Honest pricing, insured pros, and zero hassle."
         path="/customer"
       />
-      {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
@@ -190,11 +209,9 @@ export default function CustomerPortal() {
         </div>
       </header>
 
-      {/* Content */}
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {tab === 'home' && (
           <div>
-            {/* Pending quotes alert — prominent banner when provider has responded */}
             {jobs.filter(j => j.status === 'quoted').length > 0 && (
               <div className="mb-4 bg-green-600 border border-green-700 rounded-2xl p-5 shadow-lg">
                 <div className="flex items-start gap-3 mb-3">
@@ -202,9 +219,7 @@ export default function CustomerPortal() {
                     <span className="text-xl">🎉</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-base font-bold text-white">
-                      A provider has quoted your yard!
-                    </p>
+                    <p className="text-base font-bold text-white">A provider has quoted your yard!</p>
                     <p className="text-sm text-green-100 mt-0.5">
                       {jobs.filter(j => j.status === 'quoted').map(j => j.provider_name || 'A provider').join(', ')} submitted a price for your lawn care. Tap below to review and accept.
                     </p>
@@ -219,10 +234,8 @@ export default function CustomerPortal() {
               </div>
             )}
 
-            {/* Profile completion checklist */}
             <ProfileCompletionChecklist profile={customerProfile} onGoToProfile={() => setTab('profile')} />
 
-            {/* Hero */}
             <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full" />
               <div className="absolute -right-2 -bottom-10 w-24 h-24 bg-white/5 rounded-full" />
@@ -247,14 +260,10 @@ export default function CustomerPortal() {
               )}
             </div>
 
-            {/* Services */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-bold text-foreground">{t('request_service')}</h2>
-                <button
-                  onClick={() => setTab('book')}
-                  className="text-xs font-semibold text-primary flex items-center gap-1"
-                >
+                <button onClick={() => setTab('book')} className="text-xs font-semibold text-primary flex items-center gap-1">
                   <CalendarPlus size={13} /> {t('book_a_date')}
                 </button>
               </div>
@@ -265,7 +274,6 @@ export default function CustomerPortal() {
               </div>
             </div>
 
-            {/* Recent Jobs */}
             {upcomingJobs.length > 0 && (
               <div>
                 <h2 className="text-base font-bold text-foreground mb-3">{t('upcoming')}</h2>
@@ -331,7 +339,7 @@ export default function CustomerPortal() {
             )}
 
             {pastJobs.length > 0 && (
-              <div>
+              <div className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
                   <History size={15} className="text-muted-foreground" />
                   <h3 className="text-sm font-semibold text-foreground">{t('past_jobs')}</h3>
@@ -344,7 +352,57 @@ export default function CustomerPortal() {
               </div>
             )}
 
-            {jobs.length === 0 && (
+            {activeScheduledJobs.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <RefreshCw size={15} className="text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Recurring Services</h3>
+                </div>
+                <div className="space-y-3">
+                  {activeScheduledJobs.map(sj => (
+                    <div key={sj.id} className="bg-card border border-border rounded-xl p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground text-sm">{sj.service_type || 'Service'}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{sj.service_address || ''}</p>
+                        </div>
+                        <span className={'text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ' + (sj.status === 'paused' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800')}>
+                          {sj.status === 'paused' ? 'Paused' : 'Active'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
+                        <span className="flex items-center gap-1">
+                          <RefreshCw size={11} />
+                          {sj.recurrence === 'biweekly' ? 'Every 2 weeks' : sj.recurrence === 'weekly' ? 'Weekly' : sj.recurrence || 'Recurring'}
+                        </span>
+                        {sj.next_release_date && (
+                          <span className="flex items-center gap-1">
+                            <Clock size={11} />
+                            Next: {new Date(sj.next_release_date + 'T12:00:00').toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleToggleSchedule(sj)}
+                          className={'flex-1 py-2 rounded-lg text-xs font-semibold transition-colors border ' + (sj.status === 'paused' ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' : 'bg-background text-foreground border-border hover:bg-muted')}
+                        >
+                          {sj.status === 'paused' ? 'Resume' : 'Pause'}
+                        </button>
+                        <button
+                          onClick={() => handleCancelSchedule(sj)}
+                          className="px-3 py-2 rounded-lg text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {jobs.length === 0 && activeScheduledJobs.length === 0 && (
               <div className="text-center py-16">
                 <Briefcase className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground font-medium">{t('no_jobs')}</p>
@@ -377,13 +435,13 @@ export default function CustomerPortal() {
                    };
                    const cfg = statusMap[job.status] || statusMap.requested;
                    return (
-                     <div key={job.id} className={`bg-card border rounded-xl p-4 ${job.status === 'quoted' ? 'border-blue-300 shadow-sm' : 'border-border'}`}>
+                     <div key={job.id} className={'bg-card border rounded-xl p-4 ' + (job.status === 'quoted' ? 'border-blue-300 shadow-sm' : 'border-border')}>
                        <div className="flex items-start justify-between gap-3 mb-1">
                          <div className="flex-1 min-w-0">
                            <p className="font-semibold text-foreground text-sm">{job.service_name || 'Service Request'}</p>
                            <p className="text-xs text-muted-foreground mt-0.5">{job.address || '—'}</p>
                          </div>
-                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${cfg.badge}`}>
+                         <span className={'text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ' + cfg.badge}>
                            {cfg.label}
                          </span>
                        </div>
@@ -432,7 +490,6 @@ export default function CustomerPortal() {
         )}
       </main>
 
-      {/* Bottom Nav */}
       <nav className="bg-card border-t border-border sticky bottom-0 z-30">
         <div className="max-w-3xl mx-auto flex">
           {NAV_KEYS.map(({ key, labelKey, icon: NavIcon, badge }) => {
@@ -441,9 +498,7 @@ export default function CustomerPortal() {
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                  tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={'flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ' + (tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground')}
               >
                 <div className="relative">
                   <NavIcon size={18} />
@@ -458,7 +513,6 @@ export default function CustomerPortal() {
         </div>
       </nav>
 
-      {/* Modals */}
       {selectedService && (
         <RequestJobModal
           service={selectedService}
@@ -490,7 +544,6 @@ export default function CustomerPortal() {
           customerProfile={customerProfile}
         />
       )}
-
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera, UserCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera, UserCheck, Flag } from 'lucide-react';
 import AdminDuplicatesPanel from '@/components/admin/AdminDuplicatesPanel';
 import { useRef } from 'react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
@@ -28,6 +28,7 @@ import AdminJobsDashboard from '@/components/admin/AdminJobsDashboard';
 import AdminPayoutsPanel from '@/components/admin/AdminPayoutsPanel';
 import AdminInviteModal from '@/components/admin/AdminInviteModal';
 import AdminZipLookup from '@/components/admin/AdminZipLookup';
+import AdminComplaintsPanel from '@/components/admin/AdminComplaintsPanel';
 import AdminCancelJobModal from '@/components/admin/AdminCancelJobModal';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -48,6 +49,7 @@ const NAV = [
   { key: 'payouts', label: 'Payouts', icon: DollarSign },
   { key: 'ziplookup', label: 'Zip Lookup', icon: MapPin },
   { key: 'accounts', label: 'Accounts', icon: UserCheck },
+{ key: 'complaints', label: 'Complaints', icon: Flag },
 ];
 
 export default function AdminPortal() {
@@ -500,7 +502,11 @@ export default function AdminPortal() {
           />
         )}
 
-        {tab === 'reviews' && (
+        {tab === 'complaints' && (
+<AdminComplaintsPanel providers={providers} />
+)}
+
+{tab === 'reviews' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">Reviews</h2>
             {reviews.length === 0 ? (

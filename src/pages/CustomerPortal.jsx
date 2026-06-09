@@ -117,22 +117,6 @@ export default function CustomerPortal() {
     const job = await base44.entities.Job.create(baseJobData);
 
     const newJobs = [{ ...job, _providerProfile: null }];
-    if (data.recurrence === 'weekly' || data.recurrence === 'biweekly') {
-      const intervalDays = data.recurrence === 'weekly' ? 7 : 14;
-      const startDate = new Date(data.scheduled_date);
-      const recurringCreates = [];
-      for (let i = 1; i <= 4; i++) {
-        const nextDate = new Date(startDate);
-        nextDate.setDate(startDate.getDate() + intervalDays * i);
-        recurringCreates.push(base44.entities.Job.create({
-          ...baseJobData,
-          scheduled_date: nextDate.toISOString().split('T')[0],
-          recurrence_parent_id: job.id,
-        }));
-      }
-      const futureJobs = await Promise.all(recurringCreates);
-      futureJobs.forEach(j => newJobs.push({ ...j, _providerProfile: null }));
-    }
 
     base44.functions.invoke('notifyQuoteSubmitted', {
       job_id: job.id,

@@ -37,6 +37,7 @@ export default function ProviderPortal() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [unpaidInvoiceJobIds, setUnpaidInvoiceJobIds] = useState(new Set());
+  const [showStripeGuide, setShowStripeGuide] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -249,19 +250,7 @@ export default function ProviderPortal() {
               <p className="text-xs text-amber-700 mt-0.5">You can still accept and complete jobs — set up your bank account to get paid when jobs are completed.</p>
               <p className="text-xs text-amber-700 mt-1.5 font-medium">📌 When Stripe asks for a website, enter <strong>grassgodz.com</strong> — this is the platform you operate under.</p>
               <button
-                onClick={async () => {
-                  try {
-                    const res = await base44.functions.invoke('createStripeConnectAccount', {
-                      provider_id: providerProfile.id,
-                      return_url: window.location.origin + '/provider',
-                    });
-                    if (res.data?.url) {
-                      window.location.href = res.data.url;
-                    }
-                  } catch {
-                    toast.error('Failed to start Stripe onboarding. Please try again.');
-                  }
-                }}
+                onClick={() => setShowStripeGuide(true)}
                 className="mt-2 text-xs font-semibold text-amber-800 underline hover:text-amber-900"
               >
                 Set Up Stripe Payouts →
@@ -562,6 +551,62 @@ export default function ProviderPortal() {
           </div>
         )}
       </main>
+
+
+      {/* Stripe Onboarding Guidance Modal */}
+      {showStripeGuide && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="p-5 border-b border-border">
+              <h2 className="text-base font-bold text-foreground">Before you go to Stripe</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Here's exactly what Stripe will ask — no surprises.</p>
+            </div>
+            <div className="p-5 space-y-3">
+              {[
+                { field: 'Business name', answer: providerProfile?.business_name || (providerProfile?.name + ' Lawn Care') || 'Your name + "Lawn Care"', tip: 'Use your personal name or the name you go by — no LLC required.' },
+                { field: 'Business phone', answer: providerProfile?.phone || 'Your personal cell number', tip: 'Your personal cell is fine. This is for account recovery only.' },
+                { field: 'Business website', answer: 'grassgodz.com', tip: 'Always enter grassgodz.com — this is the platform you operate through.' },
+                { field: 'Business type', answer: 'Individual / Sole proprietor', tip: 'Select "Individual" — you do not need an LLC or EIN.' },
+                { field: 'SSN (last 4)', answer: 'Your Social Security Number last 4 digits', tip: 'Required by law for identity verification. Stripe keeps this secure.' },
+                { field: 'Bank account', answer: 'Your checking account & routing number', tip: 'This is where Grassgodz will send your payouts.' },
+              ].map(({ field, answer, tip }) => (
+                <div key={field} className="bg-muted/30 rounded-xl p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-xs font-bold text-foreground">{field}</p>
+                    <p className="text-xs font-semibold text-primary text-right">{answer}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{tip}</p>
+                </div>
+              ))}
+            </div>
+            <div className="p-5 pt-0 flex gap-3">
+              <button
+                onClick={() => setShowStripeGuide(false)}
+                className="flex-1 border border-border rounded-xl py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Go back
+              </button>
+              <button
+                onClick={async () => {
+                  setShowStripeGuide(false);
+                  try {
+                    const res = await base44.functions.invoke('createStripeConnectAccount', {
+                      provider_id: providerProfile.id,
+                      return_url: window.location.origin + '/provider',
+                    });
+                    if (res.data?.url) window.location.href = res.data.url;
+                  } catch {
+                    toast.error('Failed to start Stripe onboarding. Please try again.');
+                  }
+                }}
+                className="flex-1 bg-primary text-primary-foreground rounded-xl py-2.5 text-sm font-bold hover:bg-primary/90 transition-colors"
+              >
+                I'm ready — Continue to Stripe →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Nav */}
       <nav className="bg-card border-t border-border sticky bottom-0 z-30">

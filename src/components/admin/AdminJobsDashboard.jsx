@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { format, isBefore, isToday, isFuture, startOfDay, parseISO, differenceInCalendarDays } from 'date-fns';, addDays
+import { format, isBefore, isToday, isFuture, startOfDay, parseISO, differenceInCalendarDays, addDays } from 'date-fns';
 import {
   CheckCircle2, AlertCircle, Clock, RefreshCw, ChevronLeft, ChevronRight,
   Plus, DollarSign, CloudRain, CheckCircle, Trash2, Camera, MessageSquare, ImagePlus,

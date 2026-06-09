@@ -160,9 +160,8 @@ export default function QuoteCard({ quote, onAccept, onDecline, decliningId, cus
               <p className="text-sm font-semibold text-foreground">{quote.provider_name}</p>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Star size={11} className="text-amber-400 fill-amber-400" />
-                <span>4.7</span>
-                <span>·</span>
-                <span>150 jobs</span>
+                <span>{quote.provider_avg_rating ? Number(quote.provider_avg_rating).toFixed(1) : 'New'}</span>
+                {quote.provider_total_jobs > 0 && <><span>·</span><span>{quote.provider_total_jobs} jobs</span></>}
               </div>
             </div>
           </div>

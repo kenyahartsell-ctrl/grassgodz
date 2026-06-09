@@ -521,6 +521,10 @@ export default function CustomerPortal() {
           onClose={() => setSelectedService(null)}
           onSubmit={handleRequestJob}
           customerProfile={customerProfile}
+          onCardSaved={async (pmId) => {
+            const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+            setCustomerProfile(profiles[0] || null);
+          }}
         />
       )}
       {selectedJobForQuotes && (

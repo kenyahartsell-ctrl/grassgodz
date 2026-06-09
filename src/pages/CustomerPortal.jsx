@@ -39,6 +39,7 @@ export default function CustomerPortal() {
   const [selectedJobForQuotes, setSelectedJobForQuotes] = useState(null);
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [cardNudgeDismissed, setCardNudgeDismissed] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -236,7 +237,33 @@ export default function CustomerPortal() {
               </div>
             )}
 
-            <ProfileCompletionChecklist profile={customerProfile} onGoToProfile={() => setTab('profile')} />
+            {/* Card-on-file nudge for loyal customers */}
+            {!cardNudgeDismissed && !customerProfile?.default_payment_method_id && pastJobs.filter(j => j.status === 'completed').length >= 2 && (
+              <div className="mb-4 bg-amber-50 border border-amber-300 rounded-2xl p-4 flex items-start gap-3">
+                <div className="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-lg">💳</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-amber-900">Add a card to keep booking</p>
+                  <p className="text-xs text-amber-800 mt-0.5">We now require a card on file before placing a new request. It's only charged after your job is completed.</p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => setTab('profile')}
+                      className="flex-1 bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-amber-800 transition-colors"
+                    >
+                      Add Card Now →
+                    </button>
+                    <button
+                      onClick={() => setCardNudgeDismissed(true)}
+                      className="text-xs text-amber-700 font-medium px-3 py-2 rounded-lg hover:bg-amber-100 transition-colors"
+                    >
+                      Later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+                        <ProfileCompletionChecklist profile={customerProfile} onGoToProfile={() => setTab('profile')} />
 
             <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full" />

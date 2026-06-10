@@ -711,7 +711,7 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
         {/* Date navigator */}
-            <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-xl px-4 py-2.5">
+            <div className="col-span-full flex items-center gap-2 bg-muted/50 border border-border rounded-xl px-4 py-2.5">
               <button onClick={() => setSelectedDate(d => format(addDays(new Date(d + "T12:00:00"), -1), "yyyy-MM-dd"))}
                 className="p-1.5 rounded-lg hover:bg-card transition-colors"><ChevronLeft size={16} /></button>
               <button onClick={() => setSelectedDate(format(new Date(), "yyyy-MM-dd"))}

@@ -15,7 +15,7 @@ const DC_CENTER = { lat: 38.9072, lng: -77.0369 };
 async function geocodeAddress(address) {
   if (!address || !MAPBOX_TOKEN) return null;
   try {
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&limit=1&country=US`;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}&limit=1&proximity=${DC_CENTER.lng},${DC_CENTER.lat}&bbox=-77.6,38.7,-76.8,39.1&country=US`;
     const res = await fetch(url);
     const data = await res.json();
     if (data.features && data.features.length > 0) {

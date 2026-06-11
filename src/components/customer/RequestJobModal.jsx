@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, Calendar, FileText, RefreshCw, Ruler, CreditCard, Lock, Loader2 } from 'lucide-react';
+import { X, MapPin, Calendar, FileText, RefreshCw, Ruler, CreditCard, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { YARD_SIZES } from '@/lib/pricingFloors';
 import { base44 } from '@/api/base44Client';
@@ -15,18 +15,30 @@ function CardGateForm({ customerProfile, onCardSaved, onCancel }) {
   const stripe = useStripe();
   const elements = useElements();
   const [saving, setSaving] = useState(false);
+  const [profileError, setProfileError] = useState(false);
+  const [cardError, setCardError] = useState(null);
 
   const handleSave = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
     setSaving(true);
+    setCardError(null);
     try {
       const res = await base44.functions.invoke('createSetupIntent', {});
-      if (res.data?.error) throw new Error(res.data.error);
+      if (res.data?.error) {
+        if (res.data.error.toLowerCase().includes('profile not found') || res.data.error.toLowerCase().includes('not found')) {
+          setProfileError(true);
+          return;
+        }
+        throw new Error(res.data.error);
+      }
       const result = await stripe.confirmCardSetup(res.data.client_secret, {
         payment_method: { card: elements.getElement(CardElement) },
       });
-      if (result.error) throw new Error(result.error.message);
+      if (result.error) {
+        setCardError(result.error.message);
+        return;
+      }
       const pmId = result.setupIntent.payment_method;
       await base44.entities.CustomerProfile.update(customerProfile.id, {
         default_payment_method_id: pmId,
@@ -34,11 +46,51 @@ function CardGateForm({ customerProfile, onCardSaved, onCancel }) {
       toast.success('Card saved!');
       onCardSaved(pmId);
     } catch (err) {
-      toast.error(err.message || 'Failed to save card.');
+      setCardError(err.message || 'Failed to save card. Please try again.');
     } finally {
       setSaving(false);
     }
   };
+
+  if (profileError) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col items-center text-center gap-3 py-4">
+          <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center">
+            <AlertCircle size={26} className="text-amber-600" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-foreground">Account setup needed</h3>
+            <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+              To schedule a cut, your account needs to be fully set up first. Here's what to do:
+            </p>
+          </div>
+        </div>
+        <div className="bg-muted/40 rounded-xl p-4 space-y-3 text-sm text-foreground">
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+            <p>Go to your <strong>Profile</strong> tab and make sure your name, address, and zip code are filled in.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+            <p>Add a payment card in your profile settings. <strong>You won't be charged until after the job is done.</strong></p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+            <p>Come back here and request your cut — it only takes a minute!</p>
+          </div>
+        </div>
+        <p className="text-xs text-center text-muted-foreground">Need help? Contact us at <strong>support@grassgodz.com</strong></p>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full border border-border rounded-xl py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSave} className="space-y-4">
@@ -60,6 +112,12 @@ function CardGateForm({ customerProfile, onCardSaved, onCancel }) {
           }}
         />
       </div>
+      {cardError && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 text-xs text-red-700">
+          <AlertCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <span>{cardError}</span>
+        </div>
+      )}
       <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
         <Lock size={11} />
         <span>Secured by Stripe — only charged after job completion.</span>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Loader2, CreditCard, Lock } from 'lucide-react';
+import { X, Loader2, CreditCard, Lock, AlertCircle } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { base44 } from '@/api/base44Client';
@@ -21,16 +21,23 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
+  const [profileError, setProfileError] = useState(false);
+  const [cardError, setCardError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
     setLoading(true);
+    setCardError(null);
 
     try {
       const res = await base44.functions.invoke('createSetupIntent', {});
       if (res.data?.error) {
-        toast.error('Could not initialize payment setup: ' + res.data.error);
+        if (res.data.error.toLowerCase().includes('profile not found') || res.data.error.toLowerCase().includes('not found')) {
+          setProfileError(true);
+          return;
+        }
+        setCardError('Could not initialize payment setup. Please try again.');
         return;
       }
       const { client_secret } = res.data;
@@ -40,7 +47,7 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
       });
 
       if (result.error) {
-        toast.error(result.error.message);
+        setCardError(result.error.message);
         return;
       }
 
@@ -52,17 +59,55 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
       toast.success('Card saved successfully!');
       onSuccess(paymentMethodId);
     } catch (err) {
-      toast.error(err.message || 'Failed to save card. Please try again.');
+      setCardError(err.message || 'Failed to save card. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (profileError) {
+    return (
+      <div className="p-6 space-y-4">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center">
+            <AlertCircle size={26} className="text-amber-600" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-foreground">Account setup needed</h3>
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+              Before you can save a card, your customer profile needs to be set up. Here's what to do:
+            </p>
+          </div>
+        </div>
+        <div className="bg-muted/40 rounded-xl p-4 space-y-3 text-sm text-foreground">
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+            <p>Go to your <strong>Profile</strong> tab and fill in your name, address, and zip code.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+            <p>Return here to add your payment card. <strong>You won't be charged until after your job is completed.</strong></p>
+          </div>
+        </div>
+        <p className="text-xs text-center text-muted-foreground">Need help? Contact us at <strong>support@grassgodz.com</strong></p>
+        <button onClick={onClose} className="w-full border border-border rounded-xl py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+          Close
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-4">
       <div className="border border-border rounded-xl p-4 bg-muted/20">
         <CardElement options={CARD_ELEMENT_OPTIONS} />
       </div>
+      {cardError && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 text-xs text-red-700">
+          <AlertCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <span>{cardError}</span>
+        </div>
+      )}
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Lock size={11} />
         <span>Secured by Stripe. Your card will be authorized, not charged, until the job is completed.</span>

@@ -85,8 +85,6 @@ function ScheduledJobsAtAGlance({ jobs }) {
           </div>
         </div>
       )}
-
-      )}
     </div>
   );
 }
@@ -508,41 +506,6 @@ function CalendarSection({ scheduledJobs, allJobs }) {
       </div>
     </div>
   );
-
-      {/* Biweekly Jobs — release to make visible in daily list */}
-      {(() => {
-        const biweeklyPending = allJobs.filter(j => j.recurrence === 'biweekly' && !['completed','cancelled'].includes(j.status)).sort((a,b) => (a.scheduled_date||'').localeCompare(b.scheduled_date||''));
-        if (biweeklyPending.length === 0) return null;
-        return (
-          <div className="mt-5">
-            <h4 className="text-sm font-bold text-foreground mb-2">Biweekly Jobs ({biweeklyPending.length})</h4>
-            <p className="text-xs text-muted-foreground mb-3">These jobs only appear in the daily list after you release them.</p>
-            <div className="space-y-2">
-              {biweeklyPending.map(j => (
-                <div key={j.id} className="flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3 gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{j.service_name} — {j.customer_name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}) : "No date"} · {j.provider_name || "Unassigned"}</p>
-                  </div>
-                  {j.biweekly_released ? (
-                    <span className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-3 py-1 rounded-full flex-shrink-0">Released ✓</span>
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        await (await import('@/api/base44Client')).base44.entities.Job.update(j.id, { biweekly_released: true });
-                        window.location.reload();
-                      }}
-                      className="text-xs font-semibold bg-primary text-primary-foreground px-3 py-1 rounded-full hover:bg-primary/90 transition-colors flex-shrink-0"
-                    >
-                      Release
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
 }
 
 // ─── Job Card (shared between columns) ───────────────────────────────────────

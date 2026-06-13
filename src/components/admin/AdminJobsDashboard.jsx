@@ -642,8 +642,8 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
   const pendingJobs = jobs
     .filter(j => j.status !== 'completed')
     .filter(j => {
-      // Biweekly jobs only appear after release
-      if (j.recurrence === 'biweekly' && !j.biweekly_released) return false;
+      // Biweekly jobs only hidden if future AND not released
+      if (j.recurrence === 'biweekly' && !j.biweekly_released && j.scheduled_date > format(new Date(), 'yyyy-MM-dd')) return false;
       // Date filter: show jobs for selected date, or unscheduled jobs
       if (j.scheduled_date && j.scheduled_date !== selectedDate) return false;
       return pendingFilter === 'all' || j.status === pendingFilter;

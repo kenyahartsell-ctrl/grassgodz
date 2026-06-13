@@ -17,18 +17,16 @@ Deno.serve(async (req) => {
       const jobs = await base44.asServiceRole.entities.Job.filter({ status: 'requested' });
           const unassigned = jobs.filter(j => !j.provider_id);
 
-      // Only show jobs scheduled within the next 7 days (or with no scheduled date).
-      // This prevents future pre-created recurring instances from flooding the list.
+      // Only hide far-future pre-created recurring instances (more than 7 days out).
+      // Past-due or current jobs remain visible until completed/assigned.
       const today = new Date();
           today.setHours(0, 0, 0, 0);
           const cutoff = new Date(today);
           cutoff.setDate(cutoff.getDate() + 7);
-          const todayISO = today.toISOString().split('T')[0];
           const cutoffISO = cutoff.toISOString().split('T')[0];
 
       const visible = unassigned.filter(j => {
               if (!j.scheduled_date) return true;
-              if (j.scheduled_date < todayISO) return false;
               return j.scheduled_date <= cutoffISO;
       });
 

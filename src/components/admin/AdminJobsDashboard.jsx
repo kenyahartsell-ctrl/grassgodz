@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import BiweeklyPrompt from '@/components/admin/BiweeklyPrompt';
 import AdminPhotoUploadModal from '@/components/admin/AdminPhotoUploadModal';
+
 import AdminProviderPayoutModal from '@/components/admin/AdminProviderPayoutModal';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -512,6 +513,8 @@ function CalendarSection({ scheduledJobs, allJobs }) {
 function JobCard({ job: j, handlers, isCompleted }) {
   const [showBiweekly, setShowBiweekly] = useState(isCompleted);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [showAdminPhotoUpload, setShowAdminPhotoUpload] = useState(false);
+  const [localAdminPhotos, setLocalAdminPhotos] = useState(j.admin_photos || []);
   const [localPayoutStatus, setLocalPayoutStatus] = useState(j.provider_payout_status || 'pending');
   const isCash = j.cash_paid || j.payment_method === 'cash';
   const price = j.final_price || j.quoted_price;
@@ -591,6 +594,11 @@ function JobCard({ job: j, handlers, isCompleted }) {
             <Camera size={11} /> Photos
           </button>
         )}
+        {isCompleted && (
+          <button onClick={() => setShowAdminPhotoUpload(true)} className="px-2 py-1 text-[11px] font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors flex items-center gap-1">
+            <ImagePlus size={11} /> {localAdminPhotos.length > 0 ? `Admin (${localAdminPhotos.length})` : 'Add Photos'}
+          </button>
+        )}
         <button onClick={() => handlers.onChat(j)} className="px-2 py-1 text-[11px] font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors flex items-center gap-1">
           <MessageSquare size={11} /> Chat
         </button>
@@ -598,6 +606,15 @@ function JobCard({ job: j, handlers, isCompleted }) {
           <Trash2 size={11} /> Delete
         </button>
       </div>
+
+      {/* Admin photo upload modal */}
+      {showAdminPhotoUpload && (
+        <AdminPhotoUploadModal
+          job={{ ...j, admin_photos: localAdminPhotos }}
+          onClose={() => setShowAdminPhotoUpload(false)}
+          onUploaded={(newPhotos) => { setLocalAdminPhotos(newPhotos); setShowAdminPhotoUpload(false); }}
+        />
+      )}
 
       {/* Provider payout modal */}
             {showPayoutModal && (

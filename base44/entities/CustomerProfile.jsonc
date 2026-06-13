@@ -82,6 +82,9 @@
     "create": {
       "$or": [
         {
+          "data.user_email": "{{user.email}}"
+        },
+        {
           "created_by": "{{user.email}}"
         },
         {
@@ -94,6 +97,9 @@
     "read": {
       "$or": [
         {
+          "data.user_email": "{{user.email}}"
+        },
+        {
           "created_by": "{{user.email}}"
         },
         {
@@ -105,6 +111,9 @@
     },
     "update": {
       "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
         {
           "created_by": "{{user.email}}"
         },

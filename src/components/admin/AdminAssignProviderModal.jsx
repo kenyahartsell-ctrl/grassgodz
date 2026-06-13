@@ -18,21 +18,26 @@ export default function AdminAssignProviderModal({ job, onClose, onAssigned }) {
   const handleAssign = async () => {
     if (!selectedId) return;
     setSaving(true);
-    const provider = providers.find(p => p.id === selectedId);
-    await base44.entities.Job.update(job.id, {
-      provider_id: provider.id,
-      provider_email: provider.user_email,
-      provider_name: provider.name || provider.business_name,
-      status: ['completed', 'cancelled', 'in_progress'].includes(job.status) ? job.status : 'accepted',
-    });
+    try {
+      const provider = providers.find(p => p.id === selectedId);
+      await base44.entities.Job.update(job.id, {
+        provider_id: provider.id,
+        provider_email: provider.user_email,
+        provider_name: provider.name || provider.business_name,
+        status: ['completed', 'cancelled', 'in_progress'].includes(job.status) ? job.status : 'accepted',
+      });
 
-    // Send notification email to provider
-    await base44.functions.invoke('notifyProviderJobAssigned', { job_id: job.id });
+      // Send notification email to provider (non-blocking)
+      base44.functions.invoke('notifyProviderJobAssigned', { job_id: job.id }).catch(() => {});
 
-    toast.success(`Job assigned to ${provider.name || provider.business_name}`);
-    onAssigned();
-    onClose();
-    setSaving(false);
+      toast.success(`Job assigned to ${provider.name || provider.business_name}`);
+      await onAssigned();
+      onClose();
+    } catch (err) {
+      toast.error('Failed to assign provider: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

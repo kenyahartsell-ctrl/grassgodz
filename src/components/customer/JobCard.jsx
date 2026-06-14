@@ -159,10 +159,24 @@ Report an issue with this job
 
 {/* Finished yard photos — visible to customer once job is completed */}
 {job.status === 'completed' && job.completion_photos && Object.keys(job.completion_photos).length > 0 && (
-<div className="mt-3">
-<p className="text-xs font-bold text-foreground uppercase tracking-wide mb-2">Finished Yard Photos</p>
-<JobCompletionPhotos photos={job.completion_photos} />
-</div>
+  <div className="mt-3">
+    <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-2">Finished Yard Photos</p>
+    <JobCompletionPhotos photos={job.completion_photos} />
+  </div>
+)}
+
+{/* Admin-uploaded photos — visible to customer */}
+{job.status === 'completed' && job.admin_photos && job.admin_photos.length > 0 && (
+  <div className="mt-3">
+    <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-2">Job Photos</p>
+    <div className="grid grid-cols-3 gap-2">
+      {job.admin_photos.map((photo, i) => (
+        <a key={i} href={photo.url} target="_blank" rel="noopener noreferrer" className="aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all">
+          <img src={photo.url} alt={`Job photo ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform" />
+        </a>
+      ))}
+    </div>
+  </div>
 )}
 </div>
 )}

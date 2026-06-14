@@ -80,12 +80,26 @@ export default function AdminPayoutsPanel({ providers }) {
   providers.forEach(p => {
     providerMap[p.id] = { profile: p, completedJobs: [], payments: [] };
   });
+  // Week boundaries for "this week" (Sun–Sat)
+  const todayDate = new Date(todayStr);
+  const dayOfWeek = todayDate.getDay();
+  const weekStart = new Date(todayDate); weekStart.setDate(todayDate.getDate() - dayOfWeek);
+  const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+  const weekEndStr = weekEnd.toISOString().slice(0, 10);
+
   jobs.forEach(j => {
     if (j.provider_id && providerMap[j.provider_id]) {
       const pName = (j.provider_name || '').toLowerCase();
       const isFreeman = pName.includes('freeman');
       const completedToday = j.completed_at && j.completed_at.slice(0, 10) === todayStr;
       if (isFreeman && completedToday) return; // exclude Ms. Freeman's jobs completed today
+
+      // Exclude Doctor Beans Legacy Circle jobs from this week's payroll (already paid)
+      const isDrBeans = (j.address || '').toLowerCase().includes('doctor beans');
+      const completedThisWeek = j.completed_at && j.completed_at.slice(0, 10) >= weekStartStr && j.completed_at.slice(0, 10) <= weekEndStr;
+      if (isDrBeans && completedThisWeek) return;
+
       providerMap[j.provider_id].completedJobs.push(j);
     }
   });

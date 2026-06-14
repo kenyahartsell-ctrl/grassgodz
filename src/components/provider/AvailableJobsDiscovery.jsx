@@ -117,11 +117,15 @@ export default function AvailableJobsDiscovery({ jobs, providerProfile, onSubmit
   const [viewMode, setViewMode] = useState('list');
   const [selectedDate, setSelectedDate] = useState(todayStr());
 
-  // Show only jobs for the selected day (biweekly excluded — they live on the calendar)
+  const yesterday = addDays(selectedDate, -1);
+
+  // Show jobs for the selected day + missed cuts from yesterday (still unaccepted/requested)
   const filteredJobs = jobs.filter(j => {
-    if (j.recurrence === 'biweekly') return false;
     if (!j.scheduled_date) return true; // unscheduled / quote-only jobs always show
-    return j.scheduled_date === selectedDate;
+    if (j.scheduled_date === selectedDate) return true;
+    // Missed cuts: yesterday's jobs that were never accepted
+    if (j.scheduled_date === yesterday && ['requested', 'scheduled'].includes(j.status)) return true;
+    return false;
   });
 
   const today = todayStr();
@@ -158,9 +162,21 @@ export default function AvailableJobsDiscovery({ jobs, providerProfile, onSubmit
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} available {isToday ? 'today' : 'on this day'}
-      </p>
+      {(() => {
+        const missedCuts = filteredJobs.filter(j => j.scheduled_date === yesterday);
+        return (
+          <div className="space-y-0.5">
+            <p className="text-sm text-muted-foreground">
+              {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} available {isToday ? 'today' : 'on this day'}
+            </p>
+            {missedCuts.length > 0 && (
+              <p className="text-xs text-amber-600 font-medium">
+                ⚠ {missedCuts.length} missed cut{missedCuts.length !== 1 ? 's' : ''} from yesterday still available
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {viewMode === 'map'
         ? <JobMapView jobs={filteredJobs} providerProfile={providerProfile} />

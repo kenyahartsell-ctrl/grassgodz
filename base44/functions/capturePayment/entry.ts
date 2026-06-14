@@ -1,11 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import Stripe from 'npm:stripe@16.0.0';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 const MIN_PHOTO_COUNT = 4;
 
 Deno.serve(async (req) => {
   try {
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -28,13 +28,13 @@ Deno.serve(async (req) => {
 
     if (!isProvider) return Response.json({ error: 'Forbidden — not the assigned provider' }, { status: 403 });
 
-    // Photo check
+    // Photo check — photos are stored as fields on the Job record (completion_photos object)
     if (!skip_photos) {
-      const photos = await base44.asServiceRole.entities.JobPhoto.filter({ job_id });
-      if (!photos || photos.length < MIN_PHOTO_COUNT) {
+      const photoCount = Object.keys(job.completion_photos || {}).length;
+      if (photoCount < MIN_PHOTO_COUNT) {
         return Response.json({
           error: `At least ${MIN_PHOTO_COUNT} completion photos are required`,
-          photo_count: photos?.length || 0,
+          photo_count: photoCount,
           required: MIN_PHOTO_COUNT,
         }, { status: 400 });
       }

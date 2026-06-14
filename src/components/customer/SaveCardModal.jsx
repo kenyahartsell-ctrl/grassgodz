@@ -52,9 +52,7 @@ function CardForm({ customerProfile, onSuccess, onClose }) {
       }
 
       const paymentMethodId = result.setupIntent.payment_method;
-      await base44.entities.CustomerProfile.update(customerProfile.id, {
-        default_payment_method_id: paymentMethodId,
-      });
+      await base44.functions.invoke('savePaymentMethod', { profile_id: customerProfile.id, payment_method_id: paymentMethodId });
 
       toast.success('Card saved successfully!');
       onSuccess(paymentMethodId);

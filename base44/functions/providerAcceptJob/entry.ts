@@ -33,6 +33,24 @@ Deno.serve(async (req) => {
                                                                                                                                 quoted_price: job.quoted_price || job.base_price,
                                                                                                                                         accepted_at: new Date().toISOString(),
                                                                                                                                               });
+
+                                                                                        // For biweekly jobs, lock this provider onto the ScheduledJob so all future releases auto-assign them
+                                                                                        if (job.recurrence === 'biweekly') {
+                                                                                          const providerUpdate = {
+                                                                                            provider_id: profile.id,
+                                                                                            provider_name: profile.business_name || profile.name,
+                                                                                            provider_email: user.email,
+                                                                                          };
+                                                                                          // Find by recurrence_parent_id if set, otherwise find by matching address+client
+                                                                                          if (job.recurrence_parent_id) {
+                                                                                            await base44.asServiceRole.entities.ScheduledJob.update(job.recurrence_parent_id, providerUpdate);
+                                                                                          } else {
+                                                                                            const matches = await base44.asServiceRole.entities.ScheduledJob.filter({ service_address: job.address, status: 'active' });
+                                                                                            if (matches.length > 0) {
+                                                                                              await base44.asServiceRole.entities.ScheduledJob.update(matches[0].id, providerUpdate);
+                                                                                            }
+                                                                                          }
+                                                                                        }
                                                                                                                                                   } else if (action === 'decline') {
                                                                                                                                                         await base44.asServiceRole.entities.Job.update(job_id, { status: 'cancelled' });
                                                                                                                                                             } else {

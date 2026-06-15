@@ -14,16 +14,21 @@ Deno.serve(async (req) => {
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
-    const ownsJob =
-      (job.customer_email && job.customer_email === user.email) ||
-      (job.customer_id && (job.customer_id === user.id || job.customer_id === user.email));
+    const email = user.email.toLowerCase();
 
-    if (!ownsJob) {
+    const ownsJob =
+      (job.customer_email && job.customer_email.toLowerCase() === email) ||
+      (job.customer_id && (job.customer_id === user.id || job.customer_id === email));
+
+    // Also allow the provider who submitted a quote on this job to read quotes
+    const allQuotes = await base44.asServiceRole.entities.Quote.filter({ job_id }, '-created_date', 100);
+    const isProvider = allQuotes.some(q => q.provider_email && q.provider_email.toLowerCase() === email);
+
+    if (!ownsJob && !isProvider) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const quotes = await base44.asServiceRole.entities.Quote.filter({ job_id });
-    return Response.json({ quotes });
+    return Response.json({ quotes: allQuotes });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

@@ -11,15 +11,16 @@ const STATUS_CONFIG = {
 
 export default function MyQuotesPanel({ providerProfile, onGoToMyJobs }) {
   const { data: quotes = [], isLoading } = useQuery({
-    queryKey: ['provider-quotes', providerProfile?.user_email],
+    queryKey: ['provider-quotes', providerProfile?.id],
     queryFn: async () => {
-      if (!providerProfile?.user_email) return [];
-      const res = await base44.entities.Quote.filter({ provider_email: providerProfile.user_email });
-      return res || [];
+      if (!providerProfile?.id) return [];
+      // Use service-role-backed function to bypass RLS email-case issues
+      const res = await base44.functions.invoke('getMyProviderQuotes', { provider_id: providerProfile.id });
+      return res.data?.quotes || [];
     },
-    enabled: !!providerProfile?.user_email,
+    enabled: !!providerProfile?.id,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, // poll every 10s so provider sees acceptances quickly
+    refetchInterval: 10000,
   });
 
   const { data: jobMap = {} } = useQuery({

@@ -83,12 +83,24 @@ export default function ProviderSignupPage() {
     }
     setLoading(true);
     try {
-      // Step 1: Create the auth account
-      await base44.auth.register({ email: form.email.toLowerCase().trim(), password: form.password });
+      // Step 1: Create the auth account (if already exists, resend OTP for existing account)
+      const email = form.email.toLowerCase().trim();
+      try {
+        await base44.auth.register({ email, password: form.password });
+      } catch (regErr) {
+        const msg = (regErr.message || '').toLowerCase();
+        if (msg.includes('already') || msg.includes('exists') || msg.includes('taken') || msg.includes('registered')) {
+          // Account already exists — send OTP so they can verify and continue
+          try { await base44.auth.resendOtp(email); } catch { /* ignore */ }
+          setStep(5);
+          return;
+        }
+        throw regErr;
+      }
 
       // Step 2: Create the provider profile (service role, so it works before OTP verification)
       const res = await base44.functions.invoke('createProviderProfile', {
-        user_email: form.email.toLowerCase().trim(),
+        user_email: email,
         name: form.name,
         phone: form.phone,
         dob: form.dob,

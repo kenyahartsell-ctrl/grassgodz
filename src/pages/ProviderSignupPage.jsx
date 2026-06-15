@@ -90,9 +90,9 @@ export default function ProviderSignupPage() {
       } catch (regErr) {
         const msg = (regErr.message || '').toLowerCase();
         if (msg.includes('already') || msg.includes('exists') || msg.includes('taken') || msg.includes('registered')) {
-          // Account already exists — send OTP so they can verify and continue
-          try { await base44.auth.resendOtp(email); } catch { /* ignore */ }
-          setStep(5);
+          // Account already exists — profile was already created, just send them to login
+          toast.info('An account with this email already exists. Please log in.');
+          navigate('/login');
           return;
         }
         throw regErr;

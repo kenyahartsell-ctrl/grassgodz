@@ -7,7 +7,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!stripeKey) return Response.json({ error: 'Stripe not configured' }, { status: 500 });
+    const stripe = new Stripe(stripeKey);
 
     // Find the customer profile for this user
     // Use service role to bypass RLS — profiles may be created by admins or service accounts
@@ -36,7 +38,7 @@ Deno.serve(async (req) => {
 
     const setupIntent = await stripe.setupIntents.create({
       customer: stripeCustomerId,
-      payment_method_types: ['card'],
+      automatic_payment_methods: { enabled: true },
       usage: 'off_session',
     });
 

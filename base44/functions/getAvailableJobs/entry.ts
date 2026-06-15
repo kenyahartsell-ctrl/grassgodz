@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
                   return Response.json({ jobs: [] });
           }
 
-      // Fetch all unassigned requested jobs
-      const jobs = await base44.asServiceRole.entities.Job.filter({ status: 'requested' });
+      // Fetch all unassigned requested jobs — large limit to avoid 50-record default cap
+      const jobs = await base44.asServiceRole.entities.Job.filter({ status: 'requested' }, '-created_date', 500);
           const unassigned = jobs.filter(j => !j.provider_id);
 
       // Only hide far-future pre-created recurring instances (more than 7 days out).

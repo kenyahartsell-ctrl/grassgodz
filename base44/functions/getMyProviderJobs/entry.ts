@@ -16,9 +16,10 @@ Deno.serve(async (req) => {
     if (!profile) return Response.json({ jobs: [], profile: null });
 
     // Fetch all jobs assigned to this provider by both id and email (deduplicated)
+    // Use large limit to avoid default 50-record cap
     const [byId, byEmail] = await Promise.all([
-      base44.asServiceRole.entities.Job.filter({ provider_id: profile.id }),
-      base44.asServiceRole.entities.Job.filter({ provider_email: email }),
+      base44.asServiceRole.entities.Job.filter({ provider_id: profile.id }, '-created_date', 500),
+      base44.asServiceRole.entities.Job.filter({ provider_email: email }, '-created_date', 500),
     ]);
 
     const seen = new Set();

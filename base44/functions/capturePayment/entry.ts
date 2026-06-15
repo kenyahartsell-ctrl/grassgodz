@@ -45,20 +45,24 @@ Deno.serve(async (req) => {
     const platformFee = chargedPrice * 0.10;
 
     // --- Capture the Stripe authorization hold if one exists ---
+    // Fix: Job schema uses final_payment_intent_id (or deposit_payment_intent_id for deposits).
+    // Look up the payment intent ID from the Payment record, which is the canonical source.
     let stripeResult = null;
-    if (job.payment_intent_id) {
+    const existingPayments = await base44.asServiceRole.entities.Payment.filter({ job_id });
+    const existingPayment = existingPayments[0];
+    const paymentIntentId = existingPayment?.stripe_payment_intent_id ||
+      job.final_payment_intent_id ||
+      job.deposit_payment_intent_id;
+
+    if (paymentIntentId) {
       try {
         const amountToCapture = Math.round(chargedPrice * 100);
-        stripeResult = await stripe.paymentIntents.capture(job.payment_intent_id, {
+        stripeResult = await stripe.paymentIntents.capture(paymentIntentId, {
           amount_to_capture: amountToCapture,
         });
 
-        // Update Payment record status to captured
-        const payments = await base44.asServiceRole.entities.Payment.filter({
-          stripe_payment_intent_id: job.payment_intent_id,
-        });
-        if (payments[0]) {
-          await base44.asServiceRole.entities.Payment.update(payments[0].id, {
+        if (existingPayment) {
+          await base44.asServiceRole.entities.Payment.update(existingPayment.id, {
             status: 'captured',
             amount: chargedPrice,
             payout_amount: providerPayout,
@@ -67,8 +71,7 @@ Deno.serve(async (req) => {
         }
       } catch (stripeErr) {
         console.error('Stripe capture error:', stripeErr.message);
-        // Don't block completion if capture fails — log and continue
-        // The admin will need to manually capture or refund
+        // Don't block completion if capture fails — admin will need to manually capture
       }
     }
 
@@ -83,12 +86,11 @@ Deno.serve(async (req) => {
 
     // Send completion email to customer
     try {
-      const customerEmail = job.customer_email;
-      if (customerEmail) {
-        await base44.asServiceRole.entities.Email.create({
-          to: customerEmail,
+      if (job.customer_email) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: job.customer_email,
           subject: 'Your lawn service is complete! 🌿',
-          body: `Your GrassGodz service has been completed. Final charge: $${chargedPrice.toFixed(2)}. Thank you for using GrassGodz!`,
+          body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz service has been completed. Final charge: $${chargedPrice.toFixed(2)}. Thank you for choosing Grassgodz!</p>`,
         });
       }
     } catch (emailErr) {

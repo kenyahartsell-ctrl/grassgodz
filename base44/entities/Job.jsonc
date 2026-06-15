@@ -342,6 +342,13 @@
       "type": "number",
       "default": 0,
       "description": "Number of times this job has been cancelled by a provider after acceptance. Tracked for accountability."
+    },
+    "declined_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of ProviderProfile IDs that have declined this job. Used to hide the job from providers who already declined it."
     }
   },
   "required": [

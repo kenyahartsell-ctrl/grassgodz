@@ -3,6 +3,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // Auth check — require admin
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin') return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+
     const { job_id } = await req.json();
 
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
@@ -47,7 +53,7 @@ Deno.serve(async (req) => {
     const platformFee = price * 0.10; // always based on full price
     const providerPayout = price * 0.90;
 
-    // 1. Create Payment record
+    // Create Payment record if none exists
     const existingPayments = await base44.asServiceRole.entities.Payment.filter({ job_id });
     if (existingPayments.length === 0) {
       await base44.asServiceRole.entities.Payment.create({
@@ -70,7 +76,7 @@ Deno.serve(async (req) => {
         </p>`
       : '';
 
-    // 2. Send customer to portal to pay
+    // Send customer to portal to pay
     if (job.customer_email) {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: job.customer_email,

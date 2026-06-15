@@ -2,7 +2,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    createClientFromRequest(req); // auth check
+    const base44 = createClientFromRequest(req);
+
+    // Auth check — prevent open SMS relay
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { to, body } = await req.json();
 
     if (!to || !body) {

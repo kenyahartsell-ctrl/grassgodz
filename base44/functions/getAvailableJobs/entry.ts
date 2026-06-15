@@ -26,8 +26,10 @@ Deno.serve(async (req) => {
           const cutoffISO = cutoff.toISOString().split('T')[0];
 
       const visible = unassigned.filter(j => {
-              if (!j.scheduled_date) return true;
-              return j.scheduled_date <= cutoffISO;
+        if (j.scheduled_date && j.scheduled_date > cutoffISO) return false;
+        // Hide jobs this provider has already declined
+        if (Array.isArray(j.declined_by) && j.declined_by.includes(profile.id)) return false;
+        return true;
       });
 
       // Count completed card-paying jobs for this provider

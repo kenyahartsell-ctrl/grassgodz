@@ -4,7 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import { MapPin, Filter, X, Loader2, MapPinned, Zap } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || import.meta.env.VITE_MAPBOX_TOKEN || '';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_SECRET || '';
 
 // Required for react-map-gl v7 with mapbox-gl
 if (MAPBOX_TOKEN) {
@@ -89,10 +89,11 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
       const results = await Promise.all(
         availableJobs.map(async (job) => {
           // If already has coords, skip geocoding
-          if (job.lat && job.lng) return { ...job, payout: (job.quoted_price || 50) * 0.75 };
+          if (job.latitude && job.longitude) return { ...job, lat: job.latitude, lng: job.longitude, payout: (job.quoted_price || 50) * 0.9 };
+          if (job.lat && job.lng) return { ...job, payout: (job.quoted_price || 50) * 0.9 };
           const coords = await geocodeAddress(job.address);
           if (!coords) return null;
-          return { ...job, lat: coords.lat, lng: coords.lng, payout: (job.quoted_price || 50) * 0.75 };
+          return { ...job, lat: coords.lat, lng: coords.lng, payout: (job.quoted_price || 50) * 0.9 };
         })
       );
       if (!cancelled) {

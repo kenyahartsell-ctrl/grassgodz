@@ -4,7 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import { MapPin, MapPinned, Loader2, X, Calendar, User } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || import.meta.env.VITE_MAPBOX_TOKEN || '';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_SECRET || '';
 
 if (MAPBOX_TOKEN) {
   mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -52,6 +52,7 @@ export default function ScheduledJobsMap({ jobs = [] }) {
     async function geocodeAll() {
       const results = await Promise.all(
         scheduledJobs.map(async (job) => {
+          if (job.latitude && job.longitude) return { ...job, lat: job.latitude, lng: job.longitude };
           if (job.lat && job.lng) return job;
           const coords = await geocodeAddress(job.address);
           if (!coords) return null;

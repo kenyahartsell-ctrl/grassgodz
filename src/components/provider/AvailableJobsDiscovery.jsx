@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { List, Map as MapIcon, MapPin, DollarSign, Banknote, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import AvailableJobCard from './AvailableJobCard';
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 function todayStr() {
   const d = new Date();
@@ -37,11 +39,62 @@ function getCityFromAddress(address) {
   return parts.length >= 2 ? parts[parts.length - 2].trim() : parts[0].trim();
 }
 
-function JobMapView({ jobs, providerProfile }) {
+function JobMapView({ jobs }) {
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markersRef = useRef([]);
   const jobsWithCoords = jobs.filter(j => j.latitude && j.longitude);
-  const center = jobsWithCoords.length > 0
-    ? [jobsWithCoords[0].latitude, jobsWithCoords[0].longitude]
-    : [38.9, -77.03];
+
+  useEffect(() => {
+    if (!MAPBOX_TOKEN || !containerRef.current) return;
+    if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+
+    const center = jobsWithCoords.length > 0
+      ? [jobsWithCoords[0].longitude, jobsWithCoords[0].latitude]
+      : [-77.03, 38.9];
+
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    const map = new mapboxgl.Map({
+      container: containerRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center,
+      zoom: 11,
+    });
+    mapRef.current = map;
+
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    map.on('load', () => {
+      jobsWithCoords.forEach(job => {
+        const el = document.createElement('div');
+        el.style.cssText = `width:36px;height:36px;border-radius:50%;background:${getPinColor(job.quoted_price)};border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:700;cursor:pointer;`;
+        el.textContent = job.quoted_price ? `$${Math.round(job.quoted_price)}` : '?';
+
+        const popup = new mapboxgl.Popup({ offset: 20, closeButton: false })
+          .setHTML(`<div style="font-size:13px;min-width:140px"><strong>${job.service_name || ''}</strong><br/><span style="color:#666;font-size:11px">${getCityFromAddress(job.address)}</span>${job.quoted_price ? `<br/><strong style="color:#16a34a">$${job.quoted_price.toFixed(2)}</strong>` : '<br/><span style="color:#999;font-size:11px">Quote needed</span>'}</div>`);
+
+        const marker = new mapboxgl.Marker({ element: el })
+          .setLngLat([job.longitude, job.latitude])
+          .setPopup(popup)
+          .addTo(map);
+        markersRef.current.push(marker);
+      });
+
+      if (jobsWithCoords.length > 1) {
+        const bounds = jobsWithCoords.reduce((b, j) => b.extend([j.longitude, j.latitude]), new mapboxgl.LngLatBounds([jobsWithCoords[0].longitude, jobsWithCoords[0].latitude], [jobsWithCoords[0].longitude, jobsWithCoords[0].latitude]));
+        map.fitBounds(bounds, { padding: 60 });
+      }
+    });
+
+    return () => { map.remove(); mapRef.current = null; markersRef.current = []; };
+  }, [jobs]);
+
+  if (!MAPBOX_TOKEN) return (
+    <div className="flex items-center justify-center h-64 bg-muted/20 rounded-xl border border-border">
+      <p className="text-sm text-muted-foreground">Map not configured.</p>
+    </div>
+  );
+
   return (
     <div className="rounded-xl overflow-hidden border border-border" style={{ height: 420 }}>
       {jobsWithCoords.length === 0 ? (
@@ -51,21 +104,7 @@ function JobMapView({ jobs, providerProfile }) {
           <p className="text-xs text-muted-foreground mt-1">Switch to List view.</p>
         </div>
       ) : (
-        <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%' }} zoomControl>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
-          {jobsWithCoords.map(job => (
-            <CircleMarker key={job.id} center={[job.latitude, job.longitude]} radius={14}
-              pathOptions={{ fillColor: getPinColor(job.quoted_price), color: '#fff', weight: 2, fillOpacity: 0.9 }}>
-              <Popup>
-                <div className="text-sm min-w-[160px]">
-                  <p className="font-bold">{job.service_name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{getCityFromAddress(job.address)}</p>
-                  {job.quoted_price ? <p className="text-xs font-bold mt-1">${job.quoted_price.toFixed(2)}</p> : <p className="text-xs text-muted-foreground mt-1">Quote</p>}
-                </div>
-              </Popup>
-            </CircleMarker>
-          ))}
-        </MapContainer>
+        <div ref={containerRef} style={{ height: '100%', width: '100%' }} />
       )}
     </div>
   );

@@ -13,7 +13,9 @@ export default function AdminInviteModal({ onClose }) {
     if (!email.trim()) return toast.error('Email is required.');
     setLoading(true);
     try {
-      await base44.users.inviteUser(email.trim(), role);
+      // Platform only supports 'admin' or 'user' roles — providers are 'user' at the platform level
+      const platformRole = role === 'admin' ? 'admin' : 'user';
+      await base44.users.inviteUser(email.trim(), platformRole);
       toast.success(`Invitation sent to ${email} as ${role === 'admin' ? 'Admin' : role === 'user' ? 'Customer' : 'Provider'}.`);
       onClose();
     } catch (err) {

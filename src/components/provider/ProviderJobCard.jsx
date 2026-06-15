@@ -11,7 +11,7 @@ import { base44 } from '@/api/base44Client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_SECRET;
 
 function JobMiniMap({ address }) {
   const containerRef = useRef(null);

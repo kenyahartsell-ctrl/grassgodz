@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, CheckCircle, ShieldAlert, Mail, KeyRound } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle, ShieldAlert, Mail, KeyRound, Eye, EyeOff } from 'lucide-react';
 import PublicNav from '@/components/public/PublicNav';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-const STEPS = ['Personal Info', 'Credentials', 'Service Area', 'Background Check', 'Review & Submit', 'Activate Account'];
-
-// NOTE: Provider signup uses base44.users.inviteUser() which sends an email invite.
-// The provider clicks the invite link and sets their password on Base44's hosted auth page.
-// This is the correct and only supported flow — Base44 SDK does not expose a register() API.
+const STEPS = ['Personal Info', 'Credentials', 'Service Area', 'Background Check', 'Review & Submit', 'Verify Email', 'Done'];
 
 const SERVICES_LIST = [
   { id: 's1', name: 'Lawn Mowing' },
@@ -45,7 +41,12 @@ export default function ProviderSignupPage() {
     // Step 3 – Consent
     agreedBackground: false, agreedTerms: false, signature: '',
     smsOptIn: false,
+    // Auth
+    password: '', confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
   const toggleService = (id) => setForm(f => ({
@@ -72,10 +73,22 @@ export default function ProviderSignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.password !== form.confirmPassword) {
+      toast.error('Passwords do not match.');
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error('Password must be at least 8 characters.');
+      return;
+    }
     setLoading(true);
     try {
+      // Step 1: Create the auth account
+      await base44.auth.register({ email: form.email.toLowerCase().trim(), password: form.password });
+
+      // Step 2: Create the provider profile (service role, so it works before OTP verification)
       const res = await base44.functions.invoke('createProviderProfile', {
-        user_email: form.email,
+        user_email: form.email.toLowerCase().trim(),
         name: form.name,
         phone: form.phone,
         dob: form.dob,
@@ -100,27 +113,37 @@ export default function ProviderSignupPage() {
         sms_opt_in: form.smsOptIn,
         sms_opt_in_date: form.smsOptIn ? new Date().toISOString() : null,
       });
-
       if (res.data?.error) throw new Error(res.data.error);
-      const providerProfile = res.data.profile;
 
-      // Invite the provider — sends a one-click account activation email
-      try { await base44.users.inviteUser(form.email, 'user'); } catch { /* already invited — continue */ }
-
-      // Send welcome email
-      try {
-        await base44.functions.invoke('sendWelcomeEmail', {
-          data: providerProfile,
-          event: { entity_name: 'ProviderProfile' },
-        });
-      } catch { /* non-critical */ }
-
-      // Advance to the "Check your email" confirmation step
+      // Advance to OTP verification step
       setStep(5);
-    } catch {
-      toast.error('Submission failed. Please try again.');
+    } catch (err) {
+      toast.error(err.message || 'Submission failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setOtpLoading(true);
+    try {
+      const result = await base44.auth.verifyOtp({ email: form.email.toLowerCase().trim(), otpCode });
+      await base44.auth.setToken(result.access_token);
+      setStep(6);
+    } catch (err) {
+      toast.error(err.message || 'Invalid code. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      await base44.auth.resendOtp(form.email.toLowerCase().trim());
+      toast.success('New verification code sent!');
+    } catch {
+      toast.error('Failed to resend code.');
     }
   };
 
@@ -397,6 +420,39 @@ export default function ProviderSignupPage() {
                   </label>
                 </div>
 
+                {/* Password */}
+                <div className="space-y-3 pt-2 border-t border-border">
+                  <p className="text-xs font-semibold text-foreground">Create your login password</p>
+                  <div>
+                    <label className={labelClass}>Password * (min 8 characters)</label>
+                    <div className="relative">
+                      <input
+                        required
+                        type={showPassword ? 'text' : 'password'}
+                        minLength={8}
+                        value={form.password}
+                        onChange={e => set('password', e.target.value)}
+                        placeholder="••••••••"
+                        className={inputClass}
+                      />
+                      <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Confirm Password *</label>
+                    <input
+                      required
+                      type="password"
+                      value={form.confirmPassword}
+                      onChange={e => set('confirmPassword', e.target.value)}
+                      placeholder="••••••••"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setStep(3)} className="flex-1 border border-border rounded-xl py-3 text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1"><ArrowLeft size={14} /> Back</button>
                   <button type="submit" disabled={loading || !form.smsOptIn} className="flex-1 bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-colors">
@@ -405,39 +461,71 @@ export default function ProviderSignupPage() {
                 </div>
               </form>
             )}
-            {/* ── Step 5: Account Activation ── */}
+            {/* ── Step 5: OTP Verification ── */}
             {step === 5 && (
+              <form onSubmit={handleVerifyOtp} className="space-y-5 text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                  <Mail size={28} className="text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Check your email</h2>
+                  <p className="text-sm text-muted-foreground mt-1">We sent a 6-digit verification code to <strong>{form.email}</strong></p>
+                </div>
+                <div className="text-left">
+                  <label className={labelClass}>Verification Code *</label>
+                  <input
+                    required
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="123456"
+                    className={`${inputClass} text-center text-2xl tracking-widest font-bold`}
+                  />
+                </div>
+                <button type="submit" disabled={otpLoading || otpCode.length < 6} className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-colors">
+                  {otpLoading ? 'Verifying…' : 'Verify & Complete Signup'}
+                </button>
+                <button type="button" onClick={handleResendOtp} className="text-sm text-primary hover:underline">
+                  Didn't get the code? Resend
+                </button>
+              </form>
+            )}
+
+            {/* ── Step 6: Success ── */}
+            {step === 6 && (
               <div className="space-y-6 text-center py-2">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                   <CheckCircle size={32} className="text-green-600" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-foreground">Application submitted!</h2>
-                  <p className="text-sm text-muted-foreground mt-1">We've received your application and will be in touch soon.</p>
+                  <p className="text-sm text-muted-foreground mt-1">Your account is verified. We'll review your application within 1–2 business days.</p>
                 </div>
-
                 <div className="bg-card border border-border rounded-xl p-4 text-left space-y-3">
                   <p className="text-xs font-bold text-foreground uppercase tracking-wide">What happens next</p>
                   {[
-                    { step: '1', text: 'Our team reviews your application (1–2 business days)' },
-                    { step: '2', text: "You'll receive an approval email at " + form.email + " when you're accepted" },
-                    { step: '3', text: "The approval email will include a link to set your password and sign in" },
-                    { step: '4', text: "Once signed in, you'll be ready to accept jobs and earn" },
-                  ].map(({ step: s, text }) => (
+                    { s: '1', text: 'Our team reviews your application (1–2 business days)' },
+                    { s: '2', text: "You'll receive an approval email at " + form.email + " when you're accepted" },
+                    { s: '3', text: "Once approved, log in at grassgodz.com to start accepting jobs" },
+                  ].map(({ s, text }) => (
                     <div key={s} className="flex items-start gap-3">
                       <div className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{s}</div>
                       <p className="text-sm text-foreground">{text}</p>
                     </div>
                   ))}
                 </div>
-
+                <Link to="/login" className="block w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors text-center">
+                  Go to Login
+                </Link>
                 <p className="text-xs text-muted-foreground">Questions? Email us at <a href="mailto:pros@grassgodz.com" className="text-primary font-semibold">pros@grassgodz.com</a></p>
               </div>
             )}
 
           </div>
 
-          {step < 5 && (
+          {step < 5 && step !== 6 && (
             <p className="text-center text-sm text-muted-foreground mt-5">
               Already have an account? <Link to="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
             </p>

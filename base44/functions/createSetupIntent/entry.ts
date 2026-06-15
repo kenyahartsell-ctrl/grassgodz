@@ -12,8 +12,15 @@ Deno.serve(async (req) => {
     // Find the customer profile for this user
     // Use service role to bypass RLS — profiles may be created by admins or service accounts
     const profiles = await base44.asServiceRole.entities.CustomerProfile.filter({ user_email: user.email });
-    const profile = profiles[0];
-    if (!profile) return Response.json({ error: 'Customer profile not found' }, { status: 404 });
+    let profile = profiles[0];
+
+    // Auto-create profile for new customers who haven't gone through signup flow yet
+    if (!profile) {
+      profile = await base44.asServiceRole.entities.CustomerProfile.create({
+        user_email: user.email,
+        name: user.full_name || '',
+      });
+    }
 
     // Ensure Stripe customer exists
     let stripeCustomerId = profile.stripe_customer_id;

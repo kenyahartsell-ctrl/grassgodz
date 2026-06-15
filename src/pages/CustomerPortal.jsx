@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PageMeta from '@/components/shared/PageMeta';
-import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt, RefreshCw } from 'lucide-react';
+import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt, RefreshCw, LogOut } from 'lucide-react';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { useLanguage } from '@/lib/LanguageContext';
 import CustomerInvoicesPanel from '@/components/customer/CustomerInvoicesPanel';
@@ -40,6 +40,9 @@ export default function CustomerPortal() {
   const [selectedJobForReview, setSelectedJobForReview] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [cardNudgeDismissed, setCardNudgeDismissed] = useState(false);
+  const [cancelConfirmId, setCancelConfirmId] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [actionLoading, setActionLoading] = useState({});
 
   useEffect(() => {
     async function loadData() {
@@ -75,8 +78,12 @@ export default function CustomerPortal() {
 
   const refreshJobs = async () => {
     if (!user) return;
-    const myJobs = await base44.entities.Job.filter({ customer_email: user.email });
+    const [myJobs, updatedScheduled] = await Promise.all([
+      base44.entities.Job.filter({ customer_email: user.email }),
+      base44.entities.ScheduledJob.filter({ client_email: user.email }),
+    ]);
     setJobs(myJobs);
+    setScheduledJobs(updatedScheduled);
   };
 
   const handleToggleSchedule = async (sj) => {
@@ -91,10 +98,10 @@ export default function CustomerPortal() {
   };
 
   const handleCancelSchedule = async (sj) => {
-    if (!confirm('Cancel recurring ' + (sj.service_type || 'service') + '? This cannot be undone.')) return;
     try {
       await base44.entities.ScheduledJob.update(sj.id, { status: 'stopped' });
       setScheduledJobs(prev => prev.map(s => s.id === sj.id ? { ...s, status: 'stopped' } : s));
+      setCancelConfirmId(null);
       toast.success('Recurring service cancelled.');
     } catch (err) {
       toast.error('Could not cancel schedule: ' + err.message);
@@ -150,10 +157,26 @@ export default function CustomerPortal() {
   };
 
   const handleAcceptQuote = async (quote) => {
-    await base44.functions.invoke('updateQuoteStatus', { quote_id: quote.id, status: 'accepted' });
-    await base44.functions.invoke('notifyCustomerJobAccepted', { data: { job_id: quote.job_id } });
-    await refreshJobs();
-    setSelectedJobForQuotes(null);
+    setActionLoading(prev => ({ ...prev, [`acceptquote_${quote.id}`]: true }));
+    try {
+      await base44.functions.invoke('updateQuoteStatus', { quote_id: quote.id, status: 'accepted' });
+      await base44.functions.invoke('notifyCustomerJobAccepted', { data: { job_id: quote.job_id } });
+      await refreshJobs();
+      setSelectedJobForQuotes(null);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`acceptquote_${quote.id}`]: false }));
+    }
+  };
+
+  const handleCancelJob = async (job) => {
+    setActionLoading(prev => ({ ...prev, [`canceljob_${job.id}`]: true }));
+    try {
+      await base44.entities.Job.update(job.id, { status: 'cancelled' });
+      await refreshJobs();
+      toast.success('Job request cancelled.');
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`canceljob_${job.id}`]: false }));
+    }
   };
 
   const handleBooking = async (data) => {
@@ -203,6 +226,12 @@ export default function CustomerPortal() {
           <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
           <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={async () => { setIsRefreshing(true); await refreshJobs(); setIsRefreshing(false); }}
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+            >
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
             <LanguageToggle />
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <span className="text-xs font-bold text-primary">{displayName[0]}</span>
@@ -411,20 +440,40 @@ export default function CustomerPortal() {
                           </span>
                         )}
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleToggleSchedule(sj)}
-                          className={'flex-1 py-2 rounded-lg text-xs font-semibold transition-colors border ' + (sj.status === 'paused' ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' : 'bg-background text-foreground border-border hover:bg-muted')}
-                        >
-                          {sj.status === 'paused' ? 'Resume' : 'Pause'}
-                        </button>
-                        <button
-                          onClick={() => handleCancelSchedule(sj)}
-                          className="px-3 py-2 rounded-lg text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                      {cancelConfirmId === sj.id ? (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
+                          <p className="text-xs font-semibold text-red-800">Cancel recurring {sj.service_type || 'service'}? This cannot be undone.</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleCancelSchedule(sj)}
+                              className="flex-1 bg-red-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                              Confirm Cancel
+                            </button>
+                            <button
+                              onClick={() => setCancelConfirmId(null)}
+                              className="flex-1 border border-border text-xs font-medium py-2 rounded-lg hover:bg-muted transition-colors"
+                            >
+                              Go Back
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleToggleSchedule(sj)}
+                            className={'flex-1 py-2 rounded-lg text-xs font-semibold transition-colors border ' + (sj.status === 'paused' ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90' : 'bg-background text-foreground border-border hover:bg-muted')}
+                          >
+                            {sj.status === 'paused' ? 'Resume' : 'Pause'}
+                          </button>
+                          <button
+                            onClick={() => setCancelConfirmId(sj.id)}
+                            className="px-3 py-2 rounded-lg text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -480,14 +529,24 @@ export default function CustomerPortal() {
                          </p>
                        )}
                        <JobQuotesPanel
-                         job={job}
-                         customerProfile={customerProfile}
-                         onAcceptQuote={handleAcceptQuote}
-                         onCardSaved={async (pmId) => {
-                           const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
-                           setCustomerProfile(profiles[0] || null);
-                         }}
-                       />
+                          job={job}
+                          customerProfile={customerProfile}
+                          onAcceptQuote={handleAcceptQuote}
+                          onCardSaved={async (pmId) => {
+                            const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+                            setCustomerProfile(profiles[0] || null);
+                          }}
+                        />
+                       {job.status === 'requested' && (
+                         <button
+                           onClick={() => handleCancelJob(job)}
+                           disabled={actionLoading[`canceljob_${job.id}`]}
+                           className="mt-3 w-full flex items-center justify-center gap-1.5 border border-red-200 text-red-600 text-xs font-semibold py-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-60"
+                         >
+                           {actionLoading[`canceljob_${job.id}`] ? <Loader2 size={12} className="animate-spin" /> : null}
+                           Cancel Request
+                         </button>
+                       )}
                      </div>
                    );
                  })}
@@ -515,6 +574,14 @@ export default function CustomerPortal() {
                 setCustomerProfile(profiles[0] || null);
               }}
             />
+            <div className="mt-6">
+              <button
+                onClick={() => base44.auth.logout('/')}
+                className="w-full flex items-center justify-center gap-2 border border-destructive text-destructive rounded-xl py-3 text-sm font-semibold hover:bg-destructive/5 transition-colors"
+              >
+                <LogOut size={15} /> Sign Out
+              </button>
+            </div>
           </div>
         )}
       </main>

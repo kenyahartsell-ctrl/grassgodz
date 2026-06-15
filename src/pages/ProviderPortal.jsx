@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2, FileText, Clock, Power } from 'lucide-react';
+import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2, FileText, Clock, Power, RefreshCw, LogOut } from 'lucide-react';
 import AvailableJobCard from '../components/provider/AvailableJobCard';
 import ProviderJobCard from '../components/provider/ProviderJobCard';
 import BookingRequestCard from '../components/provider/BookingRequestCard';
@@ -20,8 +20,8 @@ import { toast } from 'sonner';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'bookings', label: 'Bookings', icon: Bell },
   { key: 'available', label: 'Available', icon: Search },
-  { key: 'quotes', label: 'Quotes', icon: FileText },
   { key: 'myjobs', label: 'My Jobs', icon: CalendarDays },
   { key: 'earnings', label: 'Earnings', icon: DollarSign },
   { key: 'profile', label: 'Profile', icon: User },
@@ -109,6 +109,8 @@ export default function ProviderPortal() {
   const [loading, setLoading] = useState(true);
   const [unpaidInvoiceJobIds, setUnpaidInvoiceJobIds] = useState(new Set());
   const [showStripeGuide, setShowStripeGuide] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [actionLoading, setActionLoading] = useState({});
 
   useEffect(() => {
     async function loadData() {
@@ -127,8 +129,11 @@ export default function ProviderPortal() {
         const unassigned = availableRes.data?.jobs || [];
 
         setProviderProfile(profile);
-        setAvailableJobs(unassigned);
         setMyJobs(allMyJobs);
+
+        if (!profile) {
+          setAvailableJobs(unassigned);
+        }
 
         if (profile) {
           // Check if Stripe onboarding was just completed (e.g. returning from Stripe)
@@ -147,6 +152,8 @@ export default function ProviderPortal() {
             j.scheduled_date && Array.isArray(profile.service_zip_codes) &&
             profile.service_zip_codes.includes(j.zip_code)
           );
+          const bookingIds = new Set(bookings.map(b => b.id));
+          setAvailableJobs(unassigned.filter(j => !bookingIds.has(j.id)));
           setBookingRequests(bookings);
 
           const myReviews = await base44.entities.Review.filter({ provider_id: profile.id });
@@ -170,20 +177,29 @@ export default function ProviderPortal() {
 
   const refreshJobs = async () => {
     if (!user) return;
-    const [myJobsRes, availableRes] = await Promise.all([
-      base44.functions.invoke('getMyProviderJobs', {}),
-      base44.functions.invoke('getAvailableJobs', {}),
-    ]);
-    const allMyJobs = myJobsRes.data?.jobs || [];
-    const unassigned = availableRes.data?.jobs || [];
-    setMyJobs(allMyJobs);
-    setAvailableJobs(unassigned);
-    if (providerProfile) {
-      setBookingRequests(unassigned.filter(j =>
-        j.scheduled_date &&
-        Array.isArray(providerProfile?.service_zip_codes) &&
-        providerProfile.service_zip_codes.includes(j.zip_code)
-      ));
+    setIsRefreshing(true);
+    try {
+      const [myJobsRes, availableRes] = await Promise.all([
+        base44.functions.invoke('getMyProviderJobs', {}),
+        base44.functions.invoke('getAvailableJobs', {}),
+      ]);
+      const allMyJobs = myJobsRes.data?.jobs || [];
+      const unassigned = availableRes.data?.jobs || [];
+      setMyJobs(allMyJobs);
+      if (providerProfile) {
+        const newBookings = unassigned.filter(j =>
+          j.scheduled_date &&
+          Array.isArray(providerProfile?.service_zip_codes) &&
+          providerProfile.service_zip_codes.includes(j.zip_code)
+        );
+        setBookingRequests(newBookings);
+        const bookingIds = new Set(newBookings.map(b => b.id));
+        setAvailableJobs(unassigned.filter(j => !bookingIds.has(j.id)));
+      } else {
+        setAvailableJobs(unassigned);
+      }
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -192,6 +208,7 @@ export default function ProviderPortal() {
   const inProgress = myJobs.filter(j => j.status === 'in_progress');
   const completed = myJobs.filter(j => j.status === 'completed');
   const totalEarnings = completed.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
+  const pendingPayout = myJobs.filter(j => ['in_progress', 'scheduled', 'accepted'].includes(j.status)).reduce((sum, j) => sum + (j.provider_payout || 0), 0);
 
   const now = new Date();
   const thisMonthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -206,36 +223,52 @@ export default function ProviderPortal() {
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : providerProfile?.avg_rating || '—';
 
+  const setLoading_ = (key, val) => setActionLoading(prev => ({ ...prev, [key]: val }));
+
   const handleAcceptBooking = async (booking) => {
-    const res = await base44.functions.invoke('providerAcceptJob', { job_id: booking.id, action: 'accept' });
-    if (res.data?.error) { toast.error(res.data.error); return; }
-    await refreshJobs();
-    toast.success(`Booking accepted! ${booking.service_name} for ${booking.customer_name} is now scheduled.`);
-    // SMS customer on booking confirmation
+    setLoading_(`accept_${booking.id}`, true);
     try {
-      const profiles = await base44.entities.CustomerProfile.filter({ user_email: booking.customer_email });
-      const phone = profiles?.[0]?.phone;
-      if (phone) {
-        await base44.functions.invoke('sendSMS', {
-          to: phone,
-          body: 'Hi ' + (booking.customer_name || 'there') + '! Your ' + (booking.service_name || 'lawn service') + ' with Grassgodz is confirmed by ' + (providerProfile.business_name || 'your provider') + '. See you soon! 🌿',
-        });
-      }
-    } catch {}
+      const res = await base44.functions.invoke('providerAcceptJob', { job_id: booking.id, action: 'accept' });
+      if (res.data?.error) { toast.error(res.data.error); return; }
+      await refreshJobs();
+      toast.success(`Booking accepted! ${booking.service_name} for ${booking.customer_name} is now scheduled.`);
+      try {
+        const profiles = await base44.entities.CustomerProfile.filter({ user_email: booking.customer_email });
+        const phone = profiles?.[0]?.phone;
+        if (phone) {
+          await base44.functions.invoke('sendSMS', {
+            to: phone,
+            body: 'Hi ' + (booking.customer_name || 'there') + '! Your ' + (booking.service_name || 'lawn service') + ' with Grassgodz is confirmed by ' + (providerProfile.business_name || 'your provider') + '. See you soon! 🌿',
+          });
+        }
+      } catch {}
+    } finally {
+      setLoading_(`accept_${booking.id}`, false);
+    }
   };
 
   const handleDeclineBooking = async (booking) => {
-    const res = await base44.functions.invoke('providerAcceptJob', { job_id: booking.id, action: 'decline' });
-    if (res.data?.error) { toast.error(res.data.error); return; }
-    await refreshJobs();
-    toast.error(`Booking for ${booking.customer_name} declined.`);
+    setLoading_(`decline_${booking.id}`, true);
+    try {
+      const res = await base44.functions.invoke('providerAcceptJob', { job_id: booking.id, action: 'decline' });
+      if (res.data?.error) { toast.error(res.data.error); return; }
+      await refreshJobs();
+      toast.error(`Booking for ${booking.customer_name} declined.`);
+    } finally {
+      setLoading_(`decline_${booking.id}`, false);
+    }
   };
 
   const handleAcceptCashJob = async (job) => {
-    const res = await base44.functions.invoke('providerAcceptJob', { job_id: job.id, action: 'accept' });
-    if (res.data?.error) { toast.error(res.data.error); return; }
-    await refreshJobs();
-    toast.success(`Cash job accepted! ${job.service_name} for ${job.customer_name} is now scheduled.`);
+    setLoading_(`accept_${job.id}`, true);
+    try {
+      const res = await base44.functions.invoke('providerAcceptJob', { job_id: job.id, action: 'accept' });
+      if (res.data?.error) { toast.error(res.data.error); return; }
+      await refreshJobs();
+      toast.success(`Cash job accepted! ${job.service_name} for ${job.customer_name} is now scheduled.`);
+    } finally {
+      setLoading_(`accept_${job.id}`, false);
+    }
   };
 
   const handleSubmitQuote = async (job, quoteData) => {
@@ -264,9 +297,14 @@ export default function ProviderPortal() {
   };
 
   const handleMarkInProgress = async (job) => {
-    await base44.entities.Job.update(job.id, { status: 'in_progress' });
-    await refreshJobs();
-    toast.success('Job marked as in progress.');
+    setLoading_(`inprogress_${job.id}`, true);
+    try {
+      await base44.entities.Job.update(job.id, { status: 'in_progress' });
+      await refreshJobs();
+      toast.success('Job marked as in progress.');
+    } finally {
+      setLoading_(`inprogress_${job.id}`, false);
+    }
   };
 
   const handleMarkComplete = async (job, photos = {}, skipPhotos = false) => {
@@ -325,6 +363,9 @@ export default function ProviderPortal() {
           <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
           <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full ml-1">Provider</span>
           <div className="ml-auto flex items-center gap-2">
+            <button onClick={async () => { setIsRefreshing(true); await refreshJobs(); setIsRefreshing(false); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <span className="text-xs font-bold text-primary">{displayName[0]}</span>
             </div>
@@ -613,7 +654,7 @@ export default function ProviderPortal() {
 
             <div className="grid grid-cols-2 gap-3 mb-5">
               <MetricCard title="Total Earned" value={`$${totalEarnings.toFixed(2)}`} icon={DollarSign} />
-              <MetricCard title="Pending Payout" value="$0.00" icon={TrendingUp} color="text-blue-600" bgColor="bg-blue-100" />
+              <MetricCard title="Pending Payout" value={`$${pendingPayout.toFixed(2)}`} icon={TrendingUp} color="text-blue-600" bgColor="bg-blue-100" />
             </div>
 
 
@@ -653,6 +694,14 @@ export default function ProviderPortal() {
                 setProviderProfile(r.data?.profile || null);
               }}
             />
+            <div className="mt-6">
+              <button
+                onClick={() => base44.auth.logout('/') }
+                className="w-full flex items-center justify-center gap-2 border border-destructive text-destructive rounded-xl py-3 text-sm font-semibold hover:bg-destructive/5 transition-colors"
+              >
+                <LogOut size={15} /> Sign Out
+              </button>
+            </div>
           </div>
         )}
       </main>
@@ -727,7 +776,7 @@ export default function ProviderPortal() {
               <div className="relative">
                 <NavIcon size={18} />
               </div>
-              <span className="hidden sm:block">{label}</span>
+              <span>{label}</span>
             </button>
           ))}
         </div>

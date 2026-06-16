@@ -11,6 +11,12 @@ import { base44 } from '@/api/base44Client';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
+function parseLocalDate(dateStr) {
+  if (!dateStr) return new Date();
+  const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_SECRET;
 
 function JobMiniMap({ address }) {
@@ -102,7 +108,7 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
           <div className="space-y-1 mb-3">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Calendar size={11} />
-              <span>{new Date(job.scheduled_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+              <span>{parseLocalDate(job.scheduled_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <MapPin size={11} />

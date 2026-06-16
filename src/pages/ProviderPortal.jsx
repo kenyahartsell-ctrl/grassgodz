@@ -112,6 +112,7 @@ export default function ProviderPortal() {
   const [showStripeGuide, setShowStripeGuide] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
+  const [jobsDateFilter, setJobsDateFilter] = useState('today');
 
   useEffect(() => {
     async function loadData() {
@@ -572,28 +573,47 @@ export default function ProviderPortal() {
 
         {tab === 'myjobs' && (
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">My Jobs</h2>
-            {inProgress.length > 0 && (
-              <div className="mb-5">
-                <h3 className="text-sm font-semibold text-orange-700 mb-3">In Progress</h3>
-                <div className="space-y-3">
-                  {inProgress.map(j => <ProviderJobCard key={j.id} job={j} onMarkComplete={handleMarkComplete} />)}
-                </div>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-foreground">My Jobs</h2>
+              <div className="flex items-center bg-muted rounded-lg p-1 gap-1">
+                {['today', 'tomorrow'].map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setJobsDateFilter(d)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all capitalize ${jobsDateFilter === d ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+                  >
+                    {d === 'today' ? 'Today' : 'Tomorrow'}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
             {(() => {
-              const today = new Date().toISOString().split('T')[0];
-              // All scheduled jobs render as cards (biweekly or not)
-              const allScheduledJobs = scheduled;
-              // Biweekly jobs also show in the calendar view
-              const biweeklyJobs = scheduled.filter(j => j.recurrence === 'biweekly');
+              const todayStr = new Date().toISOString().split('T')[0];
+              const tomorrowDate = new Date();
+              tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+              const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
+              const targetDate = jobsDateFilter === 'today' ? todayStr : tomorrowStr;
+
+              const dateInProgress = inProgress.filter(j => j.scheduled_date === todayStr);
+              const dateScheduled = scheduled.filter(j => j.scheduled_date === targetDate);
+              const dateCompleted = completed.filter(j => j.scheduled_date === targetDate);
+              const biweeklyJobs = dateScheduled.filter(j => j.recurrence === 'biweekly');
+
               return (
                 <>
-                  {allScheduledJobs.length > 0 && (
+                  {jobsDateFilter === 'today' && dateInProgress.length > 0 && (
+                    <div className="mb-5">
+                      <h3 className="text-sm font-semibold text-orange-700 mb-3">In Progress</h3>
+                      <div className="space-y-3">
+                        {dateInProgress.map(j => <ProviderJobCard key={j.id} job={j} onMarkComplete={handleMarkComplete} onJobCancelled={refreshJobs} />)}
+                      </div>
+                    </div>
+                  )}
+                  {dateScheduled.length > 0 && (
                     <div className="mb-5">
                       <h3 className="text-sm font-semibold text-foreground mb-3">Scheduled Jobs</h3>
                       <div className="space-y-3">
-                        {allScheduledJobs.map(j => (
+                        {dateScheduled.map(j => (
                           <div key={j.id}>
                             {unpaidInvoiceJobIds.has(j.id) && (
                               <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-t-xl px-3 py-2 -mb-1">
@@ -613,24 +633,24 @@ export default function ProviderPortal() {
                       <BiWeeklyCalendar jobs={biweeklyJobs} />
                     </div>
                   )}
-                  {allScheduledJobs.length === 0 && biweeklyJobs.length === 0 && inProgress.length === 0 && completed.length === 0 && (
+                  {dateScheduled.length === 0 && dateInProgress.length === 0 && dateCompleted.length === 0 && (
                     <div className="text-center py-16">
                       <CalendarDays className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                      <p className="text-muted-foreground font-medium">No jobs yet</p>
-                      <p className="text-sm text-muted-foreground mt-1">Accept bookings or submit quotes to get started.</p>
+                      <p className="text-muted-foreground font-medium">No jobs {jobsDateFilter === 'today' ? 'today' : 'tomorrow'}</p>
+                      <p className="text-sm text-muted-foreground mt-1">Check back or look at available jobs.</p>
+                    </div>
+                  )}
+                  {dateCompleted.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-3">Completed</h3>
+                      <div className="space-y-3">
+                        {dateCompleted.map(j => <ProviderJobCard key={j.id} job={j} onJobCancelled={refreshJobs} />)}
+                      </div>
                     </div>
                   )}
                 </>
               );
             })()}
-            {completed.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-3">Completed</h3>
-                <div className="space-y-3">
-                  {completed.map(j => <ProviderJobCard key={j.id} job={j} onJobCancelled={refreshJobs} />)}
-                </div>
-              </div>
-            )}
           </div>
         )}
         

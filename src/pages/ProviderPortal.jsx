@@ -588,15 +588,23 @@ export default function ProviderPortal() {
               </div>
             </div>
             {(() => {
-              const todayStr = new Date().toISOString().split('T')[0];
-              const tomorrowDate = new Date();
-              tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-              const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
-              const targetDate = jobsDateFilter === 'today' ? todayStr : tomorrowStr;
+              const parseLocalDateStr = (dateStr) => {
+                if (!dateStr) return null;
+                const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+                return new Date(y, m - 1, d);
+              };
+              const localNow = new Date();
+              const localToday = new Date(localNow.getFullYear(), localNow.getMonth(), localNow.getDate());
+              const localTomorrow = new Date(localNow.getFullYear(), localNow.getMonth(), localNow.getDate() + 1);
+              const targetLocalDate = jobsDateFilter === 'today' ? localToday : localTomorrow;
+              const isSameLocalDay = (j) => {
+                const d = parseLocalDateStr(j.scheduled_date);
+                return d && d.getTime() === targetLocalDate.getTime();
+              };
 
-              const dateInProgress = inProgress.filter(j => j.scheduled_date === todayStr);
-              const dateScheduled = scheduled.filter(j => j.scheduled_date === targetDate);
-              const dateCompleted = completed.filter(j => j.scheduled_date === targetDate);
+              const dateInProgress = inProgress.filter(isSameLocalDay);
+              const dateScheduled = scheduled.filter(isSameLocalDay);
+              const dateCompleted = completed.filter(isSameLocalDay);
               const biweeklyJobs = dateScheduled.filter(j => j.recurrence === 'biweekly');
 
               return (

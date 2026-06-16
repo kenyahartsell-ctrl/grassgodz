@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, MapPin, ChevronDown, ChevronUp, CloudRain, MessageCircle, Star, Flag } from 'lucide-react';
+import { Calendar, MapPin, ChevronDown, ChevronUp, CloudRain, MessageCircle, Star, Flag, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../shared/StatusBadge';
 import JobCompletionPhotos from './JobCompletionPhotos';
 import JobQuotesPanel from './JobQuotesPanel';
@@ -11,6 +11,8 @@ import ReportIssueModal from './ReportIssueModal';
 import { base44 } from '@/api/base44Client';
 
 const CHAT_ENABLED_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed'];
+const LAWN_KEYWORDS = ['mow', 'mowing', 'grass', 'lawn', 'cut'];
+const isLawnJob = (name) => LAWN_KEYWORDS.some(k => name?.toLowerCase().includes(k));
 
 export default function JobCard({ job, customerProfile, onAcceptQuote, onReview, reviewed, onRescheduled, user }) {
 const [expanded, setExpanded] = useState(job.status === 'quoted' || job.status === 'pending_payment' || (job.status === 'completed' && !reviewed));
@@ -75,11 +77,11 @@ className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary
 <MessageCircle size={11} /> Chat
 </button>
 )}
-{job.status === 'quoted' && (
-<span className="text-xs font-semibold text-white bg-blue-500 rounded-full px-3 py-1 animate-pulse">
-Quote Ready!
-</span>
-)}
+{job.status === 'quoted' && !isLawnJob(job.service_name) && (
+        <span className="text-xs font-semibold text-white bg-blue-500 rounded-full px-3 py-1 animate-pulse">
+          Quote Ready!
+        </span>
+      )}
 {expanded ? <ChevronUp size={15} className="text-muted-foreground mt-1" /> : <ChevronDown size={15} className="text-muted-foreground mt-1" />}
 </div>
 </div>
@@ -105,13 +107,20 @@ onCardSaved={() => setCardSaved(true)}
 {/* Expanded content */}
 {expanded && (
 <div className="px-4 pb-4 border-t border-border pt-3">
-{/* Quotes panel — for active (non-completed/cancelled) jobs */}
-{!['completed', 'cancelled', 'pending_deposit'].includes(job.status) && (
-<JobQuotesPanel
-job={job}
-customerProfile={customerProfile}
-onAcceptQuote={onAcceptQuote}
-/>
+{/* Quotes panel — for active (non-completed/cancelled) non-lawn jobs */}
+{!['completed', 'cancelled', 'pending_deposit'].includes(job.status) && !isLawnJob(job.service_name) && (
+  <JobQuotesPanel
+    job={job}
+    customerProfile={customerProfile}
+    onAcceptQuote={onAcceptQuote}
+  />
+)}
+{/* For lawn mowing: show fixed price confirmation instead */}
+{!['completed', 'cancelled'].includes(job.status) && isLawnJob(job.service_name) && job.quoted_price && (
+  <div className="mt-3 border-t border-border pt-3 flex items-center gap-2 text-sm text-green-800 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+    <CheckCircle2 size={14} className="text-green-600 flex-shrink-0" />
+    <span>Fixed price: <strong>${job.quoted_price}</strong> — charged after job completion.</span>
+  </div>
 )}
 
 {/* Weather reschedule button for active jobs */}

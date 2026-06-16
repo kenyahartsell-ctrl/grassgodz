@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, Calendar, FileText, RefreshCw, Ruler, CreditCard, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { X, MapPin, Calendar, FileText, RefreshCw, CreditCard, Lock, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { YARD_SIZES } from '@/lib/pricingFloors';
+
+// Fixed lawn mowing prices by yard size
+const LAWN_FIXED_PRICES = {
+  small: { price: 45, label: 'Small', desc: 'Up to 1/8 acre' },
+  medium: { price: 65, label: 'Medium', desc: '1/8 – 1/4 acre' },
+  large: { price: 85, label: 'Large', desc: '1/4 – 1/2 acre' },
+  xl: { price: 120, label: 'Extra Large', desc: '1/2+ acre' },
+};
 import { base44 } from '@/api/base44Client';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -171,7 +179,8 @@ function CardGate({ customerProfile, onCardSaved, onCancel }) {
 // ── Main modal ────────────────────────────────────────────────────────────────
 export default function RequestJobModal({ service, onClose, onSubmit, customerProfile, onCardSaved }) {
   const { t } = useLanguage();
-  const showRecurrence = isLawnService(service.name);
+  const isLawn = isLawnService(service.name);
+  const showRecurrence = isLawn;
   const [showCardGate, setShowCardGate] = useState(false);
   const [savedPmId, setSavedPmId] = useState(customerProfile?.default_payment_method_id || null);
   const [pendingForm, setPendingForm] = useState(null);
@@ -185,6 +194,8 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
     yard_size: '',
   });
 
+  const fixedPrice = isLawn && form.yard_size ? LAWN_FIXED_PRICES[form.yard_size]?.price : null;
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const hasCard = !!(savedPmId || customerProfile?.default_payment_method_id);
@@ -195,7 +206,9 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
       setShowCardGate(true);
       return;
     }
-    onSubmit({ ...form, service_id: service.id, service_name: service.name });
+    const submitData = { ...form, service_id: service.id, service_name: service.name };
+    if (isLawn && fixedPrice) submitData.quoted_price = fixedPrice;
+    onSubmit(submitData);
     onClose();
   };
 
@@ -205,6 +218,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
     if (onCardSaved) onCardSaved(pmId);
     // Submit the pending form now that card is saved
     if (pendingForm) {
+      if (isLawn && fixedPrice) pendingForm.quoted_price = fixedPrice;
       onSubmit(pendingForm);
       onClose();
     }
@@ -326,24 +340,57 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
                   className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground flex items-center gap-1.5 mb-1.5">
-                  <Ruler size={13} className="text-primary" /> Yard Size *
-                </label>
-                <select
-                  value={form.yard_size}
-                  onChange={e => setForm(f => ({ ...f, yard_size: e.target.value }))}
-                  required
-                  className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="">Select yard size…</option>
-                  {YARD_SIZES.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: t('quote_disclaimer') }} />
+              {isLawn ? (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Yard Size & Price *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(LAWN_FIXED_PRICES).map(([key, opt]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, yard_size: key }))}
+                        className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                          form.yard_size === key
+                            ? 'border-primary bg-primary/5'
+                            : 'border-input bg-background hover:border-primary/40'
+                        }`}
+                      >
+                        {form.yard_size === key && (
+                          <CheckCircle2 size={14} className="absolute top-2 right-2 text-primary" />
+                        )}
+                        <p className="text-sm font-bold text-foreground">{opt.label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                        <p className="text-base font-bold text-primary mt-1">${opt.price}</p>
+                      </button>
+                    ))}
+                  </div>
+                  {fixedPrice && (
+                    <div className="mt-3 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 text-sm text-green-800 font-semibold">
+                      <CheckCircle2 size={15} className="text-green-600 flex-shrink-0" />
+                      You agree to <span className="text-green-700">${fixedPrice}</span> for this lawn cut — no waiting for quotes.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Yard Size *</label>
+                  <select
+                    value={form.yard_size}
+                    onChange={e => setForm(f => ({ ...f, yard_size: e.target.value }))}
+                    required
+                    className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Select yard size…</option>
+                    {YARD_SIZES.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {!isLawn && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: t('quote_disclaimer') }} />
+              )}
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={onClose} className="flex-1 border border-border rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
                   {t('cancel')}

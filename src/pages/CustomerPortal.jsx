@@ -131,6 +131,9 @@ export default function CustomerPortal() {
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
   const activeScheduledJobs = scheduledJobs.filter(sj => sj.status !== 'stopped');
 
+  const LAWN_KEYWORDS = ['mow', 'mowing', 'grass', 'lawn', 'cut'];
+  const isLawnJob = (name) => LAWN_KEYWORDS.some(k => name?.toLowerCase().includes(k));
+
   const handleRequestJob = async (data) => {
     const baseJobData = {
       customer_id: user.id,
@@ -141,19 +144,21 @@ export default function CustomerPortal() {
     };
 
     const job = await base44.entities.Job.create(baseJobData);
+    setJobs(prev => [...prev, { ...job, _providerProfile: null }]);
 
-    const newJobs = [{ ...job, _providerProfile: null }];
-
-    base44.functions.invoke('notifyQuoteSubmitted', {
-      job_id: job.id,
-      customer_email: user.email,
-      customer_name: user.full_name,
-      service_name: data.service_name,
-    }).catch(() => {});
-
-    setJobs(prev => [...prev, ...newJobs]);
-    setTab('quotes');
-    toast.success("Request submitted! You'll see provider quotes here as they come in. Check your email for confirmation.");
+    if (isLawnJob(data.service_name)) {
+      setTab('jobs');
+      toast.success(`Booking confirmed for $${data.quoted_price}! We'll assign a provider shortly.`);
+    } else {
+      base44.functions.invoke('notifyQuoteSubmitted', {
+        job_id: job.id,
+        customer_email: user.email,
+        customer_name: user.full_name,
+        service_name: data.service_name,
+      }).catch(() => {});
+      setTab('quotes');
+      toast.success("Request submitted! You'll see provider quotes here as they come in. Check your email for confirmation.");
+    }
   };
 
   const handleAcceptQuote = async (quote) => {
@@ -244,7 +249,7 @@ export default function CustomerPortal() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {tab === 'home' && (
           <div>
-            {jobs.filter(j => j.status === 'quoted').length > 0 && (
+            {jobs.filter(j => j.status === 'quoted' && !isLawnJob(j.service_name)).length > 0 && (
               <div className="mb-4 bg-green-600 border border-green-700 rounded-2xl p-5 shadow-lg">
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -302,7 +307,7 @@ export default function CustomerPortal() {
               {displayAddress && <p className="text-sm text-white/80">{displayAddress}</p>}
               {upcomingJobs.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  {jobs.filter(j => j.status === 'quoted' && j.provider_name).map(j => (
+                  {jobs.filter(j => j.status === 'quoted' && j.provider_name && !isLawnJob(j.service_name)).map(j => (
                     <div key={j.id} className="bg-white/20 rounded-xl px-4 py-3 flex items-center gap-2 text-sm">
                       <span>✅</span>
                       <span><strong>{j.provider_name}</strong> quoted your {j.service_name} — tap "Review Quote" above!</span>
@@ -504,8 +509,9 @@ export default function CustomerPortal() {
             ) : (
               <div className="space-y-4">
                 {jobs.filter(j => !['completed','cancelled'].includes(j.status)).map(job => {
+                   const isLawn = isLawnJob(job.service_name);
                    const statusMap = {
-                     requested:   { label: t('waiting_for_quotes'), badge: 'bg-amber-100 text-amber-800' },
+                     requested:   { label: isLawn ? (job.quoted_price ? `$${job.quoted_price} — Finding provider` : t('waiting_for_quotes')) : t('waiting_for_quotes'), badge: 'bg-amber-100 text-amber-800' },
                      quoted:      { label: t('quote_received'), badge: 'bg-blue-100 text-blue-800' },
                      accepted:    { label: t('accepted'), badge: 'bg-indigo-100 text-indigo-800' },
                      scheduled:   { label: t('scheduled'), badge: 'bg-indigo-100 text-indigo-800' },
@@ -528,15 +534,22 @@ export default function CustomerPortal() {
                            Date: {new Date(job.scheduled_date).toLocaleDateString()}
                          </p>
                        )}
-                       <JobQuotesPanel
-                          job={job}
-                          customerProfile={customerProfile}
-                          onAcceptQuote={handleAcceptQuote}
-                          onCardSaved={async (pmId) => {
-                            const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
-                            setCustomerProfile(profiles[0] || null);
-                          }}
-                        />
+                       {!isLawn ? (
+                         <JobQuotesPanel
+                           job={job}
+                           customerProfile={customerProfile}
+                           onAcceptQuote={handleAcceptQuote}
+                           onCardSaved={async (pmId) => {
+                             const profiles = await base44.entities.CustomerProfile.filter({ user_email: user.email });
+                             setCustomerProfile(profiles[0] || null);
+                           }}
+                         />
+                       ) : job.quoted_price ? (
+                         <div className="mt-2 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 text-sm text-green-800">
+                           <CheckCircle2 size={14} className="text-green-600 flex-shrink-0" />
+                           <span>Fixed price: <strong>${job.quoted_price}</strong> — charged after job completion.</span>
+                         </div>
+                       ) : null}
                        {job.status === 'requested' && (
                          <button
                            onClick={() => handleCancelJob(job)}
@@ -589,7 +602,7 @@ export default function CustomerPortal() {
       <nav className="bg-card border-t border-border sticky bottom-0 z-30">
         <div className="max-w-3xl mx-auto flex">
           {NAV_KEYS.map(({ key, labelKey, icon: NavIcon, badge }) => {
-            const showBadge = badge && jobs.some(j => j.status === 'quoted');
+            const showBadge = badge && jobs.some(j => j.status === 'quoted' && !isLawnJob(j.service_name));
             return (
               <button
                 key={key}

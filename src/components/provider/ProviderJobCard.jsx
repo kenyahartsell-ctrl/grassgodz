@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign, CloudRain, MessageCircle, XCircle } from 'lucide-react';
+import { Calendar, MapPin, PlayCircle, CheckCircle, Image, Navigation, ChevronDown, ClipboardList, DollarSign, CloudRain, MessageCircle, XCircle, CalendarDays } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../shared/StatusBadge';
 import JobPhotoUploadModal from './JobPhotoUploadModal';
@@ -8,6 +8,7 @@ import ChatDrawer from '../shared/ChatDrawer';
 import JobAcceptanceTimer from './JobAcceptanceTimer';
 import ProviderCancelJobModal from './ProviderCancelJobModal';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -68,6 +69,8 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
   const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showMoveTomorrow, setShowMoveTomorrow] = useState(false);
+  const [movingTomorrow, setMovingTomorrow] = useState(false);
   const [chatUser, setChatUser] = useState(null);
   const chatAvailable = CHAT_ENABLED_STATUSES.includes(job.status);
 
@@ -82,6 +85,22 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
 
   const handleComplete = async (job, photos) => {
     await onMarkComplete(job, photos);
+  };
+
+  const handleMoveTomorrow = async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    setMovingTomorrow(true);
+    try {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowISO = tomorrow.toISOString().split('T')[0];
+      await base44.entities.Job.update(job.id, { scheduled_date: tomorrowISO });
+      setShowMoveTomorrow(false);
+      toast.success('Moved to tomorrow.');
+      if (onRescheduled) onRescheduled(job);
+    } finally {
+      setMovingTomorrow(false);
+    }
   };
 
   return (
@@ -242,6 +261,34 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
                 <CloudRain size={13} />
                 Weather
               </button>
+            )}
+            {['scheduled', 'accepted', 'in_progress'].includes(job.status) && (
+              showMoveTomorrow ? (
+                <div className="flex items-center gap-1.5" onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+                  <span className="text-xs text-muted-foreground">Move to tomorrow?</span>
+                  <button
+                    onClick={handleMoveTomorrow}
+                    disabled={movingTomorrow}
+                    className="text-xs font-semibold text-primary border border-primary/40 rounded-lg px-2.5 py-1.5 hover:bg-primary/10 transition-colors disabled:opacity-50"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMoveTomorrow(false); }}
+                    className="text-xs font-semibold text-muted-foreground border border-border rounded-lg px-2.5 py-1.5 hover:bg-muted transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMoveTomorrow(true); }}
+                  className="flex items-center justify-center gap-1.5 border border-border text-muted-foreground rounded-lg px-3 py-2 text-xs font-semibold hover:bg-muted transition-colors"
+                >
+                  <CalendarDays size={13} />
+                  Tomorrow
+                </button>
+              )
             )}
             {['scheduled', 'accepted'].includes(job.status) && onMarkInProgress && (
               <button

@@ -26,6 +26,21 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Guard: skip if a non-cancelled job already exists for this provider + address + date
+      if (sj.provider_id) {
+        const existing = await base44.asServiceRole.entities.Job.filter({
+          provider_id: sj.provider_id,
+          scheduled_date: releaseDate,
+          address: sj.service_address,
+        });
+        const activeStatuses = ['accepted', 'scheduled', 'in_progress', 'requested'];
+        const alreadyExists = existing.some(j => activeStatuses.includes(j.status));
+        if (alreadyExists) {
+          console.warn(`Duplicate skipped: provider ${sj.provider_id} already has a job at ${sj.service_address} on ${releaseDate}`);
+          continue;
+        }
+      }
+
       // Create the Job record
       const jobData = {
         customer_name: sj.client_name,

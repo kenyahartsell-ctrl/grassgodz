@@ -42,79 +42,82 @@ Deno.serve(async (req) => {
     const amountCents = Math.round(price * 100);
     const applicationFeeCents = Math.round(amountCents * 0.10);
 
-    // Mark all other quotes for this job as rejected
+    // --- Path A: Customer has a saved payment method — place authorization hold ---
+    if (customerProfile?.stripe_customer_id && customerProfile?.default_payment_method_id) {
+      const daysUntilJob = job.scheduled_date
+        ? Math.ceil((new Date(job.scheduled_date) - new Date()) / (1000 * 60 * 60 * 24))
+        : 0;
+      const captureMethod = daysUntilJob > 5 ? 'automatic' : 'manual';
+
+      const paymentIntentParams = {
+        amount: amountCents,
+        currency: 'usd',
+        capture_method: captureMethod,
+        confirm: true,
+        customer: customerProfile.stripe_customer_id,
+        payment_method: customerProfile.default_payment_method_id,
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+        metadata: { job_id: job.id, quote_id: quote_id, customer_email: user.email, capture_method: captureMethod },
+      };
+      if (providerProfile?.stripe_connect_account_id) {
+        paymentIntentParams.application_fee_amount = applicationFeeCents;
+        paymentIntentParams.transfer_data = { destination: providerProfile.stripe_connect_account_id };
+      }
+
+      let paymentIntent;
+      try {
+        paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+      } catch (piErr) {
+        const isInvalidDestination = piErr.param === 'transfer_data[destination]' || piErr.message?.includes('has been deleted');
+        if (isInvalidDestination && paymentIntentParams.transfer_data) {
+          console.warn('Connect account invalid, retrying as direct charge:', piErr.message);
+          delete paymentIntentParams.transfer_data;
+          delete paymentIntentParams.application_fee_amount;
+          paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+        } else {
+          throw piErr;
+        }
+      }
+
+      // PaymentIntent succeeded — now mark quotes and update job
+      const allQuotes = await base44.asServiceRole.entities.Quote.filter({ job_id: job.id });
+      for (const q of allQuotes) {
+        if (q.id !== quote_id && q.status === 'pending') {
+          await base44.asServiceRole.entities.Quote.update(q.id, { status: 'rejected' });
+        }
+      }
+      await base44.asServiceRole.entities.Quote.update(quote_id, { status: 'accepted' });
+
+      await base44.asServiceRole.entities.Payment.create({
+        job_id: job.id,
+        customer_id: customerProfile.id,
+        provider_id: providerProfile?.id,
+        stripe_payment_intent_id: paymentIntent.id,
+        amount: price,
+        platform_fee: price * 0.10,
+        payout_amount: price * 0.90,
+        status: captureMethod === 'automatic' ? 'captured' : 'authorized',
+      });
+
+      await base44.asServiceRole.entities.Job.update(job.id, {
+        status: 'accepted',
+        accepted_at: new Date().toISOString(),
+        provider_id: quote.provider_id,
+        quoted_price: price,
+        payment_intent_id: paymentIntent.id,
+      });
+
+      return Response.json({ success: true, authorized: true, payment_intent_id: paymentIntent.id });
+    }
+
+    // --- Path B: No card on file — mark quotes and generate a Stripe payment link ---
     const allQuotes = await base44.asServiceRole.entities.Quote.filter({ job_id: job.id });
     for (const q of allQuotes) {
       if (q.id !== quote_id && q.status === 'pending') {
         await base44.asServiceRole.entities.Quote.update(q.id, { status: 'rejected' });
       }
     }
-
-    // Mark this quote as accepted
     await base44.asServiceRole.entities.Quote.update(quote_id, { status: 'accepted' });
-
-    // --- Path A: Customer has a saved payment method — place authorization hold ---
-    if (customerProfile?.stripe_customer_id && customerProfile?.default_payment_method_id && providerProfile?.stripe_connect_account_id) {
-      try {
-        // Determine capture strategy: if job is >5 days out, capture immediately
-        // (Stripe authorization holds expire after 7 days)
-        const daysUntilJob = job.scheduled_date
-          ? Math.ceil((new Date(job.scheduled_date) - new Date()) / (1000 * 60 * 60 * 24))
-          : 0;
-        const captureMethod = daysUntilJob > 5 ? 'automatic' : 'manual';
-
-        const hasConnectAccount = !!(providerProfile?.stripe_connect_account_id);
-        const paymentIntentParams = {
-          amount: amountCents,
-          currency: 'usd',
-          capture_method: captureMethod,
-          confirm: true,
-          customer: customerProfile.stripe_customer_id,
-          payment_method: customerProfile.default_payment_method_id,
-          automatic_payment_methods: {
-            enabled: true,
-            allow_redirects: 'never',
-          },
-          metadata: {
-            job_id: job.id,
-            quote_id: quote_id,
-            customer_email: user.email,
-            capture_method: captureMethod,
-          },
-        };
-        if (hasConnectAccount) {
-          paymentIntentParams.application_fee_amount = applicationFeeCents;
-          paymentIntentParams.transfer_data = { destination: providerProfile.stripe_connect_account_id };
-        }
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
-
-        // Save Payment record
-        await base44.asServiceRole.entities.Payment.create({
-          job_id: job.id,
-          customer_id: customerProfile.id,
-          provider_id: providerProfile.id,
-          stripe_payment_intent_id: paymentIntent.id,
-          amount: price,
-          platform_fee: price * 0.10,
-          payout_amount: price * 0.90,
-          status: captureMethod === 'automatic' ? 'captured' : 'authorized',
-        });
-
-        // Update job: accepted, stamp accepted_at, store payment intent id
-        await base44.asServiceRole.entities.Job.update(job.id, {
-          status: 'accepted',
-          accepted_at: new Date().toISOString(),
-          provider_id: quote.provider_id,
-          quoted_price: price,
-          payment_intent_id: paymentIntent.id,
-        });
-
-        return Response.json({ success: true, authorized: true, payment_intent_id: paymentIntent.id });
-      } catch (stripeErr) {
-        // Stripe failed (e.g. deleted Connect account) — fall through to Path B
-        console.error('Stripe PaymentIntent error, falling back to payment link:', stripeErr.message);
-      }
-    }
 
     // --- Path B: No card on file — generate a Stripe payment link ---
     // Update job to scheduled so CardRequiredBanner shows

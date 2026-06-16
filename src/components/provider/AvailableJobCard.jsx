@@ -4,7 +4,8 @@ import { getMinimumPrice, YARD_SIZES } from '@/lib/pricingFloors';
 
 export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, onAcceptCashJob, onboardingComplete = true }) {
   const isCash = job.is_cash_job || job.payment_method === 'cash';
-  const isLawnCut = job.service_name?.toLowerCase().includes('lawn') || job.service_name?.toLowerCase().includes('mow');
+  const isLandscaping = job.service_name?.toLowerCase().includes('landscap');
+  const isLawnCut = !isLandscaping;
   const adminPrice = job.quoted_price; // set by admin — provider cannot change
   const minPrice = getMinimumPrice(job.service_name, job.yard_size);
   const yardSizeLabel = YARD_SIZES.find(s => s.value === job.yard_size)?.label || null;

@@ -582,15 +582,18 @@ export default function ProviderPortal() {
               </div>
             )}
             {(() => {
-              const pendingJobs = scheduled.filter(j => !j.recurrence || j.recurrence !== 'biweekly');
+              const today = new Date().toISOString().split('T')[0];
+              // All scheduled jobs render as cards (biweekly or not)
+              const allScheduledJobs = scheduled;
+              // Biweekly jobs also show in the calendar view
               const biweeklyJobs = scheduled.filter(j => j.recurrence === 'biweekly');
               return (
                 <>
-                  {pendingJobs.length > 0 && (
+                  {allScheduledJobs.length > 0 && (
                     <div className="mb-5">
                       <h3 className="text-sm font-semibold text-foreground mb-3">Scheduled Jobs</h3>
                       <div className="space-y-3">
-                        {pendingJobs.map(j => (
+                        {allScheduledJobs.map(j => (
                           <div key={j.id}>
                             {unpaidInvoiceJobIds.has(j.id) && (
                               <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-t-xl px-3 py-2 -mb-1">
@@ -610,7 +613,7 @@ export default function ProviderPortal() {
                       <BiWeeklyCalendar jobs={biweeklyJobs} />
                     </div>
                   )}
-                  {pendingJobs.length === 0 && biweeklyJobs.length === 0 && inProgress.length === 0 && completed.length === 0 && (
+                  {allScheduledJobs.length === 0 && biweeklyJobs.length === 0 && inProgress.length === 0 && completed.length === 0 && (
                     <div className="text-center py-16">
                       <CalendarDays className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                       <p className="text-muted-foreground font-medium">No jobs yet</p>

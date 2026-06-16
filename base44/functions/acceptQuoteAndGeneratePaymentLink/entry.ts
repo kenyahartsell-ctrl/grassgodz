@@ -119,7 +119,6 @@ Deno.serve(async (req) => {
     }
     await base44.asServiceRole.entities.Quote.update(quote_id, { status: 'accepted' });
 
-    // --- Path B: No card on file — generate a Stripe payment link ---
     // Update job to scheduled so CardRequiredBanner shows
     await base44.asServiceRole.entities.Job.update(job.id, {
       status: 'scheduled',

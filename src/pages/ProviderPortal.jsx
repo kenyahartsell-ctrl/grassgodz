@@ -271,6 +271,7 @@ export default function ProviderPortal() {
       if (res.data?.error) { toast.error(res.data.error); return; }
       await refreshJobs();
       toast.success(`Cash job accepted! ${job.service_name} for ${job.customer_name} is now scheduled.`);
+      setTab('myjobs');
     } finally {
       setLoading_(`accept_${job.id}`, false);
     }
@@ -299,6 +300,7 @@ export default function ProviderPortal() {
     await base44.functions.invoke('notifyCustomerNewQuote', { data: quote }).catch(() => {});
     await refreshJobs();
     toast.success(`Quote of $${quoteData.price} submitted for ${job.service_name}!`);
+    setTab('myjobs');
   };
 
   const handleMarkInProgress = async (job) => {

@@ -13,21 +13,19 @@ Deno.serve(async (req) => {
                   return Response.json({ jobs: [] });
           }
 
-      // Fetch all unassigned requested jobs — large limit to avoid 50-record default cap
-      const jobs = await base44.asServiceRole.entities.Job.filter({ status: 'requested' }, '-created_date', 500);
-          const unassigned = jobs.filter(j => !j.provider_id);
-
-      // Only hide far-future pre-created recurring instances (more than 7 days out).
-      // Past-due or current jobs remain visible until completed/assigned.
       const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const cutoff = new Date(today);
-          cutoff.setDate(cutoff.getDate() + 7);
-          const cutoffISO = cutoff.toISOString().split('T')[0];
+      today.setHours(0, 0, 0, 0);
+      const todayISO = today.toISOString().split('T')[0];
+      const cutoff = new Date(today);
+      cutoff.setDate(cutoff.getDate() + 7);
+      const cutoffISO = cutoff.toISOString().split('T')[0];
 
-      const visible = unassigned.filter(j => {
+      // Fetch all unassigned requested jobs (available to claim)
+      const requestedJobs = await base44.asServiceRole.entities.Job.filter({ status: 'requested' }, '-created_date', 500);
+      const unassigned = requestedJobs.filter(j => !j.provider_id);
+
+      const availableJobs = unassigned.filter(j => {
         if (j.scheduled_date && j.scheduled_date > cutoffISO) return false;
-        // Hide jobs this provider has already declined
         if (Array.isArray(j.declined_by) && j.declined_by.includes(profile.id)) return false;
         return true;
       });
@@ -40,11 +38,22 @@ Deno.serve(async (req) => {
       const cardCutCount = completedCardJobs.filter(j => !j.is_cash_job && j.payment_method !== 'cash').length;
 
       // Hide cash jobs until provider has at least 5 completed card-paying cuts
-      const filtered = cardCutCount >= 5
-              ? visible
-              : visible.filter(j => !j.is_cash_job && j.payment_method !== 'cash');
+      const claimableJobs = cardCutCount >= 5
+              ? availableJobs
+              : availableJobs.filter(j => !j.is_cash_job && j.payment_method !== 'cash');
 
-      return Response.json({ jobs: filtered });
+      // Also fetch all active (non-completed, non-cancelled) jobs scheduled TODAY for the map view
+      // These are already assigned jobs shown so providers see the full day's workload on the map
+      const allTodayJobs = await base44.asServiceRole.entities.Job.filter({}, '-created_date', 500);
+      const todayMapJobs = allTodayJobs.filter(j => {
+        if (j.scheduled_date !== todayISO) return false;
+        if (['completed', 'cancelled'].includes(j.status)) return false;
+        // Don't double-count jobs already in claimableJobs
+        if (claimableJobs.find(cj => cj.id === j.id)) return false;
+        return true;
+      });
+
+      return Response.json({ jobs: claimableJobs, map_jobs: todayMapJobs });
     } catch (error) {
           return Response.json({ error: error.message }, { status: 500 });
     }

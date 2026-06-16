@@ -152,7 +152,7 @@ function JobListView({ jobs, providerProfile, onSubmitQuote, onAcceptCashJob, on
   );
 }
 
-export default function AvailableJobsDiscovery({ jobs, providerProfile, onSubmitQuote, onAcceptCashJob, onboardingComplete }) {
+export default function AvailableJobsDiscovery({ jobs, mapJobs = [], providerProfile, onSubmitQuote, onAcceptCashJob, onboardingComplete }) {
   const [viewMode, setViewMode] = useState('list');
   const [selectedDate, setSelectedDate] = useState(todayStr());
 
@@ -166,6 +166,11 @@ export default function AvailableJobsDiscovery({ jobs, providerProfile, onSubmit
     if (j.scheduled_date === yesterday && ['requested', 'scheduled'].includes(j.status)) return true;
     return false;
   });
+
+  // For the map: show all today's jobs (claimable + already assigned/active)
+  const allTodayForMap = selectedDate === today
+    ? [...filteredJobs, ...mapJobs.filter(mj => !filteredJobs.find(fj => fj.id === mj.id))]
+    : filteredJobs;
 
   const today = todayStr();
   const isToday = selectedDate === today;
@@ -218,7 +223,7 @@ export default function AvailableJobsDiscovery({ jobs, providerProfile, onSubmit
       })()}
 
       {viewMode === 'map'
-        ? <JobMapView jobs={filteredJobs} providerProfile={providerProfile} />
+        ? <JobMapView jobs={allTodayForMap} providerProfile={providerProfile} />
         : <JobListView jobs={filteredJobs} providerProfile={providerProfile} onSubmitQuote={onSubmitQuote} onAcceptCashJob={onAcceptCashJob} onboardingComplete={onboardingComplete} />
       }
     </div>

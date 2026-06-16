@@ -104,6 +104,7 @@ export default function ProviderPortal() {
   const [providerProfile, setProviderProfile] = useState(null);
   const [myJobs, setMyJobs] = useState([]);
   const [availableJobs, setAvailableJobs] = useState([]);
+  const [mapJobs, setMapJobs] = useState([]);
   const [bookingRequests, setBookingRequests] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,6 +128,8 @@ export default function ProviderPortal() {
         const profile = myJobsRes.data?.profile || null;
         const allMyJobs = myJobsRes.data?.jobs || [];
         const unassigned = availableRes.data?.jobs || [];
+        const todayMapJobs = availableRes.data?.map_jobs || [];
+        setMapJobs(todayMapJobs);
 
         setProviderProfile(profile);
         setMyJobs(allMyJobs);
@@ -185,6 +188,8 @@ export default function ProviderPortal() {
       ]);
       const allMyJobs = myJobsRes.data?.jobs || [];
       const unassigned = availableRes.data?.jobs || [];
+      const refreshedMapJobs = availableRes.data?.map_jobs || [];
+      setMapJobs(refreshedMapJobs);
       setMyJobs(allMyJobs);
       if (providerProfile) {
         const newBookings = unassigned.filter(j =>
@@ -543,6 +548,7 @@ export default function ProviderPortal() {
             ) : (
               <AvailableJobsDiscovery
                 jobs={availableJobs}
+                mapJobs={mapJobs}
                 providerProfile={providerProfile}
                 onSubmitQuote={handleSubmitQuote}
                 onAcceptCashJob={handleAcceptCashJob}

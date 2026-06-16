@@ -54,61 +54,62 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.Quote.update(quote_id, { status: 'accepted' });
 
     // --- Path A: Customer has a saved payment method — place authorization hold ---
-    if (customerProfile?.stripe_customer_id && customerProfile?.default_payment_method_id) {
-      if (!providerProfile?.stripe_connect_account_id) {
-        return Response.json({ error: 'Provider has not completed Stripe onboarding' }, { status: 400 });
-      }
+    if (customerProfile?.stripe_customer_id && customerProfile?.default_payment_method_id && providerProfile?.stripe_connect_account_id) {
+      try {
+        // Determine capture strategy: if job is >5 days out, capture immediately
+        // (Stripe authorization holds expire after 7 days)
+        const daysUntilJob = job.scheduled_date
+          ? Math.ceil((new Date(job.scheduled_date) - new Date()) / (1000 * 60 * 60 * 24))
+          : 0;
+        const captureMethod = daysUntilJob > 5 ? 'automatic' : 'manual';
 
-      // Determine capture strategy: if job is >5 days out, capture immediately
-      // (Stripe authorization holds expire after 7 days)
-      const daysUntilJob = job.scheduled_date
-        ? Math.ceil((new Date(job.scheduled_date) - new Date()) / (1000 * 60 * 60 * 24))
-        : 0;
-      const captureMethod = daysUntilJob > 5 ? 'automatic' : 'manual';
-
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amountCents,
-        currency: 'usd',
-        capture_method: captureMethod,
-        confirm: true,
-        customer: customerProfile.stripe_customer_id,
-        payment_method: customerProfile.default_payment_method_id,
-        application_fee_amount: applicationFeeCents,
-        transfer_data: { destination: providerProfile.stripe_connect_account_id },
-        automatic_payment_methods: {
-          enabled: true,
-          allow_redirects: 'never',
-        },
-        metadata: {
-          job_id: job.id,
-          quote_id: quote_id,
-          customer_email: user.email,
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amountCents,
+          currency: 'usd',
           capture_method: captureMethod,
-        },
-      });
+          confirm: true,
+          customer: customerProfile.stripe_customer_id,
+          payment_method: customerProfile.default_payment_method_id,
+          application_fee_amount: applicationFeeCents,
+          transfer_data: { destination: providerProfile.stripe_connect_account_id },
+          automatic_payment_methods: {
+            enabled: true,
+            allow_redirects: 'never',
+          },
+          metadata: {
+            job_id: job.id,
+            quote_id: quote_id,
+            customer_email: user.email,
+            capture_method: captureMethod,
+          },
+        });
 
-      // Save Payment record
-      await base44.asServiceRole.entities.Payment.create({
-        job_id: job.id,
-        customer_id: customerProfile.id,
-        provider_id: providerProfile.id,
-        stripe_payment_intent_id: paymentIntent.id,
-        amount: price,
-        platform_fee: price * 0.10,
-        payout_amount: price * 0.90,
-        status: captureMethod === 'automatic' ? 'captured' : 'authorized',
-      });
+        // Save Payment record
+        await base44.asServiceRole.entities.Payment.create({
+          job_id: job.id,
+          customer_id: customerProfile.id,
+          provider_id: providerProfile.id,
+          stripe_payment_intent_id: paymentIntent.id,
+          amount: price,
+          platform_fee: price * 0.10,
+          payout_amount: price * 0.90,
+          status: captureMethod === 'automatic' ? 'captured' : 'authorized',
+        });
 
-      // Update job: accepted, stamp accepted_at, store payment intent id
-      await base44.asServiceRole.entities.Job.update(job.id, {
-        status: 'accepted',
-        accepted_at: new Date().toISOString(),
-        provider_id: quote.provider_id,
-        quoted_price: price,
-        payment_intent_id: paymentIntent.id,
-      });
+        // Update job: accepted, stamp accepted_at, store payment intent id
+        await base44.asServiceRole.entities.Job.update(job.id, {
+          status: 'accepted',
+          accepted_at: new Date().toISOString(),
+          provider_id: quote.provider_id,
+          quoted_price: price,
+          payment_intent_id: paymentIntent.id,
+        });
 
-      return Response.json({ success: true, authorized: true, payment_intent_id: paymentIntent.id });
+        return Response.json({ success: true, authorized: true, payment_intent_id: paymentIntent.id });
+      } catch (stripeErr) {
+        // Stripe failed (e.g. deleted Connect account) — fall through to Path B
+        console.error('Stripe PaymentIntent error, falling back to payment link:', stripeErr.message);
+      }
     }
 
     // --- Path B: No card on file — generate a Stripe payment link ---

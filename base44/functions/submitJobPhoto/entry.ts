@@ -19,9 +19,13 @@ Deno.serve(async (req) => {
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
-    const isAssignedProvider =
-      job.provider_email === user.email ||
-      job.provider_id === user.id;
+    // Check by email (most reliable) or by provider profile ID lookup
+    let isAssignedProvider = job.provider_email === user.email;
+    if (!isAssignedProvider) {
+      const profiles = await base44.asServiceRole.entities.ProviderProfile.filter({ user_email: user.email });
+      const profile = profiles[0];
+      isAssignedProvider = profile && job.provider_id === profile.id;
+    }
 
     if (!isAssignedProvider) {
       return Response.json({ error: 'Forbidden: you are not the assigned provider for this job' }, { status: 403 });

@@ -129,9 +129,9 @@ export default function JobDetailPage() {
       setShowPhotoModal(false);
       return;
     }
-    // Save photos to job record first, then capture payment
+    // Save photos via backend function (bypasses RLS) so capturePayment can verify the count
     if (photos && Object.keys(photos).length > 0) {
-      await base44.entities.Job.update(j.id, { completion_photos: { ...(j.completion_photos || {}), ...photos } });
+      await base44.functions.invoke('submitJobPhoto', { job_id: j.id, photos });
     }
     const res = await base44.functions.invoke('capturePayment', {
       job_id: j.id,
@@ -429,7 +429,7 @@ export default function JobDetailPage() {
                 {senderRole === 'provider' && job.quoted_price && !payment && (
                   <div className="flex justify-between items-center py-2 border-b border-border">
                     <span className="text-sm text-muted-foreground">Your Estimated Earnings</span>
-                    <span className="text-sm font-bold text-primary">${(job.quoted_price * 0.75).toFixed(2)}</span>
+                    <span className="text-sm font-bold text-primary">${(job.quoted_price * 0.90).toFixed(2)} <span className="text-xs font-normal text-muted-foreground">(90%)</span></span>
                   </div>
                 )}
               </div>

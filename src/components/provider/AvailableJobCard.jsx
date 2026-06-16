@@ -4,6 +4,7 @@ import { getMinimumPrice, YARD_SIZES } from '@/lib/pricingFloors';
 
 export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, onAcceptCashJob, onboardingComplete = true }) {
   const isCash = job.is_cash_job || job.payment_method === 'cash';
+  const isLawnCut = job.service_name?.toLowerCase().includes('lawn') || job.service_name?.toLowerCase().includes('mow');
   const adminPrice = job.quoted_price; // set by admin — provider cannot change
   const minPrice = getMinimumPrice(job.service_name, job.yard_size);
   const yardSizeLabel = YARD_SIZES.find(s => s.value === job.yard_size)?.label || null;
@@ -13,7 +14,6 @@ export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, 
   const [showForm, setShowForm] = useState(false);
   const [priceError, setPriceError] = useState('');
 
-  // Compute hauling fee to show/add to quote
   const haulingApplies = providerProfile?.hauling_fees_apply;
   const haulingFeeType = providerProfile?.hauling_fee_type || 'flat';
   const haulingFeeValue = providerProfile?.hauling_fee_value || 0;
@@ -22,7 +22,8 @@ export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, 
     return haulingFeeType === 'percentage' ? (basePrice * haulingFeeValue / 100) : haulingFeeValue;
   };
 
-
+  // Lawn cuts and cash jobs: direct accept (no quote)
+  const isDirectAccept = isCash || isLawnCut;
 
   return (
     <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-all">
@@ -75,7 +76,7 @@ export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, 
           )}
 
           {!onboardingComplete && !isCash && (
-            <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2">
+            <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
               <AlertCircle size={12} className="flex-shrink-0" />
               <span>Complete your payment setup to receive payouts</span>
             </div>
@@ -94,11 +95,13 @@ export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, 
             </div>
           )}
 
-          {isCash ? (
+          {isDirectAccept ? (
             <div className="space-y-2">
-              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800">
-                <strong>Cash payment</strong> — collect payment directly from the client after completing the job.
-              </div>
+              {isCash && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800">
+                  <strong>Cash payment</strong> — collect payment directly from the client after completing the job.
+                </div>
+              )}
               <button
                 onClick={() => onAcceptCashJob && onAcceptCashJob(job)}
                 className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
@@ -131,32 +134,32 @@ export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, 
               setQuoteForm({ price: '', message: '' });
             }} className="space-y-3 bg-muted/30 rounded-xl p-3">
               {!adminPrice && (
-              <div>
-                <label className="text-xs font-medium text-foreground mb-1 block">
-                  Your Price ($){minPrice ? <span className="text-muted-foreground font-normal ml-1">— min ${minPrice}</span> : ''}
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min={minPrice || 1}
-                  value={quoteForm.price}
-                  onChange={e => { setQuoteForm(f => ({ ...f, price: e.target.value })); setPriceError(''); }}
-                  placeholder={minPrice ? `min $${minPrice}` : 'e.g. 55.00'}
-                  className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
-                />
-                {priceError && (
-                  <p className="text-xs text-red-600 mt-1 flex items-start gap-1">
-                    <AlertCircle size={11} className="flex-shrink-0 mt-0.5" />
-                    {priceError}
-                  </p>
-                )}
-                {haulingApplies && quoteForm.price && (
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 mt-1.5">
-                    Hauling fee ({haulingFeeType === 'percentage' ? `${haulingFeeValue}%` : `$${haulingFeeValue}`}) will be added → Total: <strong>${(Number(quoteForm.price) + computeHaulingFee(Number(quoteForm.price))).toFixed(2)}</strong>
-                  </p>
-                )}
-              </div>
+                <div>
+                  <label className="text-xs font-medium text-foreground mb-1 block">
+                    Your Price ($){minPrice ? <span className="text-muted-foreground font-normal ml-1">— min ${minPrice}</span> : ''}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min={minPrice || 1}
+                    value={quoteForm.price}
+                    onChange={e => { setQuoteForm(f => ({ ...f, price: e.target.value })); setPriceError(''); }}
+                    placeholder={minPrice ? `min $${minPrice}` : 'e.g. 55.00'}
+                    className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    required
+                  />
+                  {priceError && (
+                    <p className="text-xs text-red-600 mt-1 flex items-start gap-1">
+                      <AlertCircle size={11} className="flex-shrink-0 mt-0.5" />
+                      {priceError}
+                    </p>
+                  )}
+                  {haulingApplies && quoteForm.price && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 mt-1.5">
+                      Hauling fee ({haulingFeeType === 'percentage' ? `${haulingFeeValue}%` : `$${haulingFeeValue}`}) will be added → Total: <strong>${(Number(quoteForm.price) + computeHaulingFee(Number(quoteForm.price))).toFixed(2)}</strong>
+                    </p>
+                  )}
+                </div>
               )}
               <div>
                 <label className="text-xs font-medium text-foreground mb-1 block">{adminPrice ? 'Message to Customer (optional)' : 'Message to Customer'}</label>

@@ -84,17 +84,131 @@ Deno.serve(async (req) => {
       platform_fee: platformFee,
     });
 
-    // Send completion email to customer
-    try {
-      if (job.customer_email) {
+    // Post-completion: handle payment if no Stripe auth was captured
+    if (!stripeResult && job.customer_email) {
+      try {
+        const customerProfiles = await base44.asServiceRole.entities.CustomerProfile.filter({ user_email: job.customer_email });
+        const customerProfile = customerProfiles[0];
+        const stripeCustomerId = customerProfile?.stripe_customer_id;
+        const defaultPaymentMethodId = customerProfile?.default_payment_method_id;
+
+        let chargedViaCard = false;
+        let paymentLink = null;
+
+        if (stripeCustomerId && defaultPaymentMethodId) {
+          // Attempt off-session charge
+          try {
+            const offSessionIntent = await stripe.paymentIntents.create({
+              amount: Math.round(chargedPrice * 100),
+              currency: 'usd',
+              customer: stripeCustomerId,
+              payment_method: defaultPaymentMethodId,
+              confirm: true,
+              off_session: true,
+              description: `Grassgodz — ${job.service_name || 'Lawn Service'} at ${job.address}`,
+            });
+            if (offSessionIntent.status === 'succeeded') {
+              chargedViaCard = true;
+              await base44.asServiceRole.entities.Payment.create({
+                job_id,
+                customer_id: customerProfile?.id || job.customer_id,
+                provider_id: providerProfile?.id || job.provider_id,
+                stripe_payment_intent_id: offSessionIntent.id,
+                amount: chargedPrice,
+                platform_fee: platformFee,
+                payout_amount: providerPayout,
+                status: 'captured',
+              });
+            }
+          } catch (offSessionErr) {
+            console.error('Off-session charge failed:', offSessionErr.message);
+          }
+        }
+
+        if (!chargedViaCard) {
+          // Create Stripe Checkout Session for payment link
+          try {
+            const session = await stripe.checkout.sessions.create({
+              mode: 'payment',
+              customer_email: job.customer_email,
+              line_items: [{
+                price_data: {
+                  currency: 'usd',
+                  product_data: { name: job.service_name || 'Lawn Service', description: job.address },
+                  unit_amount: Math.round(chargedPrice * 100),
+                },
+                quantity: 1,
+              }],
+              success_url: 'https://grassgodz.com/customer',
+              cancel_url: 'https://grassgodz.com/customer',
+            });
+            paymentLink = session.url;
+          } catch (sessionErr) {
+            console.error('Checkout session error:', sessionErr.message);
+          }
+        }
+
+        // Create Invoice entity record
+        try {
+          await base44.asServiceRole.entities.Invoice.create({
+            job_id,
+            customer_name: job.customer_name || '',
+            customer_email: job.customer_email,
+            service_address: job.address || '',
+            service_description: job.service_name || 'Lawn Service',
+            line_items: [{ description: job.service_name || 'Lawn Service', type: 'labor', quantity: 1, unit_price: chargedPrice, line_total: chargedPrice }],
+            labor_subtotal: chargedPrice,
+            supplies_subtotal: 0,
+            subtotal: chargedPrice,
+            tax_rate: 0,
+            tax_amount: 0,
+            total: chargedPrice,
+            stripe_payment_link: paymentLink || null,
+            status: chargedViaCard ? 'paid' : (paymentLink ? 'sent' : 'draft'),
+            created_by_admin: false,
+          });
+        } catch (invoiceErr) {
+          console.error('Invoice create error:', invoiceErr.message);
+        }
+
+        // Send email
+        try {
+          if (chargedViaCard) {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: job.customer_email,
+              subject: 'Payment received — Grassgodz service complete 🌿',
+              body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz lawn service has been completed and <strong>$${chargedPrice.toFixed(2)}</strong> has been charged to your card on file. Thank you for choosing Grassgodz!</p>`,
+            });
+          } else if (paymentLink) {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: job.customer_email,
+              subject: 'Your lawn service is complete — invoice enclosed 🌿',
+              body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz lawn service at <strong>${job.address}</strong> has been completed.</p><p>Please pay your invoice of <strong>$${chargedPrice.toFixed(2)}</strong> using the button below:</p><p style="margin:24px 0;"><a href="${paymentLink}" style="background:#16a34a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Pay Now — $${chargedPrice.toFixed(2)}</a></p><p>Thank you for choosing Grassgodz!</p>`,
+            });
+          } else {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+              to: job.customer_email,
+              subject: 'Your lawn service is complete 🌿',
+              body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz lawn service has been completed. Amount due: <strong>$${chargedPrice.toFixed(2)}</strong>. Our team will be in touch regarding payment.</p>`,
+            });
+          }
+        } catch (emailErr) {
+          console.error('Email send error:', emailErr.message);
+        }
+      } catch (postPaymentErr) {
+        console.error('Post-completion payment flow error:', postPaymentErr.message);
+      }
+    } else if (stripeResult && job.customer_email) {
+      // Card was already captured — send simple receipt
+      try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: job.customer_email,
           subject: 'Your lawn service is complete! 🌿',
-          body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz service has been completed. Final charge: $${chargedPrice.toFixed(2)}. Thank you for choosing Grassgodz!</p>`,
+          body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz service has been completed and <strong>$${chargedPrice.toFixed(2)}</strong> has been charged. Thank you for choosing Grassgodz!</p>`,
         });
+      } catch (emailErr) {
+        console.error('Receipt email error:', emailErr.message);
       }
-    } catch (emailErr) {
-      console.error('Email send error:', emailErr.message);
     }
 
     return Response.json({

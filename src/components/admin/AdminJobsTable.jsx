@@ -5,6 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import StatusBadge from '@/components/shared/StatusBadge';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import { format } from 'date-fns';
+
+function parseLocalDate(dateStr) {
+  if (!dateStr) return new Date();
+  const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
 import { Camera, Pencil, Check, X, UserX } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -120,7 +126,7 @@ export default function AdminJobsTable({ jobs, onUpdateStatus, onRefresh }) {
               <TableCell className="text-sm">{job.customer_name}</TableCell>
               <TableCell className="text-sm">{job.provider_name || '—'}</TableCell>
               <TableCell className="text-sm">
-                {job.scheduled_date ? format(new Date(job.scheduled_date), 'MMM d') : '—'}
+                {job.scheduled_date ? format(parseLocalDate(job.scheduled_date), 'MMM d') : '—'}
               </TableCell>
               <TableCell><PriceCell job={job} /></TableCell>
               <TableCell><StatusBadge status={job.status} /></TableCell>

@@ -6,6 +6,11 @@ import AdminPayoutEditModal from './AdminPayoutEditModal';
 
 const fmt = (n) => `$${(n || 0).toFixed(2)}`;
 
+function getTodayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+}
+
 const STATUS_BADGE = {
   captured: 'bg-green-100 text-green-800',
   authorized: 'bg-blue-100 text-blue-800',
@@ -73,7 +78,7 @@ export default function AdminPayoutsPanel({ providers }) {
   });
 
   // Today's date in local format for filtering
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getTodayStr();
 
   // Provider map for provider view
   const providerMap = {};

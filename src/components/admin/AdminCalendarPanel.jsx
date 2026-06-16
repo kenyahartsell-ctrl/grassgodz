@@ -172,7 +172,7 @@ export default function AdminCalendarPanel({ providers }) {
           <Button size="sm" variant="outline" onClick={handleReleaseNow}>
             <RefreshCw size={13} /> Release Today's Jobs
           </Button>
-          <Button size="sm" onClick={() => { setSelectedDate(today.toISOString().split('T')[0]); setEditingJob(null); setShowForm(true); }}>
+          <Button size="sm" onClick={() => { const n = new Date(); setSelectedDate(`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`); setEditingJob(null); setShowForm(true); }}>
             <Plus size={13} /> New Job
           </Button>
         </div>
@@ -272,7 +272,7 @@ export default function AdminCalendarPanel({ providers }) {
               <div className="grid grid-cols-7 divide-x divide-border">
                 {weekDays.map(date => {
                   const isToday = date.toDateString() === today.toDateString();
-                  const dateStr = date.toISOString().split('T')[0];
+                  const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
                   const dayJobs = jobsOnDate(date);
                   return (
                     <div

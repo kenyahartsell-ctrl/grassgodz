@@ -16,6 +16,17 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+function parseLocalDate(dateStr) {
+  if (!dateStr) return new Date();
+  const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function getTodayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+}
+
 function isPaid(job) {
   return !!(job.final_payment_intent_id || job.is_cash_job || (job.final_price && job.platform_fee));
 }
@@ -32,7 +43,7 @@ function fmtAmt(val) {
 
 // ─── Due Today / Upcoming ────────────────────────────────────────────────────
 function ScheduledJobsAtAGlance({ jobs }) {
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayStr = getTodayStr();
 
   const dueToday = jobs.filter(j =>
     !['completed', 'cancelled'].includes(j.status) &&
@@ -459,7 +470,7 @@ function CalendarSection({ scheduledJobs, allJobs }) {
     }
   });
 
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayStr = getTodayStr();
   const cells = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
@@ -538,7 +549,7 @@ function JobCard({ job: j, handlers, isCompleted }) {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
         <span>{j.provider_name || 'Unassigned'}</span>
         <span>·</span>
-        <span>{j.scheduled_date ? new Date(j.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</span>
+        <span>{j.scheduled_date ? parseLocalDate(j.scheduled_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</span>
         {price != null && <><span>·</span><span className="font-semibold text-foreground">{fmtAmt(price)}</span></>}
       </div>
 
@@ -647,7 +658,7 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
   const [scheduledJobs, setScheduledJobs] = useState([]);
   const [loadingScheduled, setLoadingScheduled] = useState(true);
   const [pendingFilter, setPendingFilter] = useState('all');
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState(getTodayStr());
 
   useEffect(() => {
     base44.entities.ScheduledJob.list('-created_date', 100)
@@ -660,7 +671,7 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
     .filter(j => j.status !== 'completed')
     .filter(j => {
       // Biweekly jobs only hidden if future AND not released
-      if (j.recurrence === 'biweekly' && !j.biweekly_released && j.scheduled_date > format(new Date(), 'yyyy-MM-dd')) return false;
+      if (j.recurrence === 'biweekly' && !j.biweekly_released && j.scheduled_date > getTodayStr()) return false;
       // Date filter: show jobs for selected date, or unscheduled jobs
       if (j.scheduled_date && j.scheduled_date !== selectedDate) return false;
       return pendingFilter === 'all' || j.status === pendingFilter;
@@ -694,8 +705,8 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
             <div className="col-span-full flex items-center gap-2 bg-muted/50 border border-border rounded-xl px-4 py-2.5">
               <button onClick={() => setSelectedDate(d => format(addDays(new Date(d + "T12:00:00"), -1), "yyyy-MM-dd"))}
                 className="p-1.5 rounded-lg hover:bg-card transition-colors"><ChevronLeft size={16} /></button>
-              <button onClick={() => setSelectedDate(format(new Date(), "yyyy-MM-dd"))}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${selectedDate === format(new Date(),"yyyy-MM-dd") ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}>
+              <button onClick={() => setSelectedDate(getTodayStr())}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${selectedDate === getTodayStr() ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}>
                 Today
               </button>
               <span className="flex-1 text-center text-sm font-bold text-foreground">

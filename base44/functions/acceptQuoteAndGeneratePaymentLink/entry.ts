@@ -63,15 +63,14 @@ Deno.serve(async (req) => {
           : 0;
         const captureMethod = daysUntilJob > 5 ? 'automatic' : 'manual';
 
-        const paymentIntent = await stripe.paymentIntents.create({
+        const hasConnectAccount = !!(providerProfile?.stripe_connect_account_id);
+        const paymentIntentParams = {
           amount: amountCents,
           currency: 'usd',
           capture_method: captureMethod,
           confirm: true,
           customer: customerProfile.stripe_customer_id,
           payment_method: customerProfile.default_payment_method_id,
-          application_fee_amount: applicationFeeCents,
-          transfer_data: { destination: providerProfile.stripe_connect_account_id },
           automatic_payment_methods: {
             enabled: true,
             allow_redirects: 'never',
@@ -82,7 +81,12 @@ Deno.serve(async (req) => {
             customer_email: user.email,
             capture_method: captureMethod,
           },
-        });
+        };
+        if (hasConnectAccount) {
+          paymentIntentParams.application_fee_amount = applicationFeeCents;
+          paymentIntentParams.transfer_data = { destination: providerProfile.stripe_connect_account_id };
+        }
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
         // Save Payment record
         await base44.asServiceRole.entities.Payment.create({
@@ -127,6 +131,12 @@ Deno.serve(async (req) => {
 
     let paymentLink = null;
     try {
+      const hasConnectAccountB = !!(providerProfile?.stripe_connect_account_id);
+      const paymentIntentData = { capture_method: 'manual', metadata: { job_id: job.id, quote_id: quote_id } };
+      if (hasConnectAccountB) {
+        paymentIntentData.application_fee_amount = applicationFeeCents;
+        paymentIntentData.transfer_data = { destination: providerProfile.stripe_connect_account_id };
+      }
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         line_items: [{
@@ -137,12 +147,7 @@ Deno.serve(async (req) => {
           },
           quantity: 1,
         }],
-        payment_intent_data: {
-          capture_method: 'manual',
-          application_fee_amount: applicationFeeCents,
-          transfer_data: { destination: providerProfile.stripe_connect_account_id },
-          metadata: { job_id: job.id, quote_id: quote_id },
-        },
+        payment_intent_data: paymentIntentData,
         customer_email: user.email,
         success_url: `https://app.base44.com/apps/69e949497e5928c679297ebf/?payment=success&job_id=${job.id}`,
         cancel_url: `https://app.base44.com/apps/69e949497e5928c679297ebf/?payment=cancelled&job_id=${job.id}`,

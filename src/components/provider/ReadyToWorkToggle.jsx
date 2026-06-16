@@ -48,25 +48,20 @@ export default function ReadyToWorkToggle({ providerProfile, onStatusChanged }) 
         <p className={`text-xs mt-0.5 ${isActive ? 'text-green-700' : 'text-muted-foreground'}`}>
           {isActive
             ? 'Available jobs are visible — tap to go Inactive when done for the day.'
-            : 'Tap "Ready to Work" to see available jobs in your area.'}
+            : 'Contact support to reactivate your account.'}
         </p>
       </div>
 
-      <button
-        onClick={handleToggle}
-        disabled={loading}
-        className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-          isActive
-            ? 'bg-white border border-green-300 text-green-800 hover:bg-green-100'
-            : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md'
-        }`}
-      >
-        {loading
-          ? <Loader2 size={14} className="animate-spin" />
-          : <Power size={14} />
-        }
-        {isActive ? 'Go Inactive' : 'Ready to Work'}
-      </button>
+      {isActive && (
+        <button
+          onClick={handleToggle}
+          disabled={loading}
+          className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all bg-white border border-green-300 text-green-800 hover:bg-green-100"
+        >
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
+          Go Inactive
+        </button>
+      )}
     </div>
   );
 }

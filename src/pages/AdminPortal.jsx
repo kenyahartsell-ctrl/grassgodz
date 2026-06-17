@@ -36,6 +36,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import AdminCashOverridePanel from '@/components/admin/AdminCashOverridePanel';
 import AdminDashboardPanel from '@/components/admin/AdminDashboardPanel';
+import AdminJobsTab from '@/components/admin/AdminJobsTab';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -340,26 +341,13 @@ export default function AdminPortal() {
         )}
 
         {tab === 'jobs' && (
-          <AdminJobsDashboard
+          <AdminJobsTab
             jobs={jobs}
             setJobs={setJobs}
+            providers={providers}
             handlers={{
-              onAddJob: () => setShowAddJob(true),
-              onEdit: (j) => setEditingJob(j),
-              onEditPrice: (j) => setEditingPriceJob(j),
-              onAssign: (j) => setAssigningJob(j),
-              onUnassign: async (j) => {
-                await base44.entities.Job.update(j.id, { provider_id: null, provider_email: null, provider_name: null, status: 'requested' });
-                const allJobs = await base44.entities.Job.list('-created_date', 100);
-                setJobs(allJobs);
-                toast.success('Provider unassigned.');
-              },
-              onWeather: (j) => setWeatherJob(j),
               onComplete: handleCompleteJob,
               onCancel: (j) => setCancellingJob(j),
-              onDelete: handleDeleteJob,
-              onPhotos: (photos) => setViewingPhotos(photos),
-              onChat: (j) => { setSupportJob(j); setTab('support'); },
             }}
           />
         )}

@@ -177,7 +177,7 @@ function PhotoUploader({ photos, onAdd, onRemove }) {
   );
 }
 /* ---------------- main component ---------------- */
-export default function ProviderPortal() {
+export default function ProviderPortal({ currentUser }) {
   const [activeTab, setActiveTab] = useState("jobs");
   const [availableJobs, setAvailableJobs] = useState(seedAvailableJobs);
   const [myJobs, setMyJobs] = useState(seedMyJobs);
@@ -290,7 +290,7 @@ export default function ProviderPortal() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Provider Dashboard</p>
-              <h1 className="text-xl font-bold sm:text-2xl">Marcus Reed</h1>
+              <h1 className="text-xl font-bold sm:text-2xl">{currentUser?.full_name || currentUser?.email?.split("@")[0] || "Provider"}</h1>
             </div>
             <button onClick={() => setShowAdminModal(true)} className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold hover:bg-emerald-600">
               <MessageCircle size={15} /> Contact Admin

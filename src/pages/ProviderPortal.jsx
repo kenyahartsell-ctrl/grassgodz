@@ -209,8 +209,9 @@ function mapJob(j, customerProfiles) {
 }
 
 /* ---------------- main component ---------------- */
-export default function ProviderPortal({ currentUser }) {
+export default function ProviderPortal() {
   const [activeTab, setActiveTab] = useState("jobs");
+  const [currentUser, setCurrentUser] = useState(null);
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -234,14 +235,15 @@ export default function ProviderPortal({ currentUser }) {
   const insuranceInputRef = useRef(null);
 
   useEffect(() => {
-    if (!currentUser) return;
     async function loadData() {
       setLoading(true);
       try {
+        const me = await base44.auth.me();
+        setCurrentUser(me);
         const customerProfiles = await base44.entities.CustomerProfile.list();
         const [byEmail, byId, available] = await Promise.all([
-          base44.entities.Job.filter({ provider_email: currentUser.email }),
-          base44.entities.Job.filter({ provider_id: currentUser.id }),
+          base44.entities.Job.filter({ provider_email: me.email }),
+          base44.entities.Job.filter({ provider_id: me.id }),
           base44.entities.Job.filter({ status: "requested" }),
         ]);
         // Merge and deduplicate by id
@@ -261,7 +263,7 @@ export default function ProviderPortal({ currentUser }) {
       }
     }
     loadData();
-  }, [currentUser]);
+  }, []);
 
   const rating = useMemo(() => {
     const poor = reviews.filter((r) => r.type === "poor").length;

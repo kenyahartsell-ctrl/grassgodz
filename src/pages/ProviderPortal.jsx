@@ -1,825 +1,619 @@
-import { useState, useEffect } from 'react';
-import { LayoutDashboard, Search, CalendarDays, DollarSign, Star, Leaf, User, TrendingUp, AlertCircle, Bell, Loader2, FileText, Clock, Power, RefreshCw, LogOut } from 'lucide-react';
-import AvailableJobCard from '../components/provider/AvailableJobCard';
-import ProviderJobCard from '../components/provider/ProviderJobCard';
-import BookingRequestCard from '../components/provider/BookingRequestCard';
-import ProviderJobMap from '../components/provider/ProviderJobMap';
-import ScheduledJobsMap from '../components/provider/ScheduledJobsMap';
-import StarRating from '../components/shared/StarRating';
-import MetricCard from '../components/shared/MetricCard';
-import MyQuotesPanel from '@/components/provider/MyQuotesPanel';
-
-import ReadyToWorkToggle from '@/components/provider/ReadyToWorkToggle';
-import AvailableJobsDiscovery from '@/components/provider/AvailableJobsDiscovery';
-
-import { base44 } from '@/api/base44Client';
-import ProviderProfileEditor from '@/components/provider/ProviderProfileEditor';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
-
-const NAV = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'bookings', label: 'Bookings', icon: Bell },
-  { key: 'available', label: 'Available', icon: Search },
-  { key: 'myjobs', label: 'My Jobs', icon: CalendarDays },
-  { key: 'earnings', label: 'Earnings', icon: DollarSign },
-  { key: 'profile', label: 'Profile', icon: User },
+import { useState, useMemo, useRef } from "react";
+import {
+  MapPin, Calendar as CalendarIcon, MessageCircle, ShieldCheck, ShieldAlert,
+  DollarSign, Camera, Phone, Repeat, CheckCircle2, Clock, Send, X, ChevronLeft,
+  ChevronRight, Upload, AlertCircle, Plus, Navigation, ListChecks, ThumbsDown,
+  ThumbsUp, PlayCircle, Trash2
+} from "lucide-react";
+/* ---------------- helpers ---------------- */
+const addDays = (date, n) => { const d = new Date(date); d.setDate(d.getDate() + n); return d; };
+const isSameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+const fmtDate = (date) => date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+const fmtMoney = (n) => `$${n.toFixed(2)}`;
+const mapsLink = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+const timeToMinutes = (t) => {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return 0;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  const mer = m[3].toUpperCase();
+  if (mer === "PM" && h !== 12) h += 12;
+  if (mer === "AM" && h === 12) h = 0;
+  return h * 60 + min;
+};
+const today = new Date();
+let idCounter = 1000;
+const nextId = () => idCounter++;
+/* ---------------- seed data ---------------- */
+const seedAvailableJobs = [
+  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Lawn Mowing", recurring: false, frequency: null, date: addDays(today, 1), time: "9:00 AM", price: 45, notes: "Gate code 4471. Dog stays inside during service." },
+  { id: nextId(), customerName: "Daniel Osei", phone: "(301) 555-0198", address: "8822 Piney Branch Rd, Silver Spring, MD", service: "Lawn Mowing + Edging", recurring: true, frequency: "Weekly", date: addDays(today, 1), time: "11:30 AM", price: 60, notes: "Side gate unlocked Tuesdays only." },
+  { id: nextId(), customerName: "Priya Nair", phone: "(703) 555-0117", address: "212 Hume Ave, Alexandria, VA", service: "Full Yard Cleanup", recurring: false, frequency: null, date: addDays(today, 2), time: "1:00 PM", price: 120, notes: "Large leaf pile near fence to bag and remove." },
 ];
-
-
-function BiWeeklyCalendar({ jobs }) {
-  const [viewDate, setViewDate] = useState(new Date());
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const scheduledDays = new Set(
-    jobs.filter(j => j.scheduled_date).map(j => {
-      const d = new Date(j.scheduled_date);
-      return d.getFullYear() === year && d.getMonth() === month ? d.getDate() : null;
-    }).filter(Boolean)
-  );
-  const jobsByDay = {};
-  jobs.forEach(j => {
-    if (!j.scheduled_date) return;
-    const d = new Date(j.scheduled_date);
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      const day = d.getDate();
-      if (!jobsByDay[day]) jobsByDay[day] = [];
-      jobsByDay[day].push(j);
-    }
-  });
-  const cells = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  const today = new Date();
-  const isToday = (d) => today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+const seedMyJobs = [
+  { id: nextId(), customerName: "Marcus Webb", phone: "(202) 555-0166", address: "504 Quincy St NW, Washington, DC", service: "Lawn Mowing", recurring: true, frequency: "Weekly", date: today, time: "8:00 AM", price: 40, status: "scheduled", thisWeek: true, photos: [], notes: "Park in driveway, not street." },
+  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Lawn Mowing", recurring: false, frequency: null, date: today, time: "10:30 AM", price: 45, status: "scheduled", thisWeek: true, photos: [], notes: "" },
+  { id: nextId(), customerName: "Joanna Ruiz", phone: "(202) 555-0190", address: "1820 Irving St NW, Washington, DC", service: "Spring Cleanup", recurring: false, frequency: null, date: today, time: "1:30 PM", price: 95, status: "scheduled", thisWeek: true, photos: [], notes: "" },
+  { id: nextId(), customerName: "Tasha Greene", phone: "(301) 555-0177", address: "67 Forest Glen Rd, Silver Spring, MD", service: "Lawn Mowing + Edging", recurring: true, frequency: "Biweekly", date: addDays(today, -2), time: "9:00 AM", price: 55, status: "completed", thisWeek: true, photos: [], notes: "" },
+  { id: nextId(), customerName: "Greg Holloway", phone: "(703) 555-0133", address: "39 Quaker Ln, Alexandria, VA", service: "Full Yard Cleanup", recurring: false, frequency: null, date: addDays(today, -3), time: "2:00 PM", price: 110, status: "completed", thisWeek: true, photos: [], notes: "" },
+  { id: nextId(), customerName: "Marcus Webb", phone: "(202) 555-0166", address: "504 Quincy St NW, Washington, DC", service: "Lawn Mowing", recurring: true, frequency: "Weekly", date: addDays(today, -9), time: "8:00 AM", price: 40, status: "completed", thisWeek: false, photos: [], notes: "" },
+  { id: nextId(), customerName: "Dana Okafor", phone: "(703) 555-0188", address: "14 Pendleton St, Alexandria, VA", service: "Hedge Trimming", recurring: false, frequency: null, date: addDays(today, 5), time: "10:00 AM", price: 75, status: "scheduled", thisWeek: false, photos: [], notes: "" },
+];
+const seedQuotes = [
+  { id: nextId(), customerName: "Joanna Ruiz", phone: "(202) 555-0190", address: "1820 Irving St NW, Washington, DC", service: "Spring Cleanup + Mulching", amount: 180, status: "pending", date: addDays(today, -1) },
+  { id: nextId(), customerName: "Bill Hartman", phone: "(301) 555-0144", address: "905 Bonifant St, Silver Spring, MD", service: "Lawn Mowing", amount: 42, status: "accepted", date: addDays(today, -4) },
+  { id: nextId(), customerName: "Dana Okafor", phone: "(703) 555-0188", address: "14 Pendleton St, Alexandria, VA", service: "Hedge Trimming", amount: 75, status: "declined", date: addDays(today, -6) },
+  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Fall Leaf Removal", amount: 95, status: "expired", date: addDays(today, -12) },
+];
+const seedReviews = [
+  { id: nextId(), type: "poor", date: addDays(today, -6), note: "Lawn lines uneven, asked for redo." },
+];
+const seedChatThreads = {
+  "Marcus Webb": [
+    { from: "customer", text: "Can you come a little earlier this week? Maybe 7:45?", time: addDays(today, -1) },
+    { from: "provider", text: "I can do 7:45 — works on my end.", time: addDays(today, -1) },
+  ],
+  "Renee Carter": [
+    { from: "customer", text: "Gate code is 4471, please make sure it latches when you leave.", time: addDays(today, -2) },
+  ],
+  "Tasha Greene": [
+    { from: "customer", text: "Yard looked great last time, thank you!", time: addDays(today, -2) },
+  ],
+  "Joanna Ruiz": [
+    { from: "customer", text: "Sent over a quote request for spring cleanup, let me know what you think.", time: addDays(today, -1) },
+  ],
+};
+/* ---------------- small UI pieces ---------------- */
+function Card({ children, className = "" }) {
+  return <div className={`rounded-2xl border border-stone-200 bg-white p-4 shadow-sm ${className}`}>{children}</div>;
+}
+function Eyebrow({ children }) {
+  return <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-700">{children}</p>;
+}
+function ratingTier(score) {
+  if (score >= 85) return "green";
+  if (score >= 60) return "amber";
+  return "red";
+}
+function RatingBadge({ score, onClick }) {
+  const tier = ratingTier(score);
+  const styles = {
+    green: "bg-emerald-50 text-emerald-800 border-emerald-300",
+    amber: "bg-amber-50 text-amber-800 border-amber-300",
+    red: "bg-rose-50 text-rose-800 border-rose-300",
+  };
+  const dot = { green: "bg-emerald-500", amber: "bg-amber-500", red: "bg-rose-500" };
   return (
-    <div className="bg-card border border-border rounded-xl p-4">
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground text-lg leading-none">‹</button>
-        <p className="text-sm font-bold text-foreground">{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
-        <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground text-lg leading-none">›</button>
-      </div>
-      <div className="grid grid-cols-7 mb-1">
-        {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
-          <div key={d} className="text-center text-[10px] font-semibold text-muted-foreground py-1">{d}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-0.5">
-        {cells.map((day, idx) => (
-          <div key={idx} className={`aspect-square flex flex-col items-center justify-center rounded-lg text-xs ${!day ? '' : isToday(day) ? 'bg-primary text-primary-foreground font-bold' : scheduledDays.has(day) ? 'bg-green-100 text-green-800 font-semibold ring-1 ring-green-400' : 'text-foreground'}`}>
-            {day && <span>{day}</span>}
-            {day && scheduledDays.has(day) && <span className="w-1 h-1 rounded-full bg-green-600 mt-0.5" />}
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 border-t border-border pt-3">
-        <p className="text-xs font-semibold text-foreground mb-2">Bi-Weekly Jobs This Month</p>
-        {Object.keys(jobsByDay).length === 0 ? (
-          <p className="text-xs text-muted-foreground">No bi-weekly jobs this month.</p>
-        ) : (
-          <div className="space-y-1.5">
-            {Object.entries(jobsByDay).sort(([a],[b]) => Number(a)-Number(b)).flatMap(([day, dayJobs]) =>
-              dayJobs.map(j => (
-                <div key={j.id} className="flex items-center gap-2 text-xs">
-                  <span className="w-16 flex-shrink-0 font-medium text-foreground">
-                    {new Date(year, month, Number(day)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
-                  <span className="text-muted-foreground truncate">{j.service_name} — {j.customer_name}</span>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+    <button onClick={onClick} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition ${styles[tier]}`}>
+      <span className={`h-2 w-2 rounded-full ${dot[tier]}`} />
+      {score}% rating
+    </button>
+  );
+}
+function InsuranceBadge({ status, onUpload }) {
+  if (status === "verified") {
+    return (
+      <span className="flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800">
+        <ShieldCheck size={14} /> Insured
+      </span>
+    );
+  }
+  if (status === "pending") {
+    return (
+      <span className="flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800">
+        <Clock size={14} /> Insurance pending review
+      </span>
+    );
+  }
+  return (
+    <button onClick={onUpload} className="flex items-center gap-1.5 rounded-full border border-rose-300 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-800 hover:bg-rose-100">
+      <ShieldAlert size={14} /> Not insured — upload proof
+    </button>
+  );
+}
+function RecurringTag({ frequency }) {
+  return (
+    <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+      <Repeat size={11} /> Recurring · {frequency}
+    </span>
+  );
+}
+function StatusPill({ status }) {
+  const map = {
+    pending: "bg-amber-100 text-amber-800",
+    accepted: "bg-emerald-100 text-emerald-800",
+    declined: "bg-rose-100 text-rose-800",
+    expired: "bg-stone-200 text-stone-600",
+    scheduled: "bg-sky-100 text-sky-800",
+    completed: "bg-emerald-100 text-emerald-800",
+    in_progress: "bg-amber-100 text-amber-800",
+  };
+  const labels = {
+    pending: "Pending", accepted: "Accepted", declined: "Declined", expired: "Expired",
+    scheduled: "Scheduled", completed: "Completed", in_progress: "In progress",
+  };
+  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${map[status]}`}>{labels[status]}</span>;
+}
+function CustomerInfo({ name, phone, address }) {
+  return (
+    <div className="space-y-0.5 text-sm text-stone-600">
+      <p className="font-semibold text-stone-900">{name}</p>
+      <a href={`tel:${phone.replace(/[^\d]/g, "")}`} className="flex items-center gap-1.5 hover:text-emerald-700">
+        <Phone size={12} /> {phone}
+      </a>
+      <a href={mapsLink(address)} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-emerald-700">
+        <MapPin size={12} /> {address}
+      </a>
     </div>
   );
 }
-
-export default function ProviderPortal() {
-  const [tab, setTab] = useState('dashboard');
-  const [user, setUser] = useState(null);
-  const [providerProfile, setProviderProfile] = useState(null);
-  const [myJobs, setMyJobs] = useState([]);
-  const [availableJobs, setAvailableJobs] = useState([]);
-  const [mapJobs, setMapJobs] = useState([]);
-  const [bookingRequests, setBookingRequests] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [unpaidInvoiceJobIds, setUnpaidInvoiceJobIds] = useState(new Set());
-  const [showStripeGuide, setShowStripeGuide] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [actionLoading, setActionLoading] = useState({});
-  const [jobsDateFilter, setJobsDateFilter] = useState('today');
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const me = await base44.auth.me();
-        setUser(me);
-
-        // Fetch provider's own jobs + profile, and available jobs in parallel
-        const [myJobsRes, availableRes] = await Promise.all([
-          base44.functions.invoke('getMyProviderJobs', {}),
-          base44.functions.invoke('getAvailableJobs', {}),
-        ]);
-
-        const profile = myJobsRes.data?.profile || null;
-        const allMyJobs = myJobsRes.data?.jobs || [];
-        const unassigned = availableRes.data?.jobs || [];
-        const todayMapJobs = availableRes.data?.map_jobs || [];
-        setMapJobs(todayMapJobs);
-
-        setProviderProfile(profile);
-        setMyJobs(allMyJobs);
-
-        if (!profile) {
-          setAvailableJobs(unassigned);
-        }
-
-        if (profile) {
-          // Check if Stripe onboarding was just completed (e.g. returning from Stripe)
-          if (profile.stripe_connect_account_id && !profile.onboarding_complete) {
-            try {
-              const result = await base44.functions.invoke('checkStripeOnboardingStatus', {
-                provider_id: profile.id,
-              });
-              if (result.data?.onboarding_complete) {
-                profile.onboarding_complete = true;
-              }
-            } catch {}
-          }
-
-          const bookings = unassigned.filter(j =>
-            j.scheduled_date && Array.isArray(profile.service_zip_codes) &&
-            profile.service_zip_codes.includes(j.zip_code)
-          );
-          const bookingIds = new Set(bookings.map(b => b.id));
-          setAvailableJobs(unassigned.filter(j => !bookingIds.has(j.id)));
-          setBookingRequests(bookings);
-
-          const myReviews = await base44.entities.Review.filter({ provider_id: profile.id });
-          setReviews(myReviews);
-        }
-
-        // Load unpaid invoices to warn provider
-        try {
-          const invoices = await base44.entities.Invoice.filter({ status: 'sent' });
-          const jobIds = new Set(invoices.filter(i => i.job_id).map(i => i.job_id));
-          setUnpaidInvoiceJobIds(jobIds);
-        } catch {}
-      } catch (err) {
-        toast.error('Failed to load data.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  const refreshJobs = async () => {
-    if (!user) return;
-    setIsRefreshing(true);
-    try {
-      const [myJobsRes, availableRes] = await Promise.all([
-        base44.functions.invoke('getMyProviderJobs', {}),
-        base44.functions.invoke('getAvailableJobs', {}),
-      ]);
-      const allMyJobs = myJobsRes.data?.jobs || [];
-      const unassigned = availableRes.data?.jobs || [];
-      const refreshedMapJobs = availableRes.data?.map_jobs || [];
-      setMapJobs(refreshedMapJobs);
-      setMyJobs(allMyJobs);
-      if (providerProfile) {
-        const newBookings = unassigned.filter(j =>
-          j.scheduled_date &&
-          Array.isArray(providerProfile?.service_zip_codes) &&
-          providerProfile.service_zip_codes.includes(j.zip_code)
-        );
-        setBookingRequests(newBookings);
-        const bookingIds = new Set(newBookings.map(b => b.id));
-        setAvailableJobs(unassigned.filter(j => !bookingIds.has(j.id)));
-      } else {
-        setAvailableJobs(unassigned);
-      }
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const scheduled = myJobs.filter(j => ['scheduled', 'accepted'].includes(j.status));
-
-  const inProgress = myJobs.filter(j => j.status === 'in_progress');
-  const completed = myJobs.filter(j => j.status === 'completed');
-  const totalEarnings = completed.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
-  const pendingPayout = myJobs.filter(j => ['in_progress', 'scheduled', 'accepted'].includes(j.status)).reduce((sum, j) => sum + (j.provider_payout || 0), 0);
-
-  const now = new Date();
-  const thisMonthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
-  const thisMonthCompleted = completed.filter(j => {
-    if (!j.completed_at) return false;
-    const d = new Date(j.completed_at);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
-  const thisMonthEarnings = thisMonthCompleted.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
-
-  const avgRating = reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-    : providerProfile?.avg_rating || '—';
-
-  const setLoading_ = (key, val) => setActionLoading(prev => ({ ...prev, [key]: val }));
-
-  const handleAcceptBooking = async (booking) => {
-    setLoading_(`accept_${booking.id}`, true);
-    try {
-      const res = await base44.functions.invoke('providerAcceptJob', { job_id: booking.id, action: 'accept' });
-      if (res.data?.error) { toast.error(res.data.error); return; }
-      await refreshJobs();
-      toast.success(`Booking accepted! ${booking.service_name} for ${booking.customer_name} is now scheduled.`);
-      try {
-        const profiles = await base44.entities.CustomerProfile.filter({ user_email: booking.customer_email });
-        const phone = profiles?.[0]?.phone;
-        if (phone) {
-          await base44.functions.invoke('sendSMS', {
-            to: phone,
-            body: 'Hi ' + (booking.customer_name || 'there') + '! Your ' + (booking.service_name || 'lawn service') + ' with Grassgodz is confirmed by ' + (providerProfile.business_name || 'your provider') + '. See you soon! 🌿',
-          });
-        }
-      } catch {}
-    } finally {
-      setLoading_(`accept_${booking.id}`, false);
-    }
-  };
-
-  const handleDeclineBooking = async (booking) => {
-    setLoading_(`decline_${booking.id}`, true);
-    try {
-      const res = await base44.functions.invoke('providerAcceptJob', { job_id: booking.id, action: 'decline' });
-      if (res.data?.error) { toast.error(res.data.error); return; }
-      await refreshJobs();
-      toast.error(`Booking for ${booking.customer_name} declined.`);
-    } finally {
-      setLoading_(`decline_${booking.id}`, false);
-    }
-  };
-
-  const handleAcceptCashJob = async (job) => {
-    setLoading_(`accept_${job.id}`, true);
-    try {
-      const res = await base44.functions.invoke('providerAcceptJob', { job_id: job.id, action: 'accept' });
-      if (res.data?.error) { toast.error(res.data.error); return; }
-      await refreshJobs();
-      toast.success(`Cash job accepted! ${job.service_name} for ${job.customer_name} is now scheduled.`);
-      setTab('myjobs');
-    } finally {
-      setLoading_(`accept_${job.id}`, false);
-    }
-  };
-
-  const handleSubmitQuote = async (job, quoteData) => {
-    const quote = await base44.entities.Quote.create({
-      job_id: job.id,
-      provider_id: providerProfile.id,
-      provider_name: providerProfile.business_name || providerProfile.name,
-      provider_email: user.email,
-      price: quoteData.price,
-      message: quoteData.message,
-      status: 'pending',
-      provider_avg_rating: providerProfile.avg_rating || null,
-      provider_total_jobs: providerProfile.total_jobs_completed || 0,
-    });
-    // Update job status to 'quoted' so the customer sees the provider responded
-    await base44.functions.invoke('updateJobToQuoted', {
-      job_id: job.id,
-      quoted_price: quoteData.price,
-      provider_email: user.email,
-      provider_id: providerProfile.id,
-      provider_name: providerProfile.business_name || providerProfile.name,
-    });
-    await base44.functions.invoke('notifyCustomerNewQuote', { data: quote }).catch(() => {});
-    await refreshJobs();
-    toast.success(`Quote of $${quoteData.price} submitted for ${job.service_name}!`);
-    setTab('myjobs');
-  };
-
-  const handleMarkInProgress = async (job) => {
-    setLoading_(`inprogress_${job.id}`, true);
-    try {
-      await base44.entities.Job.update(job.id, { status: 'in_progress' });
-      await refreshJobs();
-      toast.success('Job marked as in progress.');
-    } finally {
-      setLoading_(`inprogress_${job.id}`, false);
-    }
-  };
-
-  const handleMarkComplete = async (job, photos = {}, skipPhotos = false) => {
-    // Save completion photos via backend function (bypasses RLS)
-    if (!skipPhotos && Object.keys(photos).length > 0) {
-      await base44.functions.invoke('submitJobPhoto', { job_id: job.id, photos });
-    }
-    // capturePayment handles marking completed, calculating payout, and notifying customer
-    const res = await base44.functions.invoke('capturePayment', {
-      job_id: job.id,
-      skip_photos: skipPhotos,
-    });
-    if (res.data?.success) {
-      const payout = res.data.payout != null ? Number(res.data.payout).toFixed(2) : ((job.quoted_price || 0) * 0.90).toFixed(2);
-      await refreshJobs();
-      toast.success(`Job completed! $${payout} payout — customer has been notified.`);
-    // SMS customer on job completion + payment
-    try {
-      const profiles = await base44.entities.CustomerProfile.filter({ user_email: job.customer_email });
-      const phone = profiles?.[0]?.phone;
-      if (phone) {
-        await base44.functions.invoke('sendSMS', {
-          to: phone,
-          body: 'Hi ' + (job.customer_name || 'there') + '! Your ' + (job.service_name || 'lawn service') + ' is complete and payment of $' + payout + ' has been processed. Thanks for choosing Grassgodz! 🌿',
-        });
-      }
-    } catch {}
-    } else {
-      toast.error(res.data?.error || 'Failed to complete job. Please try again.');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  const isProviderActive = providerProfile?.status === 'active';
-
-  const handleStatusChanged = (newStatus) => {
-    setProviderProfile(p => p ? { ...p, status: newStatus } : p);
-  };
-
-  const displayName = providerProfile?.name || user?.full_name || 'Provider';
-  const businessName = providerProfile?.business_name || displayName;
-
+function PhotoUploader({ photos, onAdd, onRemove }) {
+  const inputRef = useRef(null);
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-30 flex-shrink-0">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
-          <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-9 w-9 object-contain" />
-          <span className="font-display font-bold text-lg text-foreground">Grassgodz</span>
-          <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full ml-1">Provider</span>
-          <div className="ml-auto flex items-center gap-2">
-            <button onClick={async () => { setIsRefreshing(true); await refreshJobs(); setIsRefreshing(false); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
-              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-            </button>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">{displayName[0]}</span>
-            </div>
-            <span className="text-sm font-medium text-foreground hidden sm:block">{businessName}</span>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 overflow-y-auto max-w-3xl mx-auto w-full px-4 py-6">
-        {/* Stripe Onboarding Banner — persistent but non-blocking */}
-        {providerProfile && !providerProfile?.onboarding_complete && (
-          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-            <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-800">Complete your payment setup to receive payouts</p>
-              <p className="text-xs text-amber-700 mt-0.5">You can still accept and complete jobs — set up your bank account to get paid when jobs are completed.</p>
-              <p className="text-xs text-amber-700 mt-1.5 font-medium">📌 When Stripe asks for a website, enter <strong>grassgodz.com</strong> — this is the platform you operate under.</p>
-              <button
-                onClick={() => setShowStripeGuide(true)}
-                className="mt-2 text-xs font-semibold text-amber-800 underline hover:text-amber-900"
-              >
-                Set Up Stripe Payouts →
+    <div className="mt-3 border-t border-stone-100 pt-3">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-stone-500">
+          <Camera size={13} /> Job photos
+        </p>
+        <button onClick={() => inputRef.current?.click()} className="flex items-center gap-1 rounded-lg bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-700 hover:bg-stone-200">
+          <Upload size={12} /> Add photos
+        </button>
+        <input ref={inputRef} type="file" accept="image/*" multiple hidden
+          onChange={(e) => { if (e.target.files?.length) onAdd(Array.from(e.target.files)); e.target.value = ""; }} />
+      </div>
+      {photos.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {photos.map((p) => (
+            <div key={p.id} className="group relative h-16 w-16 overflow-hidden rounded-lg border border-stone-200">
+              <img src={p.url} alt="job" className="h-full w-full object-cover" />
+              <button onClick={() => onRemove(p.id)} className="absolute right-0.5 top-0.5 hidden rounded-full bg-black/60 p-0.5 text-white group-hover:block">
+                <X size={10} />
               </button>
             </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+/* ---------------- main component ---------------- */
+export default function ProviderPortal() {
+  const [activeTab, setActiveTab] = useState("jobs");
+  const [availableJobs, setAvailableJobs] = useState(seedAvailableJobs);
+  const [myJobs, setMyJobs] = useState(seedMyJobs);
+  const [quotes, setQuotes] = useState(seedQuotes);
+  const [reviews, setReviews] = useState(seedReviews);
+  const [insuranceStatus, setInsuranceStatus] = useState("verified");
+  const [showPerf, setShowPerf] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminSubject, setAdminSubject] = useState("");
+  const [adminMessage, setAdminMessage] = useState("");
+  const [sentAdminMessages, setSentAdminMessages] = useState([]);
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [quoteForm, setQuoteForm] = useState({ customerName: "", phone: "", address: "", service: "", amount: "" });
+  const [chatThreads, setChatThreads] = useState(seedChatThreads);
+  const [selectedCustomer, setSelectedCustomer] = useState(Object.keys(seedChatThreads)[0]);
+  const [chatInput, setChatInput] = useState("");
+  const [routeMode, setRouteMode] = useState("route");
+  const [routeDayOffset, setRouteDayOffset] = useState(0);
+  const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
+  const [selectedCalDay, setSelectedCalDay] = useState(today.getDate());
+  const insuranceInputRef = useRef(null);
+  const rating = useMemo(() => {
+    const poor = reviews.filter((r) => r.type === "poor").length;
+    return Math.max(0, 100 - poor * 5);
+  }, [reviews]);
+  const weeklyPay = useMemo(
+    () => myJobs.filter((j) => j.status === "completed" && j.thisWeek).reduce((sum, j) => sum + j.price, 0),
+    [myJobs]
+  );
+  function acceptJob(job) {
+    setAvailableJobs((prev) => prev.filter((j) => j.id !== job.id));
+    setMyJobs((prev) => [...prev, { ...job, status: "scheduled", thisWeek: isSameDay(job.date, today) || job.date >= startOfWeek(today), photos: [] }]);
+  }
+  function passJob(id) {
+    setAvailableJobs((prev) => prev.filter((j) => j.id !== id));
+  }
+  function startJob(id) {
+    setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "in_progress" } : j)));
+  }
+  function completeJob(id) {
+    setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "completed", thisWeek: true } : j)));
+  }
+  function addPhotos(id, files) {
+    const newPhotos = files.map((f) => ({ id: nextId(), url: URL.createObjectURL(f) }));
+    setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, photos: [...j.photos, ...newPhotos] } : j)));
+  }
+  function removePhoto(jobId, photoId) {
+    setMyJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, photos: j.photos.filter((p) => p.id !== photoId) } : j)));
+  }
+  function startOfWeek(d) {
+    const monday = new Date(d);
+    const day = monday.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    monday.setDate(monday.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  }
+  function addReview(type) {
+    setReviews((prev) => [...prev, { id: nextId(), type, date: new Date(), note: type === "poor" ? "Simulated negative review." : "Simulated positive review." }]);
+  }
+  function updateQuoteStatus(id, status) {
+    setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, status } : q)));
+  }
+  function submitQuote(e) {
+    e.preventDefault();
+    if (!quoteForm.customerName || !quoteForm.amount) return;
+    setQuotes((prev) => [
+      { id: nextId(), ...quoteForm, amount: parseFloat(quoteForm.amount) || 0, status: "pending", date: new Date() },
+      ...prev,
+    ]);
+    setQuoteForm({ customerName: "", phone: "", address: "", service: "", amount: "" });
+    setShowQuoteForm(false);
+  }
+  function sendChat() {
+    if (!chatInput.trim() || !selectedCustomer) return;
+    setChatThreads((prev) => ({
+      ...prev,
+      [selectedCustomer]: [...(prev[selectedCustomer] || []), { from: "provider", text: chatInput.trim(), time: new Date() }],
+    }));
+    setChatInput("");
+  }
+  function sendAdminMessage(e) {
+    e.preventDefault();
+    if (!adminMessage.trim()) return;
+    setSentAdminMessages((prev) => [{ id: nextId(), subject: adminSubject || "(no subject)", message: adminMessage, time: new Date() }, ...prev]);
+    setAdminSubject("");
+    setAdminMessage("");
+  }
+  const routeDate = addDays(today, routeDayOffset);
+  const routeJobs = useMemo(
+    () => myJobs.filter((j) => isSameDay(j.date, routeDate) && j.status !== "completed").sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time)),
+    [myJobs, routeDate]
+  );
+  const calendarDate = useMemo(() => new Date(today.getFullYear(), today.getMonth() + calendarMonthOffset, 1), [calendarMonthOffset]);
+  const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
+  const firstWeekday = calendarDate.getDay();
+  const jobsForSelectedDay = myJobs.filter((j) => j.date.getFullYear() === calendarDate.getFullYear() && j.date.getMonth() === calendarDate.getMonth() && j.date.getDate() === selectedCalDay);
+  const tabs = [
+    { id: "jobs", label: "Available", icon: ListChecks },
+    { id: "schedule", label: "My Schedule", icon: CheckCircle2 },
+    { id: "route", label: "Route", icon: Navigation },
+    { id: "quotes", label: "Quotes", icon: DollarSign },
+    { id: "completed", label: "Completed", icon: CheckCircle2 },
+    { id: "chat", label: "Messages", icon: MessageCircle },
+  ];
+  return (
+    <div className="min-h-screen bg-stone-50 pb-10 font-sans text-stone-900">
+      <div className="bg-emerald-900 px-4 py-5 text-white sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Provider Dashboard</p>
+              <h1 className="text-xl font-bold sm:text-2xl">Marcus Reed</h1>
+            </div>
+            <button onClick={() => setShowAdminModal(true)} className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold hover:bg-emerald-600">
+              <MessageCircle size={15} /> Contact Admin
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <RatingBadge score={rating} onClick={() => setShowPerf((s) => !s)} />
+            <InsuranceBadge status={insuranceStatus} onUpload={() => insuranceInputRef.current?.click()} />
+            <input ref={insuranceInputRef} type="file" accept="image/*,application/pdf" hidden onChange={(e) => { if (e.target.files?.length) setInsuranceStatus("pending"); }} />
+            <span className="flex items-center gap-1.5 rounded-full border border-emerald-600 bg-emerald-800 px-3 py-1.5 text-sm font-medium">
+              <DollarSign size={14} /> {fmtMoney(weeklyPay)} this week
+            </span>
+          </div>
+          {showPerf && (
+            <Card className="mt-4 bg-white/95 text-stone-900">
+              <Eyebrow>Performance</Eyebrow>
+              <p className="text-sm text-stone-600">Every provider starts at 100%. Each substantiated negative customer review lowers your rating by 5%. Ratings of 85% and above stay green, 60-84% is amber, below 60% is flagged red for admin review.</p>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-stone-200">
+                <div className={`h-full ${ratingTier(rating) === "green" ? "bg-emerald-500" : ratingTier(rating) === "amber" ? "bg-amber-500" : "bg-rose-500"}`} style={{ width: `${rating}%` }} />
+              </div>
+              <div className="mt-3 space-y-1.5">
+                {reviews.length === 0 && <p className="text-sm text-stone-500">No reviews yet.</p>}
+                {reviews.slice().reverse().map((r) => (
+                  <div key={r.id} className="flex items-center gap-2 text-sm text-stone-600">
+                    {r.type === "poor" ? <ThumbsDown size={13} className="text-rose-600" /> : <ThumbsUp size={13} className="text-emerald-600" />}
+                    <span className="font-medium">{fmtDate(r.date)}</span> — {r.note}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex gap-2 border-t border-stone-100 pt-3">
+                <p className="text-xs text-stone-400">Test controls:</p>
+                <button onClick={() => addReview("poor")} className="rounded-lg bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100">Simulate negative review</button>
+                <button onClick={() => addReview("good")} className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">Simulate positive review</button>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+      <div className="sticky top-0 z-10 border-b border-stone-200 bg-stone-50/95 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 py-2 sm:px-6">
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            return (
+              <button key={t.id} onClick={() => setActiveTab(t.id)}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${activeTab === t.id ? "bg-emerald-800 text-white" : "text-stone-600 hover:bg-stone-200"}`}>
+                <Icon size={15} /> {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6">
+        {activeTab === "jobs" && (
+          <div className="space-y-3">
+            <Eyebrow>Available tasks near you</Eyebrow>
+            {availableJobs.length === 0 && <p className="text-sm text-stone-500">No available jobs right now — check back soon.</p>}
+            {availableJobs.map((job) => (
+              <Card key={job.id}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <p className="font-semibold">{job.service}</p>
+                      {job.recurring && <RecurringTag frequency={job.frequency} />}
+                    </div>
+                    <CustomerInfo name={job.customerName} phone={job.phone} address={job.address} />
+                    <p className="mt-1.5 flex items-center gap-1.5 text-sm text-stone-500"><Clock size={12} /> {fmtDate(job.date)} · {job.time}</p>
+                    {job.notes && <p className="mt-1 text-xs italic text-stone-500">{job.notes}</p>}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-emerald-800">{fmtMoney(job.price)}</p>
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={() => passJob(job.id)} className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100">Pass</button>
+                      <button onClick={() => acceptJob(job)} className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">Accept</button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         )}
-
-        {tab === 'dashboard' && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
-              <p className="text-sm text-muted-foreground">Welcome back, {displayName.split(' ')[0]}</p>
-            </div>
-
-            {providerProfile && (
-              <ReadyToWorkToggle
-                providerProfile={providerProfile}
-                onStatusChanged={handleStatusChanged}
-              />
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <MetricCard title="Scheduled" value={scheduled.length} icon={CalendarDays} />
-              <MetricCard title="In Progress" value={inProgress.length} icon={TrendingUp} color="text-orange-600" bgColor="bg-orange-100" />
-              <MetricCard title="Total Completed" value={providerProfile?.total_jobs_completed || completed.length} icon={Star} color="text-amber-600" bgColor="bg-amber-100" />
-              <MetricCard title="Avg Rating" value={avgRating} icon={Star} color="text-amber-500" bgColor="bg-amber-50" />
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <h3 className="text-sm font-bold text-foreground mb-4">Monthly Earnings</h3>
-              {(() => {
-                const now = new Date();
-                const earningsData = Array.from({ length: 6 }, (_, i) => {
-                  const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-                  const month = d.toLocaleString('default', { month: 'short' });
-                  const monthJobs = completed.filter(j => {
-                    if (!j.completed_at) return false;
-                    const jd = new Date(j.completed_at);
-                    return jd.getMonth() === d.getMonth() && jd.getFullYear() === d.getFullYear();
-                  });
-                  const earnings = monthJobs.reduce((sum, j) => sum + (j.provider_payout || 0), 0);
-                  return { month, earnings };
-                });
-                const hasEarnings = earningsData.some(d => d.earnings > 0);
-                if (!hasEarnings) {
-                  return (
-                    <div className="flex flex-col items-center justify-center h-[160px] text-center">
-                      <p className="text-sm text-muted-foreground">No earnings yet.</p>
-                      <p className="text-xs text-muted-foreground mt-1">Complete jobs to start earning.</p>
-                    </div>
-                  );
-                }
-                return (
-                  <ResponsiveContainer width="100%" height={160}>
-                    <AreaChart data={earningsData}>
-                      <defs>
-                        <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(142,60%,28%)" stopOpacity={0.2} />
-                          <stop offset="95%" stopColor="hsl(142,60%,28%)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                      <Tooltip formatter={(v) => [`$${v}`, 'Earnings']} />
-                      <Area type="monotone" dataKey="earnings" stroke="hsl(142,60%,28%)" fill="url(#eg)" strokeWidth={2} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                );
-              })()}
-            </div>
-
-            {bookingRequests.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-bold text-foreground">Pending Booking Requests</h3>
-                  <button onClick={() => setTab('bookings')} className="text-xs font-semibold text-primary">View all →</button>
-                </div>
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-                  <Bell size={18} className="text-amber-600 flex-shrink-0" />
+        {activeTab === "schedule" && (
+          <div className="space-y-3">
+            <Eyebrow>Upcoming and active jobs</Eyebrow>
+            {myJobs.filter((j) => j.status !== "completed").length === 0 && <p className="text-sm text-stone-500">Nothing scheduled.</p>}
+            {myJobs.filter((j) => j.status !== "completed").map((job) => (
+              <Card key={job.id}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-amber-800">{bookingRequests.length} booking request{bookingRequests.length > 1 ? 's' : ''} awaiting your response</p>
-                    <p className="text-xs text-amber-700 mt-0.5">Customers have selected specific dates and times for you.</p>
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <p className="font-semibold">{job.service}</p>
+                      {job.recurring && <RecurringTag frequency={job.frequency} />}
+                      <StatusPill status={job.status} />
+                    </div>
+                    <CustomerInfo name={job.customerName} phone={job.phone} address={job.address} />
+                    <p className="mt-1.5 flex items-center gap-1.5 text-sm text-stone-500"><Clock size={12} /> {fmtDate(job.date)} · {job.time}</p>
+                    <PhotoUploader photos={job.photos} onAdd={(files) => addPhotos(job.id, files)} onRemove={(pid) => removePhoto(job.id, pid)} />
                   </div>
-                  <button
-                    onClick={() => setTab('bookings')}
-                    className="flex-shrink-0 bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-800 transition-colors"
-                  >
-                    Review
-                  </button>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-emerald-800">{fmtMoney(job.price)}</p>
+                    <div className="mt-2 flex flex-col gap-2">
+                      <button onClick={() => { setActiveTab("chat"); setSelectedCustomer(job.customerName); }} className="flex items-center justify-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100">
+                        <MessageCircle size={12} /> Message
+                      </button>
+                      {job.status === "scheduled" && (
+                        <button onClick={() => startJob(job.id)} className="flex items-center justify-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600">
+                          <PlayCircle size={12} /> Start job
+                        </button>
+                      )}
+                      {job.status === "in_progress" && (
+                        <button onClick={() => completeJob(job.id)} className="flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
+                          <CheckCircle2 size={12} /> Mark complete
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
+              </Card>
+            ))}
+          </div>
+        )}
+        {activeTab === "route" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Eyebrow>Plan your day</Eyebrow>
+              <div className="flex gap-1 rounded-lg bg-stone-200 p-1">
+                <button onClick={() => setRouteMode("route")} className={`rounded-md px-3 py-1 text-xs font-semibold ${routeMode === "route" ? "bg-white shadow" : "text-stone-600"}`}>Route</button>
+                <button onClick={() => setRouteMode("calendar")} className={`rounded-md px-3 py-1 text-xs font-semibold ${routeMode === "calendar" ? "bg-white shadow" : "text-stone-600"}`}>Calendar</button>
               </div>
+            </div>
+            {routeMode === "route" && (
+              <Card>
+                <div className="mb-3 flex items-center justify-between">
+                  <button onClick={() => setRouteDayOffset((o) => o - 1)} className="rounded-lg p-1.5 hover:bg-stone-100"><ChevronLeft size={16} /></button>
+                  <p className="font-semibold">{isSameDay(routeDate, today) ? "Today" : fmtDate(routeDate)}</p>
+                  <button onClick={() => setRouteDayOffset((o) => o + 1)} className="rounded-lg p-1.5 hover:bg-stone-100"><ChevronRight size={16} /></button>
+                </div>
+                {routeJobs.length === 0 ? (
+                  <p className="text-sm text-stone-500">No stops scheduled for this day.</p>
+                ) : (
+                  <>
+                    <div className="mb-4 flex items-center overflow-x-auto pb-2">
+                      {routeJobs.map((j, i) => (
+                        <div key={j.id} className="flex items-center">
+                          <div className="flex flex-col items-center">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-sm font-bold text-white">{i + 1}</div>
+                            <p className="mt-1 w-20 truncate text-center text-[11px] text-stone-500">{j.time}</p>
+                          </div>
+                          {i < routeJobs.length - 1 && <div className="mx-1 h-0.5 w-10 shrink-0 border-t-2 border-dashed border-emerald-300" />}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      {routeJobs.map((j, i) => (
+                        <div key={j.id} className="flex items-center justify-between rounded-xl border border-stone-200 p-3">
+                          <div>
+                            <p className="text-sm font-semibold">{i + 1}. {j.customerName} {j.recurring && <span className="ml-1 text-emerald-700">· recurring</span>}</p>
+                            <p className="text-xs text-stone-500">{j.service} · {j.time}</p>
+                            <p className="text-xs text-stone-500">{j.address}</p>
+                          </div>
+                          <a href={mapsLink(j.address)} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">
+                            <Navigation size={12} /> Directions
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </Card>
             )}
-
-            {inProgress.length > 0 && (
-              <div>
-                <h3 className="text-sm font-bold text-foreground mb-3">In Progress</h3>
-                <div className="space-y-3">
-                  {inProgress.map(j => (
-                    <ProviderJobCard key={j.id} job={j} onMarkComplete={handleMarkComplete} onJobCancelled={refreshJobs} />
+            {routeMode === "calendar" && (
+              <Card>
+                <div className="mb-3 flex items-center justify-between">
+                  <button onClick={() => setCalendarMonthOffset((o) => o - 1)} className="rounded-lg p-1.5 hover:bg-stone-100"><ChevronLeft size={16} /></button>
+                  <p className="font-semibold">{calendarDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>
+                  <button onClick={() => setCalendarMonthOffset((o) => o + 1)} className="rounded-lg p-1.5 hover:bg-stone-100"><ChevronRight size={16} /></button>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-stone-400">
+                  {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <div key={i}>{d}</div>)}
+                </div>
+                <div className="mt-1 grid grid-cols-7 gap-1">
+                  {Array.from({ length: firstWeekday }).map((_, i) => <div key={`b${i}`} />)}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const day = i + 1;
+                    const hasJob = myJobs.some((j) => j.date.getFullYear() === calendarDate.getFullYear() && j.date.getMonth() === calendarDate.getMonth() && j.date.getDate() === day);
+                    const isToday = isSameDay(new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day), today);
+                    return (
+                      <button key={day} onClick={() => setSelectedCalDay(day)}
+                        className={`relative aspect-square rounded-lg text-sm font-medium ${selectedCalDay === day ? "bg-emerald-700 text-white" : isToday ? "bg-emerald-100 text-emerald-800" : "hover:bg-stone-100"}`}>
+                        {day}
+                        {hasJob && <span className={`absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${selectedCalDay === day ? "bg-white" : "bg-emerald-600"}`} />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 space-y-2 border-t border-stone-100 pt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Jobs on {calendarDate.toLocaleDateString("en-US", { month: "short" })} {selectedCalDay}</p>
+                  {jobsForSelectedDay.length === 0 && <p className="text-sm text-stone-500">No jobs this day.</p>}
+                  {jobsForSelectedDay.map((j) => (
+                    <div key={j.id} className="flex items-center justify-between rounded-lg bg-stone-50 p-2.5 text-sm">
+                      <span>{j.time} — {j.customerName} {j.recurring && <span className="text-emerald-700">(recurring)</span>}</span>
+                      <StatusPill status={j.status} />
+                    </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
           </div>
         )}
-
-        {tab === 'bookings' && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-foreground">Booking Requests</h2>
-              <p className="text-sm text-muted-foreground">Customers who have scheduled a specific date and time.</p>
+        {activeTab === "quotes" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Eyebrow>Quotes sent to customers</Eyebrow>
+              <button onClick={() => setShowQuoteForm((s) => !s)} className="flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
+                <Plus size={13} /> New quote
+              </button>
             </div>
-            {bookingRequests.length === 0 ? (
-              <div className="text-center py-16">
-                <Bell className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground font-medium">No pending booking requests</p>
-                <p className="text-sm text-muted-foreground mt-1">When customers book you for a specific date, they'll appear here.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {bookingRequests.map(b => (
-                  <BookingRequestCard
-                    key={b.id}
-                    job={b}
-                    onSubmitQuote={handleSubmitQuote}
-                    onDecline={handleDeclineBooking}
-                  />
-                ))}
-              </div>
+            {showQuoteForm && (
+              <Card>
+                <form onSubmit={submitQuote} className="grid gap-2 sm:grid-cols-2">
+                  <input required placeholder="Customer name" value={quoteForm.customerName} onChange={(e) => setQuoteForm({ ...quoteForm, customerName: e.target.value })} className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
+                  <input placeholder="Phone" value={quoteForm.phone} onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })} className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
+                  <input placeholder="Address" value={quoteForm.address} onChange={(e) => setQuoteForm({ ...quoteForm, address: e.target.value })} className="rounded-lg border border-stone-300 px-3 py-2 text-sm sm:col-span-2" />
+                  <input placeholder="Service" value={quoteForm.service} onChange={(e) => setQuoteForm({ ...quoteForm, service: e.target.value })} className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
+                  <input required type="number" min="0" placeholder="Amount ($)" value={quoteForm.amount} onChange={(e) => setQuoteForm({ ...quoteForm, amount: e.target.value })} className="rounded-lg border border-stone-300 px-3 py-2 text-sm" />
+                  <button type="submit" className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 sm:col-span-2">Send quote</button>
+                </form>
+              </Card>
             )}
-          </div>
-        )}
-
-        {tab === 'available' && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-foreground">Available Jobs</h2>
-            </div>
-            {!isProviderActive ? (
-              <div className="text-center py-16 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
-                  <Power className="w-7 h-7 text-muted-foreground" />
+            {quotes.map((q) => (
+              <Card key={q.id}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="mb-1.5 flex items-center gap-2">
+                      <p className="font-semibold">{q.service}</p>
+                      <StatusPill status={q.status} />
+                    </div>
+                    <CustomerInfo name={q.customerName} phone={q.phone} address={q.address} />
+                    <p className="mt-1.5 text-xs text-stone-400">Sent {fmtDate(q.date)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-emerald-800">{fmtMoney(q.amount)}</p>
+                    <select value={q.status} onChange={(e) => updateQuoteStatus(q.id, e.target.value)} className="mt-2 rounded-lg border border-stone-300 px-2 py-1 text-xs">
+                      <option value="pending">Pending</option>
+                      <option value="accepted">Accepted</option>
+                      <option value="declined">Declined</option>
+                      <option value="expired">Expired</option>
+                    </select>
+                  </div>
                 </div>
+              </Card>
+            ))}
+          </div>
+        )}
+        {activeTab === "completed" && (
+          <div className="space-y-2">
+            <Eyebrow>Completed job history</Eyebrow>
+            {myJobs.filter((j) => j.status === "completed").length === 0 && <p className="text-sm text-stone-500">No completed jobs yet.</p>}
+            {myJobs.filter((j) => j.status === "completed").sort((a, b) => b.date - a.date).map((j) => (
+              <Card key={j.id} className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="text-foreground font-semibold">You're currently Inactive</p>
-                  <p className="text-sm text-muted-foreground mt-1">Go to Dashboard and tap "Ready to Work" to see available jobs.</p>
+                  <p className="flex items-center gap-2 font-semibold">{j.service} {j.recurring && <RecurringTag frequency={j.frequency} />}</p>
+                  <p className="text-sm text-stone-500">{j.customerName} · {j.address}</p>
+                  <p className="text-xs text-stone-400">{fmtDate(j.date)}{j.thisWeek ? " · counted in this week's pay" : ""}</p>
                 </div>
-                <button
-                  onClick={() => setTab('dashboard')}
-                  className="bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
-                >
-                  Go to Dashboard
+                <p className="text-lg font-bold text-emerald-800">{fmtMoney(j.price)}</p>
+              </Card>
+            ))}
+          </div>
+        )}
+        {activeTab === "chat" && (
+          <div className="grid gap-3 sm:grid-cols-[200px_1fr]">
+            <Card className="h-fit p-2">
+              {Object.keys(chatThreads).map((name) => (
+                <button key={name} onClick={() => setSelectedCustomer(name)}
+                  className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-medium ${selectedCustomer === name ? "bg-emerald-700 text-white" : "hover:bg-stone-100"}`}>
+                  {name}
                 </button>
-              </div>
-            ) : (
-              <AvailableJobsDiscovery
-                jobs={availableJobs}
-                mapJobs={mapJobs}
-                providerProfile={providerProfile}
-                onSubmitQuote={handleSubmitQuote}
-                onAcceptCashJob={handleAcceptCashJob}
-                onboardingComplete={providerProfile?.onboarding_complete}
-              />
-            )}
-          </div>
-        )}
-
-        {tab === 'quotes' && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-foreground">My Quotes</h2>
-              <p className="text-sm text-muted-foreground">Track quotes you've submitted and their status.</p>
-            </div>
-            <MyQuotesPanel providerProfile={providerProfile} onGoToMyJobs={() => setTab('myjobs')} />
-          </div>
-        )}
-
-        {tab === 'myjobs' && (
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-foreground">My Jobs</h2>
-              <div className="flex items-center bg-muted rounded-lg p-1 gap-1">
-                {['today', 'tomorrow'].map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setJobsDateFilter(d)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all capitalize ${jobsDateFilter === d ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
-                  >
-                    {d === 'today' ? 'Today' : 'Tomorrow'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {(() => {
-              const parseLocalDateStr = (dateStr) => {
-                if (!dateStr) return null;
-                const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
-                return new Date(y, m - 1, d);
-              };
-              const localNow = new Date();
-              const localToday = new Date(localNow.getFullYear(), localNow.getMonth(), localNow.getDate());
-              const localTomorrow = new Date(localNow.getFullYear(), localNow.getMonth(), localNow.getDate() + 1);
-              const targetLocalDate = jobsDateFilter === 'today' ? localToday : localTomorrow;
-              const isSameLocalDay = (j) => {
-                const d = parseLocalDateStr(j.scheduled_date);
-                return d && d.getTime() === targetLocalDate.getTime();
-              };
-
-              const dateInProgress = inProgress.filter(isSameLocalDay);
-              const dateScheduled = scheduled.filter(isSameLocalDay);
-              const dateCompleted = completed.filter(isSameLocalDay);
-              const biweeklyJobs = dateScheduled.filter(j => j.recurrence === 'biweekly');
-
-              return (
-                <>
-                  {jobsDateFilter === 'today' && dateInProgress.length > 0 && (
-                    <div className="mb-5">
-                      <h3 className="text-sm font-semibold text-orange-700 mb-3">In Progress</h3>
-                      <div className="space-y-3">
-                        {dateInProgress.map(j => <ProviderJobCard key={j.id} job={j} onMarkComplete={handleMarkComplete} onJobCancelled={refreshJobs} />)}
-                      </div>
-                    </div>
-                  )}
-                  {dateScheduled.length > 0 && (
-                    <div className="mb-5">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Scheduled Jobs</h3>
-                      <div className="space-y-3">
-                        {dateScheduled.map(j => (
-                          <div key={j.id}>
-                            {unpaidInvoiceJobIds.has(j.id) && (
-                              <div className="flex items-center gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-t-xl px-3 py-2 -mb-1">
-                                <Clock size={12} className="flex-shrink-0" />
-                                Awaiting customer payment before job can begin.
-                              </div>
-                            )}
-                            <ProviderJobCard job={j} onMarkInProgress={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkInProgress} onMarkComplete={unpaidInvoiceJobIds.has(j.id) ? undefined : handleMarkComplete} onJobCancelled={refreshJobs} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {biweeklyJobs.length > 0 && (
-                    <div className="mb-5">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Bi-Weekly Schedule</h3>
-                      <BiWeeklyCalendar jobs={biweeklyJobs} />
-                    </div>
-                  )}
-                  {dateScheduled.length === 0 && dateInProgress.length === 0 && dateCompleted.length === 0 && (
-                    <div className="text-center py-16">
-                      <CalendarDays className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                      <p className="text-muted-foreground font-medium">No jobs {jobsDateFilter === 'today' ? 'today' : 'tomorrow'}</p>
-                      <p className="text-sm text-muted-foreground mt-1">Check back or look at available jobs.</p>
-                    </div>
-                  )}
-                  {dateCompleted.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-muted-foreground mb-3">Completed</h3>
-                      <div className="space-y-3">
-                        {dateCompleted.map(j => <ProviderJobCard key={j.id} job={j} onJobCancelled={refreshJobs} />)}
-                      </div>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-        )}
-        
-        {tab === 'earnings' && (
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-foreground">Earnings</h2>
-              <Link to="/provider/financials" className="text-xs font-semibold text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary/5 transition-colors">
-                Full Financial Summary →
-              </Link>
-            </div>
-
-            {/* Monthly Summary Card */}
-            <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 mb-5 text-white">
-              <p className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-1">{thisMonthName} Summary</p>
-              <div className="flex items-end gap-6 mt-2">
-                <div>
-                  <p className="text-3xl font-bold">${thisMonthEarnings.toFixed(2)}</p>
-                  <p className="text-xs text-white/70 mt-0.5">Earned this month</p>
-                </div>
-                <div className="border-l border-white/20 pl-6">
-                  <p className="text-3xl font-bold">{thisMonthCompleted.length}</p>
-                  <p className="text-xs text-white/70 mt-0.5">Jobs completed</p>
-                </div>
-              </div>
-              {thisMonthCompleted.length > 0 && (
-                <p className="text-xs text-white/60 mt-3">
-                  Avg ${(thisMonthEarnings / thisMonthCompleted.length).toFixed(2)} per job this month
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <MetricCard title="Total Earned" value={`$${totalEarnings.toFixed(2)}`} icon={DollarSign} />
-              <MetricCard title="Pending Payout" value={`$${pendingPayout.toFixed(2)}`} icon={TrendingUp} color="text-blue-600" bgColor="bg-blue-100" />
-            </div>
-
-
-
-            <h3 className="text-sm font-semibold text-foreground mb-3">Payment History</h3>
-            {completed.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No completed jobs yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {completed.map(j => (
-                  <div key={j.id} className="flex items-center justify-between bg-card border border-border rounded-lg px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{j.service_name}</p>
-                      <p className="text-xs text-muted-foreground">{j.completed_at ? new Date(j.completed_at).toLocaleDateString() : '—'}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-primary">+${j.provider_payout?.toFixed(2) || '—'}</p>
-
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === 'profile' && (
-          <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">Profile</h2>
-            <ProviderProfileEditor
-              user={user}
-              profile={providerProfile}
-              avgRating={avgRating}
-              reviews={reviews}
-              onProfileUpdated={async () => {
-                const r = await base44.functions.invoke('getMyProviderProfile', {});
-                setProviderProfile(r.data?.profile || null);
-              }}
-            />
-            <div className="mt-6">
-              <button
-                onClick={() => base44.auth.logout('/') }
-                className="w-full flex items-center justify-center gap-2 border border-destructive text-destructive rounded-xl py-3 text-sm font-semibold hover:bg-destructive/5 transition-colors"
-              >
-                <LogOut size={15} /> Sign Out
-              </button>
-            </div>
-          </div>
-        )}
-      </main>
-
-
-      {/* Stripe Onboarding Guidance Modal */}
-      {showStripeGuide && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-card rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="p-5 border-b border-border">
-              <h2 className="text-base font-bold text-foreground">Before you go to Stripe</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Here's exactly what Stripe will ask — no surprises.</p>
-            </div>
-            <div className="p-5 space-y-3">
-              {[
-                { field: 'Business name', answer: providerProfile?.business_name || (providerProfile?.name + ' Lawn Care') || 'Your name + "Lawn Care"', tip: 'Use your personal name or the name you go by — no LLC required.' },
-                { field: 'Business phone', answer: providerProfile?.phone || 'Your personal cell number', tip: 'Your personal cell is fine. This is for account recovery only.' },
-                { field: 'Business website', answer: 'grassgodz.com', tip: 'Always enter grassgodz.com — this is the platform you operate through.' },
-                { field: 'Business type', answer: 'Individual / Sole proprietor', tip: 'Select "Individual" — you do not need an LLC or EIN.' },
-                { field: 'SSN (last 4)', answer: 'Your Social Security Number last 4 digits', tip: 'Required by law for identity verification. Stripe keeps this secure.' },
-                { field: 'Bank account', answer: 'Your checking account & routing number', tip: 'This is where Grassgodz will send your payouts.' },
-              ].map(({ field, answer, tip }) => (
-                <div key={field} className="bg-muted/30 rounded-xl p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-xs font-bold text-foreground">{field}</p>
-                    <p className="text-xs font-semibold text-primary text-right">{answer}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{tip}</p>
-                </div>
               ))}
+            </Card>
+            <Card className="flex h-[420px] flex-col">
+              <p className="mb-2 border-b border-stone-100 pb-2 font-semibold">{selectedCustomer}</p>
+              <div className="flex-1 space-y-2 overflow-y-auto pr-1">
+                {(chatThreads[selectedCustomer] || []).map((m, i) => (
+                  <div key={i} className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${m.from === "provider" ? "ml-auto bg-emerald-700 text-white" : "bg-stone-100 text-stone-800"}`}>
+                    {m.text}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex gap-2 border-t border-stone-100 pt-2">
+                <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()}
+                  placeholder="Message customer..." className="flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm" />
+                <button onClick={sendChat} className="rounded-lg bg-emerald-700 px-3 py-2 text-white hover:bg-emerald-800"><Send size={15} /></button>
+              </div>
+            </Card>
+          </div>
+        )}
+      </div>
+      {showAdminModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-lg font-bold">Contact Admin</p>
+              <button onClick={() => setShowAdminModal(false)} className="rounded-lg p-1 hover:bg-stone-100"><X size={18} /></button>
             </div>
-            <div className="p-5 pt-0 flex gap-3">
-              <button
-                onClick={() => setShowStripeGuide(false)}
-                className="flex-1 border border-border rounded-xl py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-              >
-                Go back
-              </button>
-              <button
-                onClick={async () => {
-                  setShowStripeGuide(false);
-                  try {
-                    const res = await base44.functions.invoke('createStripeConnectAccount', {
-                      provider_id: providerProfile.id,
-                      return_url: window.location.origin + '/provider',
-                    });
-                    if (res.data?.url) window.location.href = res.data.url;
-                  } catch {
-                    toast.error('Failed to start Stripe onboarding. Please try again.');
-                  }
-                }}
-                className="flex-1 bg-primary text-primary-foreground rounded-xl py-2.5 text-sm font-bold hover:bg-primary/90 transition-colors"
-              >
-                I'm ready — Continue to Stripe →
-              </button>
-            </div>
+            <form onSubmit={sendAdminMessage} className="space-y-2">
+              <input placeholder="Subject" value={adminSubject} onChange={(e) => setAdminSubject(e.target.value)} className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm" />
+              <textarea required placeholder="Describe the issue..." value={adminMessage} onChange={(e) => setAdminMessage(e.target.value)} rows={4} className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm" />
+              <button type="submit" className="w-full rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Send to admin</button>
+            </form>
+            {sentAdminMessages.length > 0 && (
+              <div className="mt-4 max-h-40 space-y-2 overflow-y-auto border-t border-stone-100 pt-3">
+                <p className="flex items-center gap-1 text-xs font-semibold uppercase text-stone-400"><AlertCircle size={12} /> Sent</p>
+                {sentAdminMessages.map((m) => (
+                  <div key={m.id} className="rounded-lg bg-stone-50 p-2 text-xs">
+                    <p className="font-semibold">{m.subject}</p>
+                    <p className="text-stone-600">{m.message}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
-
-      {/* Bottom Nav */}
-      <nav className="bg-card border-t border-border sticky bottom-0 z-30">
-        <div className="max-w-3xl mx-auto flex">
-          {NAV.map(({ key, label, icon: NavIcon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                tab === key ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <div className="relative">
-                <NavIcon size={18} />
-              </div>
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
     </div>
   );
 }

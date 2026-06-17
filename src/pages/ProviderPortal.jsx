@@ -1,5 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
+import JobPhotoUploadModal from "@/components/provider/JobPhotoUploadModal";
 import {
   MapPin, Calendar as CalendarIcon, MessageCircle, ShieldCheck, ShieldAlert,
   DollarSign, Camera, Phone, Repeat, CheckCircle2, Clock, Send, X, ChevronLeft,
@@ -220,6 +222,7 @@ export default function ProviderPortal() {
   const [insuranceStatus, setInsuranceStatus] = useState("verified");
   const [showPerf, setShowPerf] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [photoCompleteJob, setPhotoCompleteJob] = useState(null);
   const [adminSubject, setAdminSubject] = useState("");
   const [adminMessage, setAdminMessage] = useState("");
   const [sentAdminMessages, setSentAdminMessages] = useState([]);
@@ -283,8 +286,16 @@ export default function ProviderPortal() {
   function startJob(id) {
     setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "in_progress" } : j)));
   }
-  function completeJob(id) {
-    setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "completed", thisWeek: true } : j)));
+  async function completeJob(id, photos) {
+    try {
+      const updates = { status: "completed", completed_at: new Date().toISOString() };
+      if (photos && Object.keys(photos).length > 0) updates.completion_photos = photos;
+      await base44.entities.Job.update(id, updates);
+      setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "completed", thisWeek: true } : j)));
+      toast.success("Job marked complete!");
+    } catch {
+      toast.error("Failed to mark job complete. Please try again.");
+    }
   }
   function addPhotos(id, files) {
     const newPhotos = files.map((f) => ({ id: nextId(), url: URL.createObjectURL(f) }));
@@ -475,9 +486,9 @@ export default function ProviderPortal() {
                           <PlayCircle size={12} /> Start job
                         </button>
                       )}
-                      {job.status === "in_progress" && (
-                        <button onClick={() => completeJob(job.id)} className="flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
-                          <CheckCircle2 size={12} /> Mark complete
+                      {["in_progress", "scheduled", "accepted"].includes(job.status) && (
+                        <button onClick={() => setPhotoCompleteJob(job)} className="flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
+                          <CheckCircle2 size={12} /> Complete & Photos
                         </button>
                       )}
                     </div>
@@ -664,6 +675,13 @@ export default function ProviderPortal() {
           </div>
         )}
       </div>
+      {photoCompleteJob && (
+        <JobPhotoUploadModal
+          job={photoCompleteJob}
+          onClose={() => setPhotoCompleteJob(null)}
+          onComplete={(job, photos) => { completeJob(job.id, photos); setPhotoCompleteJob(null); }}
+        />
+      )}
       {showAdminModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-5">

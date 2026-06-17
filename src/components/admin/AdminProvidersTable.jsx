@@ -3,10 +3,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import StarRating from '@/components/shared/StarRating';
-import { Check, Ban, ShieldCheck, AlertCircle, Eye, ChevronDown, Trash2, Mail } from 'lucide-react';
+import { Check, Ban, ShieldCheck, AlertCircle, Eye, ChevronDown, Trash2, Mail, Briefcase } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import ProviderDetailModal from './ProviderDetailModal';
+import AdminProviderJobsModal from './AdminProviderJobsModal';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Pending Review' },
@@ -23,6 +24,7 @@ export default function AdminProvidersTable({ providers, jobs = [], onRefresh })
   const [loadingId, setLoadingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
+  const [jobsProvider, setJobsProvider] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [invitingId, setInvitingId] = useState(null);
 
@@ -94,9 +96,26 @@ export default function AdminProvidersTable({ providers, jobs = [], onRefresh })
     pendingPayoutByProvider[j.provider_id] = (pendingPayoutByProvider[j.provider_id] || 0) + payout;
   });
 
+  // Count active jobs per provider for sorting (most active first)
+  const activeJobCount = {};
+  jobs.forEach(j => {
+    if (j.provider_id && !['cancelled'].includes(j.status)) {
+      activeJobCount[j.provider_id] = (activeJobCount[j.provider_id] || 0) + 1;
+    }
+  });
+
+  const sortedProviders = [...providers].sort((a, b) => (activeJobCount[b.id] || 0) - (activeJobCount[a.id] || 0));
+
   return (
     <>
     {selectedProvider && <ProviderDetailModal provider={selectedProvider} onClose={() => setSelectedProvider(null)} />}
+    {jobsProvider && (
+      <AdminProviderJobsModal
+        provider={jobsProvider}
+        onClose={() => setJobsProvider(null)}
+        onJobUpdated={onRefresh}
+      />
+    )}
     <div className="rounded-xl border border-border overflow-hidden">
       <Table>
         <TableHeader>
@@ -111,15 +130,25 @@ export default function AdminProvidersTable({ providers, jobs = [], onRefresh })
           </TableRow>
         </TableHeader>
         <TableBody>
-          {providers.map(p => (
+          {sortedProviders.map(p => (
             <React.Fragment key={p.id}>
               <TableRow className="cursor-pointer" onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <ChevronDown size={14} className={`text-muted-foreground transition-transform ${expandedId === p.id ? 'rotate-180' : ''}`} />
                     <div>
-                      <p className="font-medium text-sm">{p.business_name || p.name || '—'}</p>
+                      <button
+                        onClick={e => { e.stopPropagation(); setJobsProvider(p); }}
+                        className="font-medium text-sm text-primary hover:underline text-left"
+                      >
+                        {p.business_name || p.name || '—'}
+                      </button>
                       <p className="text-xs text-muted-foreground">{p.user_email}</p>
+                      {activeJobCount[p.id] > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-1.5 py-0.5 mt-0.5">
+                          <Briefcase size={9} /> {activeJobCount[p.id]} job{activeJobCount[p.id] !== 1 ? 's' : ''}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </TableCell>

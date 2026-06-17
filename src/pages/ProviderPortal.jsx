@@ -1,4 +1,5 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
 import {
   MapPin, Calendar as CalendarIcon, MessageCircle, ShieldCheck, ShieldAlert,
   DollarSign, Camera, Phone, Repeat, CheckCircle2, Clock, Send, X, ChevronLeft,
@@ -176,13 +177,45 @@ function PhotoUploader({ photos, onAdd, onRemove }) {
     </div>
   );
 }
+/* ---------------- helpers ---------------- */
+function mapJob(j, customerProfiles) {
+  const profile = customerProfiles.find(
+    (p) => p.user_email === j.customer_email || p.id === j.customer_id
+  );
+  const dateObj = j.scheduled_date ? new Date(j.scheduled_date + "T12:00:00") : new Date();
+  const monday = new Date(today);
+  const day = monday.getDay();
+  monday.setDate(monday.getDate() + (day === 0 ? -6 : 1 - day));
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  return {
+    id: j.id,
+    customerName: j.customer_name || "Customer",
+    phone: profile?.phone || "",
+    address: j.address || "",
+    service: j.service_name || "Service",
+    recurring: j.recurrence && j.recurrence !== "one_time",
+    frequency: j.recurrence === "weekly" ? "Weekly" : j.recurrence === "biweekly" ? "Biweekly" : null,
+    date: dateObj,
+    time: j.scheduled_time || "TBD",
+    price: j.quoted_price || j.final_price || 0,
+    status: j.status,
+    thisWeek: dateObj >= monday && dateObj <= sunday,
+    photos: [],
+    notes: j.customer_notes || "",
+  };
+}
+
 /* ---------------- main component ---------------- */
 export default function ProviderPortal({ currentUser }) {
   const [activeTab, setActiveTab] = useState("jobs");
-  const [availableJobs, setAvailableJobs] = useState(seedAvailableJobs);
-  const [myJobs, setMyJobs] = useState(seedMyJobs);
-  const [quotes, setQuotes] = useState(seedQuotes);
-  const [reviews, setReviews] = useState(seedReviews);
+  const [availableJobs, setAvailableJobs] = useState([]);
+  const [myJobs, setMyJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [quotes, setQuotes] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [insuranceStatus, setInsuranceStatus] = useState("verified");
   const [showPerf, setShowPerf] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -191,14 +224,43 @@ export default function ProviderPortal({ currentUser }) {
   const [sentAdminMessages, setSentAdminMessages] = useState([]);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [quoteForm, setQuoteForm] = useState({ customerName: "", phone: "", address: "", service: "", amount: "" });
-  const [chatThreads, setChatThreads] = useState(seedChatThreads);
-  const [selectedCustomer, setSelectedCustomer] = useState(Object.keys(seedChatThreads)[0]);
+  const [chatThreads, setChatThreads] = useState({});
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [chatInput, setChatInput] = useState("");
   const [routeMode, setRouteMode] = useState("route");
   const [routeDayOffset, setRouteDayOffset] = useState(0);
   const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
   const [selectedCalDay, setSelectedCalDay] = useState(today.getDate());
   const insuranceInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const customerProfiles = await base44.entities.CustomerProfile.list();
+        const [assigned, available] = await Promise.all([
+          base44.entities.Job.filter({
+            $or: [
+              { provider_email: currentUser.email },
+              { provider_id: currentUser.id },
+            ],
+          }),
+          base44.entities.Job.filter({ status: "requested" }),
+        ]);
+        setMyJobs(assigned.map((j) => mapJob(j, customerProfiles)));
+        setAvailableJobs(
+          available
+            .filter((j) => !j.provider_id && !j.provider_email)
+            .map((j) => mapJob(j, customerProfiles))
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [currentUser]);
+
   const rating = useMemo(() => {
     const poor = reviews.filter((r) => r.type === "poor").length;
     return Math.max(0, 100 - poor * 5);
@@ -343,7 +405,12 @@ export default function ProviderPortal({ currentUser }) {
         </div>
       </div>
       <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6">
-        {activeTab === "jobs" && (
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" />
+          </div>
+        ) : null}
+        {!loading && activeTab === "jobs" && (
           <div className="space-y-3">
             <Eyebrow>Available tasks near you</Eyebrow>
             {availableJobs.length === 0 && <p className="text-sm text-stone-500">No available jobs right now — check back soon.</p>}
@@ -371,7 +438,7 @@ export default function ProviderPortal({ currentUser }) {
             ))}
           </div>
         )}
-        {activeTab === "schedule" && (
+        {!loading && activeTab === "schedule" && (
           <div className="space-y-3">
             <Eyebrow>Upcoming and active jobs</Eyebrow>
             {myJobs.filter((j) => j.status !== "completed").length === 0 && <p className="text-sm text-stone-500">Nothing scheduled.</p>}
@@ -411,7 +478,7 @@ export default function ProviderPortal({ currentUser }) {
             ))}
           </div>
         )}
-        {activeTab === "route" && (
+        {!loading && activeTab === "route" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Eyebrow>Plan your day</Eyebrow>
@@ -499,7 +566,7 @@ export default function ProviderPortal({ currentUser }) {
             )}
           </div>
         )}
-        {activeTab === "quotes" && (
+        {!loading && activeTab === "quotes" && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Eyebrow>Quotes sent to customers</Eyebrow>
@@ -544,7 +611,7 @@ export default function ProviderPortal({ currentUser }) {
             ))}
           </div>
         )}
-        {activeTab === "completed" && (
+        {!loading && activeTab === "completed" && (
           <div className="space-y-2">
             <Eyebrow>Completed job history</Eyebrow>
             {myJobs.filter((j) => j.status === "completed").length === 0 && <p className="text-sm text-stone-500">No completed jobs yet.</p>}
@@ -560,7 +627,7 @@ export default function ProviderPortal({ currentUser }) {
             ))}
           </div>
         )}
-        {activeTab === "chat" && (
+        {!loading && activeTab === "chat" && (
           <div className="grid gap-3 sm:grid-cols-[200px_1fr]">
             <Card className="h-fit p-2">
               {Object.keys(chatThreads).map((name) => (

@@ -276,6 +276,30 @@ export default function AdminPortal() {
         </div>
       </header>
 
+      {/* Top primary tab bar */}
+      <div className="bg-card border-b border-border">
+        <div className="max-w-5xl mx-auto px-4 flex gap-1 pt-2">
+          {[
+            { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+            { key: 'jobs', label: 'Jobs', icon: Briefcase },
+            { key: 'communications', label: 'Communications', icon: Radio },
+          ].map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                tab === key
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              <Icon size={15} />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
         {tab === 'dashboard' && (
           <AdminDashboardPanel

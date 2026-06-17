@@ -4,7 +4,7 @@ import {
   MapPin, Calendar as CalendarIcon, MessageCircle, ShieldCheck, ShieldAlert,
   DollarSign, Camera, Phone, Repeat, CheckCircle2, Clock, Send, X, ChevronLeft,
   ChevronRight, Upload, AlertCircle, Plus, Navigation, ListChecks, ThumbsDown,
-  ThumbsUp, PlayCircle, Trash2
+  ThumbsUp, PlayCircle, Trash2, LogOut
 } from "lucide-react";
 /* ---------------- helpers ---------------- */
 const addDays = (date, n) => { const d = new Date(date); d.setDate(d.getDate() + n); return d; };
@@ -358,9 +358,14 @@ export default function ProviderPortal() {
               <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Provider Dashboard</p>
               <h1 className="text-xl font-bold sm:text-2xl">{currentUser?.full_name || currentUser?.email?.split("@")[0] || "Provider"}</h1>
             </div>
-            <button onClick={() => setShowAdminModal(true)} className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold hover:bg-emerald-600">
-              <MessageCircle size={15} /> Contact Admin
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowAdminModal(true)} className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold hover:bg-emerald-600">
+                <MessageCircle size={15} /> Contact Admin
+              </button>
+              <button onClick={() => base44.auth.logout('/')} className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-950 px-4 py-2 text-sm font-semibold hover:bg-black">
+                <LogOut size={15} /> Log Out
+              </button>
+            </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <RatingBadge score={rating} onClick={() => setShowPerf((s) => !s)} />

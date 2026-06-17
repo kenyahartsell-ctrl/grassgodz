@@ -35,6 +35,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, L
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import AdminCashOverridePanel from '@/components/admin/AdminCashOverridePanel';
+import AdminDashboardPanel from '@/components/admin/AdminDashboardPanel';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -274,105 +275,18 @@ export default function AdminPortal() {
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
         {tab === 'dashboard' && (
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Platform Overview</h2>
-                <p className="text-sm text-muted-foreground">Real-time metrics across the marketplace</p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap justify-end">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const emails = providers.map(p => p.user_email).filter(Boolean).join(', ');
-                    navigator.clipboard.writeText(emails);
-                    toast.success(`Copied ${providers.length} provider email${providers.length !== 1 ? 's' : ''}`);
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Copy size={14} />
-                  Copy Provider Emails
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const emails = customers.map(c => c.user_email).filter(Boolean).join(', ');
-                    navigator.clipboard.writeText(emails);
-                    toast.success(`Copied ${customers.length} customer email${customers.length !== 1 ? 's' : ''}`);
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Copy size={14} />
-                  Copy Customer Emails
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleTestStripe}
-                  className="flex items-center gap-2"
-                >
-                  <TestTube size={14} />
-                  Test Stripe
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setShowInvite(true)}
-                  className="flex items-center gap-2"
-                >
-                  <UserPlus size={14} />
-                  Invite User
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <MetricCard title="Active Providers" value={activeProviders} icon={Users} />
-              <MetricCard title="Pending Approval" value={pendingProviders} icon={Activity} color="text-amber-600" bgColor="bg-amber-100" />
-              <MetricCard title="Total GMV" value={`$${totalGMV.toFixed(0)}`} icon={DollarSign} color="text-blue-600" bgColor="bg-blue-100" />
-              <MetricCard title="Platform Revenue" value={`$${platformRevenue.toFixed(0)}`} icon={TrendingUp} color="text-purple-600" bgColor="bg-purple-100" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <MetricCard title="Total Jobs" value={weekJobs} icon={Briefcase} />
-              <MetricCard title="Avg Job Value" value={`$${avgJobValue.toFixed(0)}`} icon={Star} color="text-amber-600" bgColor="bg-amber-100" />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-card border border-border rounded-xl p-5">
-                <h3 className="text-sm font-bold text-foreground mb-4">Jobs This Week</h3>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart data={weeklyData}>
-                    <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <Tooltip />
-                    <Bar dataKey="jobs" fill="hsl(142,60%,28%)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-5">
-                <h3 className="text-sm font-bold text-foreground mb-4">Daily GMV ($)</h3>
-                <ResponsiveContainer width="100%" height={160}>
-                  <LineChart data={weeklyData}>
-                    <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                    <Tooltip formatter={v => [`$${v}`, 'GMV']} />
-                    <Line type="monotone" dataKey="gmv" stroke="hsl(200,70%,45%)" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {pendingProviders > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-                <h3 className="text-sm font-bold text-amber-800 mb-3">{pendingProviders} Provider{pendingProviders > 1 ? 's' : ''} Awaiting Review</h3>
-                {providers.filter(p => ['pending_review', 'pending_approval'].includes(p.status)).map(p => (
-                  <ProviderApprovalRow key={p.id} provider={p} onApprove={handleApprove} onReject={handleReject} />
-                ))}
-              </div>
-            )}
-          </div>
+          <AdminDashboardPanel
+            jobs={jobs}
+            customers={customers}
+            providers={providers}
+            quotes={quotes}
+            payments={payments}
+            onNavigate={setTab}
+            onAssignJob={(job, provider) => {
+              if (job) setAssigningJob(job);
+              else setTab('jobs');
+            }}
+          />
         )}
 
         {tab === 'calendar' && (

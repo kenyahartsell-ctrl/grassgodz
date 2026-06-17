@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera, UserCheck, Flag } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera, UserCheck, Flag, Radio } from 'lucide-react';
 import AdminDuplicatesPanel from '@/components/admin/AdminDuplicatesPanel';
 import { useRef } from 'react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
@@ -37,6 +37,7 @@ import { Button } from '@/components/ui/button';
 import AdminCashOverridePanel from '@/components/admin/AdminCashOverridePanel';
 import AdminDashboardPanel from '@/components/admin/AdminDashboardPanel';
 import AdminJobsTab from '@/components/admin/AdminJobsTab';
+import AdminCommunicationsTab from '@/components/admin/AdminCommunicationsTab';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -54,6 +55,7 @@ const NAV = [
   { key: 'accounts', label: 'Accounts', icon: UserCheck },
 { key: 'complaints', label: 'Complaints', icon: Flag },
   { key: 'cash', label: 'Cash OK', icon: DollarSign },
+  { key: 'communications', label: 'Comms', icon: Radio },
 ];
 
 export default function AdminPortal() {
@@ -419,6 +421,10 @@ export default function AdminPortal() {
             const allJobs = await base44.entities.Job.list('-created_date', 100);
             setJobs(allJobs);
           }} />
+        )}
+
+        {tab === 'communications' && (
+          <AdminCommunicationsTab customers={customers} providers={providers} jobs={jobs} />
         )}
 
 {tab === 'reviews' && (

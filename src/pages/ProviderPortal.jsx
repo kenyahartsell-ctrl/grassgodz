@@ -239,15 +239,17 @@ export default function ProviderPortal({ currentUser }) {
       setLoading(true);
       try {
         const customerProfiles = await base44.entities.CustomerProfile.list();
-        const [assigned, available] = await Promise.all([
-          base44.entities.Job.filter({
-            $or: [
-              { provider_email: currentUser.email },
-              { provider_id: currentUser.id },
-            ],
-          }),
+        const [byEmail, byId, available] = await Promise.all([
+          base44.entities.Job.filter({ provider_email: currentUser.email }),
+          base44.entities.Job.filter({ provider_id: currentUser.id }),
           base44.entities.Job.filter({ status: "requested" }),
         ]);
+        // Merge and deduplicate by id
+        const seen = new Set();
+        const assigned = [];
+        for (const j of [...byEmail, ...byId]) {
+          if (!seen.has(j.id)) { seen.add(j.id); assigned.push(j); }
+        }
         setMyJobs(assigned.map((j) => mapJob(j, customerProfiles)));
         setAvailableJobs(
           available

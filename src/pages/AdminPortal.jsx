@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera, UserCheck, Flag } from 'lucide-react';
 import AdminDuplicatesPanel from '@/components/admin/AdminDuplicatesPanel';
 import { useRef } from 'react';
@@ -55,7 +55,11 @@ const NAV = [
 ];
 
 export default function AdminPortal() {
-  const [tab, setTab] = useState('dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tabFromHash = location.hash.replace('#', '') || 'dashboard';
+  const tab = tabFromHash;
+  const setTab = (t) => navigate(`/admin#${t}`, { replace: false });
   const [providers, setProviders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [jobs, setJobs] = useState([]);

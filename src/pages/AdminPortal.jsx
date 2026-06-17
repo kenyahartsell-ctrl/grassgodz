@@ -53,7 +53,7 @@ const NAV = [
   { key: 'payouts', label: 'Payouts', icon: DollarSign },
   { key: 'ziplookup', label: 'Zip Lookup', icon: MapPin },
   { key: 'accounts', label: 'Accounts', icon: UserCheck },
-{ key: 'complaints', label: 'Complaints', icon: Flag },
+  { key: 'complaints', label: 'Complaints', icon: Flag },
   { key: 'cash', label: 'Cash OK', icon: DollarSign },
   { key: 'communications', label: 'Comms', icon: Radio },
 ];
@@ -76,7 +76,7 @@ export default function AdminPortal() {
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [assigningJob, setAssigningJob] = useState(null);
   const [viewingPhotos, setViewingPhotos] = useState(null);
-  const [adjustingPayment, setAdjustingPayment] = useState(null); // { payment, job }
+  const [adjustingPayment, setAdjustingPayment] = useState(null);
   const [editingJob, setEditingJob] = useState(null);
   const [editingPriceJob, setEditingPriceJob] = useState(null);
   const [weatherJob, setWeatherJob] = useState(null);
@@ -104,7 +104,6 @@ export default function AdminPortal() {
   };
 
   useEffect(() => {
-    // Log Stripe public key prefix for verification
     const pubKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
     if (pubKey) {
       console.log('[Stripe] Publishable key detected:', pubKey.substring(0, 8) + '...');
@@ -147,7 +146,6 @@ export default function AdminPortal() {
   const weekJobs = jobs.filter(j => j.status !== 'cancelled').length;
   const avgJobValue = totalGMV / (payments.length || 1);
 
-  // Build weekly chart from real jobs
   const weeklyData = (() => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const now = new Date();
@@ -237,6 +235,7 @@ export default function AdminPortal() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Top header */}
       <header className="bg-card border-b border-border sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-2">
           <img src="https://media.base44.com/images/public/69e949497e5928c679297ebf/b2338f6dd_logo_transparent.png" alt="Grassgodz" className="h-8 w-8 object-contain flex-shrink-0" />
@@ -331,9 +330,9 @@ export default function AdminPortal() {
             {customers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-10">No customers yet.</p>
             ) : (
-              <AdminCustomersTable 
-                customers={customers} 
-                jobs={jobs} 
+              <AdminCustomersTable
+                customers={customers}
+                jobs={jobs}
                 quotes={quotes}
                 onCustomerDeleted={async () => {
                   const allCustomers = await base44.entities.CustomerProfile.list();
@@ -451,7 +450,7 @@ export default function AdminPortal() {
           <AdminCommunicationsTab customers={customers} providers={providers} jobs={jobs} />
         )}
 
-{tab === 'reviews' && (
+        {tab === 'reviews' && (
           <div>
             <h2 className="text-xl font-bold text-foreground mb-5">Reviews</h2>
             {reviews.length === 0 ? (

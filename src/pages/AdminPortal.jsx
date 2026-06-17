@@ -1,12 +1,10 @@
 // Updated
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera, UserCheck, Flag, Radio } from 'lucide-react';
-import AdminDuplicatesPanel from '@/components/admin/AdminDuplicatesPanel';
+import { LayoutDashboard, Users, Briefcase, Shield, TrendingUp, DollarSign, Star, Activity, Loader2, TestTube, Plus, UserCircle, MessageSquare, Mail, Banknote, Receipt, CalendarDays, Copy, LinkIcon, UserPlus, MapPin, Camera, UserCheck, Flag, Radio, Archive } from 'lucide-react';
 import { useRef } from 'react';
 import WeatherRescheduleModal from '@/components/shared/WeatherRescheduleModal';
 import AdminCalendarPanel from '@/components/admin/AdminCalendarPanel';
-import AdminInvoiceBuilder from '@/components/admin/AdminInvoiceBuilder';
 import AdminEditJobModal from '@/components/admin/AdminEditJobModal';
 import AdminPriceAdjustModal from '@/components/admin/AdminPriceAdjustModal';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
@@ -15,9 +13,6 @@ import AdminAddProviderModal from '@/components/admin/AdminAddProviderModal';
 import AdminAssignProviderModal from '@/components/admin/AdminAssignProviderModal';
 import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
 import AdminSupportPanel from '@/components/admin/AdminSupportPanel';
-import AdminEmailPanel from '@/components/admin/AdminEmailPanel';
-import AdminManualClientsPanel from '@/components/admin/AdminManualClientsPanel';
-import AdminPaymentLinksPanel from '@/components/admin/AdminPaymentLinksPanel';
 import AdminEditPriceModal from '@/components/admin/AdminEditPriceModal';
 import MetricCard from '../components/shared/MetricCard';
 import StatusBadge from '../components/shared/StatusBadge';
@@ -39,6 +34,8 @@ import AdminCashOverridePanel from '@/components/admin/AdminCashOverridePanel';
 import AdminDashboardPanel from '@/components/admin/AdminDashboardPanel';
 import AdminJobsTab from '@/components/admin/AdminJobsTab';
 import AdminCommunicationsTab from '@/components/admin/AdminCommunicationsTab';
+import AdminBillingPanel from '@/components/admin/AdminBillingPanel';
+import AdminArchivedJobsPanel from '@/components/admin/AdminArchivedJobsPanel';
 
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -46,14 +43,10 @@ const NAV = [
   { key: 'customers', label: 'Customers', icon: UserCircle },
   { key: 'providers', label: 'Providers', icon: Users },
   { key: 'jobs', label: 'Jobs', icon: Briefcase },
-  { key: 'support', label: 'Support', icon: MessageSquare },
-  { key: 'email', label: 'Email', icon: Mail },
-  { key: 'manual', label: 'Manual', icon: Banknote },
-  { key: 'invoices', label: 'Invoices', icon: Receipt },
-  { key: 'paymentlinks', label: 'Pay Links', icon: LinkIcon },
+  { key: 'archived', label: 'Archived', icon: Archive },
+  { key: 'billing', label: 'Billing', icon: Receipt },
   { key: 'payouts', label: 'Payouts', icon: DollarSign },
   { key: 'ziplookup', label: 'Zip Lookup', icon: MapPin },
-  { key: 'accounts', label: 'Accounts', icon: UserCheck },
   { key: 'complaints', label: 'Complaints', icon: Flag },
   { key: 'cash', label: 'Cash OK', icon: DollarSign },
   { key: 'communications', label: 'Comms', icon: Radio },
@@ -82,7 +75,6 @@ export default function AdminPortal() {
   const [editingPriceJob, setEditingPriceJob] = useState(null);
   const [weatherJob, setWeatherJob] = useState(null);
   const [supportJob, setSupportJob] = useState(null);
-  const [showInvite, setShowInvite] = useState(false);
   const [cancellingJob, setCancellingJob] = useState(null);
   const [adminPhotoUrl, setAdminPhotoUrl] = useState('');
   const [adminPhotoUploading, setAdminPhotoUploading] = useState(false);
@@ -282,6 +274,7 @@ export default function AdminPortal() {
           {[
             { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
             { key: 'jobs', label: 'Jobs', icon: Briefcase },
+            { key: 'archived', label: 'Archived', icon: Archive },
             { key: 'communications', label: 'Communications', icon: Radio },
           ].map(({ key, label, icon: Icon }) => (
             <button
@@ -320,29 +313,50 @@ export default function AdminPortal() {
           <AdminCalendarPanel providers={providers} />
         )}
 
-        {tab === 'customers' && (
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Customers</h2>
-                <p className="text-sm text-muted-foreground">{customers.length} registered customer{customers.length !== 1 ? 's' : ''}</p>
+        {tab === 'customers' && (() => {
+          // Detect duplicate customer accounts (same phone or name)
+          const phoneGroups = {};
+          customers.forEach(c => {
+            if (c.phone) {
+              const key = c.phone.replace(/\D/g, '');
+              if (key.length >= 7) { if (!phoneGroups[key]) phoneGroups[key] = []; phoneGroups[key].push(c); }
+            }
+          });
+          const duplicates = Object.values(phoneGroups).filter(g => g.length > 1);
+          return (
+            <div>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Customers</h2>
+                  <p className="text-sm text-muted-foreground">{customers.length} registered customer{customers.length !== 1 ? 's' : ''}</p>
+                </div>
               </div>
+              {duplicates.length > 0 && (
+                <div className="mb-4 bg-amber-50 border border-amber-300 rounded-xl p-4">
+                  <p className="text-sm font-bold text-amber-800 mb-2">⚠️ Possible Duplicate Accounts Detected</p>
+                  {duplicates.map((group, i) => (
+                    <p key={i} className="text-xs text-amber-700">
+                      Phone {group[0].phone}: {group.map(c => c.name || c.user_email).join(', ')}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {customers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-10">No customers yet.</p>
+              ) : (
+                <AdminCustomersTable
+                  customers={customers}
+                  jobs={jobs}
+                  quotes={quotes}
+                  onCustomerDeleted={async () => {
+                    const allCustomers = await base44.entities.CustomerProfile.list();
+                    setCustomers(allCustomers);
+                  }}
+                />
+              )}
             </div>
-            {customers.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-10">No customers yet.</p>
-            ) : (
-              <AdminCustomersTable
-                customers={customers}
-                jobs={jobs}
-                quotes={quotes}
-                onCustomerDeleted={async () => {
-                  const allCustomers = await base44.entities.CustomerProfile.list();
-                  setCustomers(allCustomers);
-                }}
-              />
-            )}
-          </div>
-        )}
+          );
+        })()}
 
         {tab === 'providers' && (
           <div>
@@ -357,6 +371,7 @@ export default function AdminPortal() {
             ) : (
               <AdminProvidersTable
                 providers={providers}
+                jobs={jobs}
                 onRefresh={async () => {
                   const allProviders = await base44.entities.ProviderProfile.list();
                   setProviders(allProviders);
@@ -378,42 +393,12 @@ export default function AdminPortal() {
           />
         )}
 
-        {tab === 'support' && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-foreground">Support Messaging</h2>
-              <p className="text-sm text-muted-foreground">View job conversations and send admin support messages to customers or providers.</p>
-            </div>
-            <AdminSupportPanel jobs={jobs} initialJob={supportJob} onJobConsumed={() => setSupportJob(null)} adminUser={adminUser} />
-          </div>
+        {tab === 'archived' && (
+          <AdminArchivedJobsPanel />
         )}
 
-        {tab === 'email' && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-foreground">Send Email</h2>
-              <p className="text-sm text-muted-foreground">Send emails to customers or providers directly from here.</p>
-            </div>
-            <AdminEmailPanel />
-          </div>
-        )}
-
-        {tab === 'manual' && (
-          <div>
-            <AdminManualClientsPanel allJobs={jobs} />
-          </div>
-        )}
-
-        {tab === 'invoices' && (
-          <div>
-            <AdminInvoiceBuilder allJobs={jobs} />
-          </div>
-        )}
-
-        {tab === 'paymentlinks' && (
-          <div>
-            <AdminPaymentLinksPanel allJobs={jobs} />
-          </div>
+        {tab === 'billing' && (
+          <AdminBillingPanel allJobs={jobs} />
         )}
 
         {tab === 'payouts' && (
@@ -424,16 +409,6 @@ export default function AdminPortal() {
 
         {tab === 'ziplookup' && (
           <AdminZipLookup providers={providers} />
-        )}
-
-        {tab === 'accounts' && (
-          <AdminDuplicatesPanel
-            customers={customers}
-            onRefresh={async () => {
-              const allCustomers = await base44.entities.CustomerProfile.list();
-              setCustomers(allCustomers);
-            }}
-          />
         )}
 
         {tab === 'complaints' && (
@@ -554,10 +529,6 @@ export default function AdminPortal() {
             setJobs(prev => prev.map(j => j.id === editingPriceJob.id ? { ...j, quoted_price: newPrice } : j));
           }}
         />
-      )}
-
-      {showInvite && (
-        <AdminInviteModal onClose={() => setShowInvite(false)} />
       )}
 
       {cancellingJob && (

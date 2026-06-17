@@ -19,7 +19,7 @@ const STATUS_OPTIONS = [
   { value: 'rejected', label: 'Rejected' },
 ];
 
-export default function AdminProvidersTable({ providers, onRefresh }) {
+export default function AdminProvidersTable({ providers, jobs = [], onRefresh }) {
   const [loadingId, setLoadingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
@@ -86,6 +86,14 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
     }
   };
 
+  // Compute pending payout per provider from completed jobs
+  const pendingPayoutByProvider = {};
+  jobs.filter(j => j.status === 'completed' && j.provider_id && !j.provider_paid_out).forEach(j => {
+    const price = j.final_price || j.quoted_price || 0;
+    const payout = parseFloat((price * 0.90).toFixed(2));
+    pendingPayoutByProvider[j.provider_id] = (pendingPayoutByProvider[j.provider_id] || 0) + payout;
+  });
+
   return (
     <>
     {selectedProvider && <ProviderDetailModal provider={selectedProvider} onClose={() => setSelectedProvider(null)} />}
@@ -97,6 +105,7 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
             <TableHead>Experience</TableHead>
             <TableHead>Rating</TableHead>
             <TableHead>BG Check</TableHead>
+            <TableHead>Pending Payout</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -127,6 +136,13 @@ export default function AdminProvidersTable({ providers, onRefresh }) {
                   }`}>
                     {p.background_check_status || 'not started'}
                   </span>
+                </TableCell>
+                <TableCell>
+                  {pendingPayoutByProvider[p.id] > 0 ? (
+                    <span className="text-sm font-bold text-amber-600">${pendingPayoutByProvider[p.id].toFixed(2)}</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </TableCell>
                 <TableCell onClick={e => e.stopPropagation()}>
                   <select

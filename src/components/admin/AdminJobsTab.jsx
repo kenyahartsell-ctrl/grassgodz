@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import {
   Plus, ChevronDown, ChevronUp, Clock, CheckCircle2, AlertCircle,
-  MapPin, User, DollarSign, Calendar, Loader2, X
+  MapPin, User, DollarSign, Calendar, Loader2, X, Trash2, Edit2, Save, Archive
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -79,9 +79,20 @@ function SectionHeader({ color, title, count, collapsible, collapsed, onToggle }
 }
 
 // ─── Available Job Card ───────────────────────────────────────────────────────
-function AvailableJobCard({ job, providers, onAssigned }) {
-  const [assigning, setAssigning] = useState(false);
+function AvailableJobCard({ job, providers, onAssigned, onDeleted, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
+  const [showEditDate, setShowEditDate] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete this duplicate job for ${job.customer_name}?`)) return;
+    setDeleting(true);
+    try {
+      await base44.entities.Job.delete(job.id);
+      toast.success('Job deleted.');
+      onDeleted(job.id);
+    } catch { toast.error('Failed to delete.'); } finally { setDeleting(false); }
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
@@ -94,32 +105,82 @@ function AvailableJobCard({ job, providers, onAssigned }) {
       </div>
       <div className="space-y-1 text-xs text-gray-500 mb-3">
         <div className="flex items-center gap-1.5"><MapPin size={11} /> <span className="truncate">{job.address || '—'}</span></div>
-        <div className="flex items-center gap-1.5"><Calendar size={11} /> {fmtDate(job.scheduled_date)} {job.scheduled_time ? `@ ${job.scheduled_time}` : ''}</div>
+        <div className="flex items-center gap-1.5">
+          <Calendar size={11} /> {fmtDate(job.scheduled_date)} {job.scheduled_time ? `@ ${job.scheduled_time}` : ''}
+          <button onClick={() => setShowEditDate(true)} className="ml-1 text-emerald-600 hover:text-emerald-800 transition-colors" title="Edit date">
+            <Edit2 size={10} />
+          </button>
+        </div>
         {job.customer_notes && <p className="text-gray-400 italic truncate">{job.customer_notes}</p>}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Link to={`/jobs/${job.id}`} className="flex-1 text-center py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">View</Link>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex-1 py-1.5 text-xs font-semibold bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition-colors"
-        >
-          Assign to Provider
+        <button onClick={() => setShowModal(true)} className="flex-1 py-1.5 text-xs font-semibold bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition-colors">
+          Assign Provider
+        </button>
+        <button onClick={handleDelete} disabled={deleting} className="py-1.5 px-2.5 text-xs font-semibold bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50">
+          {deleting ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
         </button>
       </div>
       {showModal && (
         <AdminAssignProviderModal
           job={job}
           onClose={() => setShowModal(false)}
-          onAssigned={() => { setShowModal(false); onAssigned(); toast.success(`Job assigned successfully!`); }}
+          onAssigned={() => { setShowModal(false); onAssigned(); toast.success('Job assigned!'); }}
         />
       )}
+      {showEditDate && <EditDateModal job={job} onClose={() => setShowEditDate(false)} onSaved={onRefresh} />}
+    </div>
+  );
+}
+
+// ─── Edit Date Modal ──────────────────────────────────────────────────────────
+function EditDateModal({ job, onClose, onSaved }) {
+  const [date, setDate] = useState(job.scheduled_date || '');
+  const [time, setTime] = useState(job.scheduled_time || '');
+  const [saving, setSaving] = useState(false);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await base44.entities.Job.update(job.id, { scheduled_date: date, scheduled_time: time || null });
+      toast.success('Date updated.');
+      onSaved();
+      onClose();
+    } catch { toast.error('Failed to update date.'); } finally { setSaving(false); }
+  };
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-gray-900">Edit Scheduled Date</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">{job.customer_name} — {job.service_name}</p>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-gray-500 block mb-1">Date</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-500 block mb-1">Time (optional)</label>
+            <input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30" />
+          </div>
+        </div>
+        <div className="flex gap-3 mt-4">
+          <button onClick={onClose} className="flex-1 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button onClick={handleSave} disabled={saving || !date} className="flex-1 py-2 bg-emerald-700 text-white rounded-xl text-sm font-semibold hover:bg-emerald-800 disabled:opacity-50 flex items-center justify-center gap-2">
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 // ─── Active Job Card ──────────────────────────────────────────────────────────
-function ActiveJobCard({ job, onAssigned, handlers }) {
+function ActiveJobCard({ job, onAssigned, handlers, onRefresh }) {
   const [showModal, setShowModal] = useState(false);
+  const [showEditDate, setShowEditDate] = useState(false);
   return (
     <div className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -131,18 +192,24 @@ function ActiveJobCard({ job, onAssigned, handlers }) {
       </div>
       <div className="space-y-1 text-xs text-gray-500 mb-2">
         <div className="flex items-center gap-1.5"><User size={11} /> Provider: <span className="font-semibold text-gray-700 ml-0.5">{job.provider_name || 'Unassigned'}</span></div>
-        <div className="flex items-center gap-1.5"><Calendar size={11} /> {fmtDate(job.scheduled_date)} {job.scheduled_time ? `@ ${job.scheduled_time}` : ''}</div>
+        <div className="flex items-center gap-1.5">
+          <Calendar size={11} /> {fmtDate(job.scheduled_date)} {job.scheduled_time ? `@ ${job.scheduled_time}` : ''}
+          <button onClick={() => setShowEditDate(true)} className="ml-1 text-emerald-600 hover:text-emerald-800 transition-colors" title="Edit date">
+            <Edit2 size={10} />
+          </button>
+        </div>
         <div className="flex items-center gap-1.5"><MapPin size={11} /> <span className="truncate">{job.address || '—'}</span></div>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 mb-3">
         <StatusBadge status={job.status} />
         <CountdownTimer job={job} />
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Link to={`/jobs/${job.id}`} className="flex-1 text-center py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">View</Link>
         <button onClick={() => handlers.onComplete(job)} className="flex-1 py-1.5 text-xs font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Complete</button>
         <button onClick={() => handlers.onCancel(job)} className="flex-1 py-1.5 text-xs font-semibold bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
       </div>
+      {showEditDate && <EditDateModal job={job} onClose={() => setShowEditDate(false)} onSaved={onRefresh} />}
     </div>
   );
 }
@@ -200,6 +267,9 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
           <h2 className="text-xl font-bold text-foreground">Jobs</h2>
           <p className="text-sm text-muted-foreground">
             {availableJobs.length} available · {activeJobs.length} active · {completedJobs.length} completed
+            {jobs.filter(j => j.status === 'cancelled').length > 0 && (
+              <span className="ml-2 text-xs text-gray-400">· {jobs.filter(j => j.status === 'cancelled').length} archived</span>
+            )}
           </p>
         </div>
         <Button onClick={() => setShowAddJob(true)} className="flex items-center gap-2">
@@ -217,7 +287,7 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {availableJobs.map(j => (
-              <AvailableJobCard key={j.id} job={j} providers={providers} onAssigned={refreshJobs} />
+              <AvailableJobCard key={j.id} job={j} providers={providers} onAssigned={refreshJobs} onDeleted={(id) => setJobs(prev => prev.filter(x => x.id !== id))} onRefresh={refreshJobs} />
             ))}
           </div>
         )}
@@ -233,7 +303,7 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {activeJobs.map(j => (
-              <ActiveJobCard key={j.id} job={j} onAssigned={refreshJobs} handlers={handlers} />
+              <ActiveJobCard key={j.id} job={j} onAssigned={refreshJobs} handlers={handlers} onRefresh={refreshJobs} />
             ))}
           </div>
         )}

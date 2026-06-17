@@ -25,6 +25,8 @@ const BLANK_FORM = {
   provider_email: '',
   provider_name: '',
   status: 'requested',
+  payment_method: 'stripe',
+  is_cash_job: false,
 };
 
 export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], existingJobs = [] }) {
@@ -292,6 +294,27 @@ export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], 
             <p className="text-xs text-gray-400 mt-1">
               {form.provider_id ? `Will be assigned to ${form.provider_name}` : 'Providers can claim first-come-first-served'}
             </p>
+          </div>
+
+          {/* Payment Method */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">Payment Method</label>
+            <div className="flex gap-2">
+              {[{ value: 'stripe', label: '💳 Card (Stripe)' }, { value: 'cash', label: '💵 Cash' }].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, payment_method: opt.value, is_cash_job: opt.value === 'cash' }))}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                    form.payment_method === opt.value
+                      ? 'bg-emerald-700 text-white border-emerald-700'
+                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Notes */}

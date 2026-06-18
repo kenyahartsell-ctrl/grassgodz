@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CustomerDetailModal from './CustomerDetailModal';
 import AdminEditCustomerModal from './AdminEditCustomerModal';
+import AdminMergeCustomersModal from './AdminMergeCustomersModal';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
@@ -83,6 +84,7 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [emailingCustomer, setEmailingCustomer] = useState(null);
+  const [showMergeModal, setShowMergeModal] = useState(false);
   const [customerList, setCustomerList] = useState(customers);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -124,6 +126,21 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
           }}
         />
       )}
+      {showMergeModal && (
+        <AdminMergeCustomersModal
+          customers={customerList}
+          onClose={() => setShowMergeModal(false)}
+          onMerged={async () => {
+            setShowMergeModal(false);
+            onCustomerDeleted?.(); // re-fetch data
+          }}
+        />
+      )}
+      <div className="mb-4 flex justify-end">
+        <Button variant="outline" size="sm" onClick={() => setShowMergeModal(true)} className="gap-2">
+          Merge Duplicate Accounts
+        </Button>
+      </div>
       <div className="space-y-2">
         {customerList.map(c => {
           const customerJobs = jobs.filter(j => j.customer_email === c.user_email);

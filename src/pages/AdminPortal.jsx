@@ -362,6 +362,8 @@ export default function AdminPortal() {
                   onCustomerDeleted={async () => {
                     const allCustomers = await base44.entities.CustomerProfile.list();
                     setCustomers(allCustomers);
+                    const allJobs = await base44.entities.Job.list('-created_date', 100);
+                    setJobs(allJobs);
                   }}
                 />
               )}

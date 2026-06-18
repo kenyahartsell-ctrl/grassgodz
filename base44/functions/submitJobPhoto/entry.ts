@@ -19,15 +19,20 @@ Deno.serve(async (req) => {
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
-    // Check by email (most reliable) or by provider profile ID lookup
-    let isAssignedProvider = job.provider_email === user.email;
-    if (!isAssignedProvider) {
-      const profiles = await base44.asServiceRole.entities.ProviderProfile.filter({ user_email: user.email });
-      const profile = profiles[0];
-      isAssignedProvider = profile && job.provider_id === profile.id;
+    // Admin can upload photos (admin overriding)
+    let isAuthorized = user.role === 'admin';
+    
+    if (!isAuthorized) {
+      // Check by email (most reliable) or by provider profile ID lookup
+      isAuthorized = job.provider_email === user.email;
+      if (!isAuthorized) {
+        const profiles = await base44.asServiceRole.entities.ProviderProfile.filter({ user_email: user.email });
+        const profile = profiles[0];
+        isAuthorized = profile && job.provider_id === profile.id;
+      }
     }
 
-    if (!isAssignedProvider) {
+    if (!isAuthorized) {
       return Response.json({ error: 'Forbidden: you are not the assigned provider for this job' }, { status: 403 });
     }
 

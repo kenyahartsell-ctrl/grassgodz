@@ -246,11 +246,22 @@ export default function ProviderPortal() {
         const me = await base44.auth.me();
         setCurrentUser(me);
         const customerProfiles = await base44.entities.CustomerProfile.list();
-        const [byEmail, byId, available] = await Promise.all([
+        const myProfiles = await base44.entities.ProviderProfile.filter({ user_email: me.email });
+        const myProfile = myProfiles[0];
+        
+        const queries = [
           base44.entities.Job.filter({ provider_email: me.email }),
-          base44.entities.Job.filter({ provider_id: me.id }),
-          base44.entities.Job.filter({ status: "requested" }),
-        ]);
+          base44.entities.Job.filter({ status: "requested" })
+        ];
+        if (myProfile) {
+          queries.push(base44.entities.Job.filter({ provider_id: myProfile.id }));
+        }
+        
+        const results = await Promise.all(queries);
+        const byEmail = results[0];
+        const available = results[1];
+        const byId = myProfile ? results[2] : [];
+
         // Merge and deduplicate by id
         const seen = new Set();
         const assigned = [];
@@ -296,18 +307,22 @@ export default function ProviderPortal() {
   }
   async function completeJob(id, photos) {
     try {
-      const updates = { status: "completed", completed_at: new Date().toISOString() };
-      if (photos && Object.keys(photos).length > 0) updates.completion_photos = photos;
-      await base44.entities.Job.update(id, updates);
+      // 1. Submit photos via backend function to bypass RLS limits
+      if (photos && Object.keys(photos).length > 0) {
+         await base44.functions.invoke('submitJobPhoto', { job_id: id, photos });
+      }
       
-      // Trigger the backend payment flow and notifications
-      await base44.functions.invoke('jobCompletedPaymentFlow', { job_id: id });
+      // 2. Trigger the backend payment flow and notifications (marks job completed)
+      const res = await base44.functions.invoke('capturePayment', { job_id: id, skip_photos: true });
+      if (res.data && res.data.error) {
+         throw new Error(res.data.error);
+      }
       
       setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "completed", thisWeek: true } : j)));
       toast.success("Job marked complete!");
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to mark job complete. Please try again.");
+      console.error("Complete job error:", error);
+      toast.error(error.message || "Failed to mark job complete. Please try again.");
       throw error;
     }
   }

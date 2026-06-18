@@ -92,9 +92,17 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
         maxWidthOrHeight: 1920,
         useWebWorker: true,
       });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: compressedFile });
-      setPhotos(p => ({ ...p, [key]: file_url }));
+      // Ensure we pass a File object, as imageCompression sometimes returns a Blob without a proper name
+      const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
+      
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+      if (file_url) {
+        setPhotos(p => ({ ...p, [key]: file_url }));
+      } else {
+        throw new Error("No URL returned from upload");
+      }
     } catch (err) {
+      console.error("Photo upload error:", err);
       toast.error('Photo upload failed. Please try again.');
     } finally {
       setUploading(u => ({ ...u, [key]: false }));

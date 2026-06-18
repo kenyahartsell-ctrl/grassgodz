@@ -1,5 +1,6 @@
 import { X, Phone, MapPin, Car, Wrench, Shield, Star, Mail, Calendar, FileText, User, AlertCircle, CheckCircle, DollarSign, Banknote, CreditCard, Info } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import StarRating from '@/components/shared/StarRating';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -15,9 +16,10 @@ function InfoRow({ label, value, highlight }) {
 
 const fmt = (n) => `$${(n || 0).toFixed(2)}`;
 
-function ProviderEarningsSection({ providerId, providerEmail }) {
+function ProviderEarningsSection({ providerId, providerEmail, onClose }) {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     base44.entities.Job.filter({ status: 'completed', provider_email: providerEmail })
@@ -112,7 +114,7 @@ function ProviderEarningsSection({ providerId, providerEmail }) {
                   const price = j.final_price || j.quoted_price || 0;
                   const isCash = j.cash_paid || j.payment_method === 'cash';
                   return (
-                    <tr key={j.id} className="hover:bg-muted/40">
+                    <tr key={j.id} onClick={() => { if (onClose) onClose(); navigate(`/jobs/${j.id}`); }} className="hover:bg-muted/40 cursor-pointer">
                       <td className="px-3 py-2 font-medium text-foreground">{j.service_name || '—'}</td>
                       <td className="px-3 py-2">
                         {isCash
@@ -265,7 +267,7 @@ export default function ProviderDetailModal({ provider: p, onClose }) {
           </section>
 
           {/* Earnings Summary (admin-only) */}
-          <ProviderEarningsSection providerId={p.id} providerEmail={p.user_email} />
+          <ProviderEarningsSection providerId={p.id} providerEmail={p.user_email} onClose={onClose} />
 
           {/* Admin Notes */}
           {p.admin_notes && (

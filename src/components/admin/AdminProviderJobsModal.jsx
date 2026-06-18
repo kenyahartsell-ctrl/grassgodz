@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, Calendar, CheckCircle2, Clock, Image, Loader2 } from 'lucide-react';
+import { X, MapPin, Calendar, CheckCircle2, Clock, Image, Loader2, Eye } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import StatusBadge from '@/components/shared/StatusBadge';
 import JobPhotoUploadModal from '@/components/provider/JobPhotoUploadModal';
 
@@ -99,6 +100,13 @@ export default function AdminProviderJobsModal({ provider, onClose, onJobUpdated
                           {job.quoted_price && <div className="font-semibold text-emerald-700">${job.quoted_price}</div>}
                         </div>
                         <div className="flex gap-2">
+                          <Link
+                            to={`/jobs/${job.id}`}
+                            onClick={onClose}
+                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                          >
+                            <Eye size={12} /> View Job
+                          </Link>
                           <button
                             onClick={() => setPhotoJob(job)}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary/10 text-primary border border-primary/30 rounded-lg hover:bg-primary/20 transition-colors"
@@ -126,7 +134,7 @@ export default function AdminProviderJobsModal({ provider, onClose, onJobUpdated
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Completed ({doneJobs.length})</p>
                   <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
                     {doneJobs.map(job => (
-                      <div key={job.id} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50">
+                      <Link key={job.id} to={`/jobs/${job.id}`} onClick={onClose} className="flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors">
                         <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-gray-800 truncate">{job.customer_name}</p>
@@ -134,7 +142,7 @@ export default function AdminProviderJobsModal({ provider, onClose, onJobUpdated
                         </div>
                         <span className="text-xs text-gray-400 flex-shrink-0">{fmtDate(job.completed_at || job.scheduled_date)}</span>
                         {job.quoted_price && <span className="text-xs font-bold text-gray-700">${job.quoted_price}</span>}
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>

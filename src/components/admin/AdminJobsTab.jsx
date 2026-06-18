@@ -215,7 +215,7 @@ function ActiveJobCard({ job, onAssigned, handlers, onRefresh }) {
 }
 
 // ─── Completed Job Row ────────────────────────────────────────────────────────
-function CompletedJobRow({ job, invoices }) {
+function CompletedJobRow({ job, invoices, onArchive }) {
   const hasInvoice = invoices.some(inv => inv.job_id === job.id);
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
@@ -230,6 +230,7 @@ function CompletedJobRow({ job, invoices }) {
       }`}>
         {hasInvoice ? '✓ Invoice sent' : 'No invoice'}
       </span>
+      <button onClick={() => onArchive && onArchive(job)} className="text-xs text-gray-500 underline hover:no-underline">Archive</button>
       <Link to={`/jobs/${job.id}`} className="text-xs text-primary underline hover:no-underline">View</Link>
     </div>
   );
@@ -251,7 +252,7 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
   const activeJobs = jobs.filter(j =>
     ['accepted', 'scheduled', 'in_progress', 'quoted'].includes(j.status)
   ).sort((a, b) => new Date(a.scheduled_date || 0) - new Date(b.scheduled_date || 0));
-  const completedJobs = jobs.filter(j => j.status === 'completed')
+  const completedJobs = jobs.filter(j => j.status === 'completed' && !j.is_archived)
     .sort((a, b) => new Date(b.completed_at || b.updated_date) - new Date(a.completed_at || a.updated_date));
 
   const refreshJobs = async () => {
@@ -324,7 +325,7 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
             {completedJobs.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-10">No completed jobs yet.</p>
             ) : (
-              completedJobs.map(j => <CompletedJobRow key={j.id} job={j} invoices={invoices} />)
+              completedJobs.map(j => <CompletedJobRow key={j.id} job={j} invoices={invoices} onArchive={handlers.onArchive} />)
             )}
           </div>
         )}

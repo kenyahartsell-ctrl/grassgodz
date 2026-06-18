@@ -201,6 +201,17 @@ export default function AdminPortal() {
     toast.success('Job deleted.');
   };
 
+  const handleArchiveJob = async (job) => {
+    if (!window.confirm(`Archive this completed job for ${job.customer_name}?`)) return;
+    try {
+      await base44.entities.Job.update(job.id, { is_archived: true });
+      setJobs(prev => prev.map(j => j.id === job.id ? { ...j, is_archived: true } : j));
+      toast.success('Job archived. It will now appear in the Archived tab.');
+    } catch {
+      toast.error('Failed to archive job.');
+    }
+  };
+
   const handleTestStripe = async () => {
     try {
       const res = await base44.functions.invoke('stripeSmokeTest', {});
@@ -388,6 +399,7 @@ export default function AdminPortal() {
             providers={providers}
             handlers={{
               onComplete: handleCompleteJob,
+              onArchive: handleArchiveJob,
               onCancel: (j) => setCancellingJob(j),
             }}
           />

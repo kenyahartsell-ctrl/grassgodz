@@ -349,6 +349,11 @@
         "type": "string"
       },
       "description": "Array of ProviderProfile IDs that have declined this job. Used to hide the job from providers who already declined it."
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if the job has been archived by an admin (hides it from active views)."
     }
   },
   "required": [

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, MapPin, Calendar, FileText, RefreshCw, CreditCard, Lock, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { YARD_SIZES } from '@/lib/pricingFloors';
+import YardPhotoUpload from '@/components/shared/YardPhotoUpload';
 
 // Fixed lawn mowing prices by yard size
 const LAWN_FIXED_PRICES = {
@@ -184,6 +185,7 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
   const [showCardGate, setShowCardGate] = useState(false);
   const [savedPmId, setSavedPmId] = useState(customerProfile?.default_payment_method_id || null);
   const [pendingForm, setPendingForm] = useState(null);
+  const [yardPhotos, setYardPhotos] = useState([]);
 
   const [form, setForm] = useState({
     address: customerProfile?.service_address || '',
@@ -202,11 +204,11 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
   const cashApproved = customerProfile?.allow_cash_payment;
     if (!hasCard && !cashApproved) {
       // Save form and show card gate
-      setPendingForm({ ...form, service_id: service.id, service_name: service.name });
+      setPendingForm({ ...form, service_id: service.id, service_name: service.name, customer_yard_photos: yardPhotos });
       setShowCardGate(true);
       return;
     }
-    const submitData = { ...form, service_id: service.id, service_name: service.name };
+    const submitData = { ...form, service_id: service.id, service_name: service.name, customer_yard_photos: yardPhotos };
     if (isLawn && fixedPrice) submitData.quoted_price = fixedPrice;
     onSubmit(submitData);
     onClose();
@@ -391,11 +393,14 @@ export default function RequestJobModal({ service, onClose, onSubmit, customerPr
                 <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-xs text-amber-800 leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: t('quote_disclaimer') }} />
               )}
+              <div className="pt-2">
+                <YardPhotoUpload photos={yardPhotos} onChange={setYardPhotos} />
+              </div>
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={onClose} className="flex-1 border border-border rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
                   {t('cancel')}
                 </button>
-                <button type="submit" className="flex-1 bg-primary text-primary-foreground rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors">
+                <button type="submit" disabled={yardPhotos.length === 0} className="flex-1 bg-primary text-primary-foreground rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50">
                   {savedPmId || customerProfile?.default_payment_method_id ? t('submit_request') : 'Add Card & Continue'}
                 </button>
               </div>

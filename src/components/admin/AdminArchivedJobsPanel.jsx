@@ -18,7 +18,7 @@ export default function AdminArchivedJobsPanel() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await base44.entities.Job.filter({ status: 'cancelled' });
+      const data = await base44.entities.Job.filter({ $or: [{ status: 'cancelled' }, { is_archived: true }] });
       setJobs(data.sort((a, b) => new Date(b.cancelled_at || b.updated_date) - new Date(a.cancelled_at || a.updated_date)));
     } catch { toast.error('Failed to load archived jobs.'); }
     finally { setLoading(false); }
@@ -27,9 +27,13 @@ export default function AdminArchivedJobsPanel() {
   useEffect(() => { load(); }, []);
 
   const handleRestore = async (job) => {
-    if (!window.confirm(`Restore this job for ${job.customer_name} back to "requested" status?`)) return;
+    if (!window.confirm(`Restore this job for ${job.customer_name}?`)) return;
     try {
-      await base44.entities.Job.update(job.id, { status: 'requested', cancelled_by: null, cancelled_at: null, cancellation_reason: null });
+      if (job.status === 'cancelled') {
+        await base44.entities.Job.update(job.id, { status: 'requested', cancelled_by: null, cancelled_at: null, cancellation_reason: null, is_archived: false });
+      } else {
+        await base44.entities.Job.update(job.id, { is_archived: false });
+      }
       toast.success('Job restored.');
       setJobs(prev => prev.filter(j => j.id !== job.id));
     } catch { toast.error('Failed to restore job.'); }
@@ -60,7 +64,7 @@ export default function AdminArchivedJobsPanel() {
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Archive size={20} className="text-muted-foreground" /> Archived Jobs
           </h2>
-          <p className="text-sm text-muted-foreground">{jobs.length} cancelled job{jobs.length !== 1 ? 's' : ''} · Can be restored or permanently deleted</p>
+          <p className="text-sm text-muted-foreground">{jobs.length} archived/cancelled job{jobs.length !== 1 ? 's' : ''} · Can be restored or permanently deleted</p>
         </div>
       </div>
 

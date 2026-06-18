@@ -5,7 +5,7 @@ import { format, isBefore, isToday, isFuture, startOfDay, parseISO, differenceIn
 import {
   CheckCircle2, AlertCircle, Clock, RefreshCw, ChevronLeft, ChevronRight,
   Plus, DollarSign, CloudRain, CheckCircle, Trash2, Camera, MessageSquare, ImagePlus,
-  Banknote, CreditCard, CalendarDays, Sun, Receipt,
+  Banknote, CreditCard, CalendarDays, Sun, Receipt, Archive,
 } from 'lucide-react';
 import BiweeklyPrompt from '@/components/admin/BiweeklyPrompt';
 import AdminPhotoUploadModal from '@/components/admin/AdminPhotoUploadModal';
@@ -616,6 +616,11 @@ function JobCard({ job: j, handlers, isCompleted }) {
         <button onClick={() => handlers.onDelete(j)} className="px-2 py-1 text-[11px] font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-1">
           <Trash2 size={11} /> Delete
         </button>
+        {isCompleted && (
+          <button onClick={() => handlers.onArchive && handlers.onArchive(j)} className="px-2 py-1 text-[11px] font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1">
+            <Archive size={11} /> Archive
+          </button>
+        )}
       </div>
 
       {/* Admin photo upload modal */}
@@ -679,7 +684,7 @@ export default function AdminJobsDashboard({ jobs, setJobs, handlers }) {
     .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
   const biweeklyHiddenCount = jobs.filter(j => j.recurrence === 'biweekly' && !j.biweekly_released && !['completed','cancelled'].includes(j.status)).length;
   const completedJobs = jobs
-    .filter(j => j.status === 'completed')
+    .filter(j => j.status === 'completed' && !j.is_archived)
     .sort((a, b) => new Date(b.completed_at || b.updated_date) - new Date(a.completed_at || a.updated_date));
 
   return (

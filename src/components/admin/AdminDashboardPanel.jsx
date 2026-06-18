@@ -327,7 +327,7 @@ export default function AdminDashboardPanel({ jobs, customers, providers, quotes
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
   const completedThisWeek = jobs.filter(j => {
-    if (j.status !== 'completed' || !j.completed_at) return false;
+    if (j.status !== 'completed' || !j.completed_at || j.is_archived) return false;
     const d = new Date(j.completed_at);
     return d >= weekStart && d <= weekEnd;
   });

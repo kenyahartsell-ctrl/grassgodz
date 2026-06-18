@@ -18,8 +18,17 @@ export default function AdminArchivedJobsPanel() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await base44.entities.Job.filter({ $or: [{ status: 'cancelled' }, { is_archived: true }] });
-      setJobs(data.sort((a, b) => new Date(b.cancelled_at || b.updated_date) - new Date(a.cancelled_at || a.updated_date)));
+      const data = await base44.entities.Job.filter({ $or: [{ status: 'cancelled' }, { is_archived: true }, { status: 'completed' }] }, '-created_date', 1000);
+      const cutoff = new Date('2025-06-01T00:00:00');
+      const filtered = data.filter(j => {
+        if (j.status === 'cancelled' || j.is_archived) return true;
+        if (j.status === 'completed') {
+           const d = new Date(j.completed_at || j.scheduled_date || j.updated_date);
+           return d < cutoff;
+        }
+        return false;
+      });
+      setJobs(filtered.sort((a, b) => new Date(b.cancelled_at || b.completed_at || b.updated_date) - new Date(a.cancelled_at || a.completed_at || a.updated_date)));
     } catch { toast.error('Failed to load archived jobs.'); }
     finally { setLoading(false); }
   };
@@ -109,12 +118,14 @@ export default function AdminArchivedJobsPanel() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Link to={`/jobs/${job.id}`} className="px-3 py-1.5 text-xs font-medium bg-muted rounded-lg hover:bg-muted/80 transition-colors">View</Link>
-                  <button
-                    onClick={() => handleRestore(job)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
-                  >
-                    <RotateCcw size={11} /> Restore
-                  </button>
+                  {(!job.status || job.status === 'cancelled' || job.is_archived) && (
+                    <button
+                      onClick={() => handleRestore(job)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+                    >
+                      <RotateCcw size={11} /> Restore
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(job)}
                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"

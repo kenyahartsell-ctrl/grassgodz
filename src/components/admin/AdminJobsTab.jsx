@@ -252,8 +252,12 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
   const activeJobs = jobs.filter(j =>
     ['accepted', 'scheduled', 'in_progress', 'quoted'].includes(j.status)
   ).sort((a, b) => new Date(a.scheduled_date || 0) - new Date(b.scheduled_date || 0));
-  const completedJobs = jobs.filter(j => j.status === 'completed' && !j.is_archived)
-    .sort((a, b) => new Date(b.completed_at || b.updated_date) - new Date(a.completed_at || a.updated_date));
+  const cutoff = new Date('2025-06-01T00:00:00');
+  const completedJobs = jobs.filter(j => {
+    if (j.status !== 'completed' || j.is_archived) return false;
+    const d = new Date(j.completed_at || j.scheduled_date || j.updated_date);
+    return d >= cutoff;
+  }).sort((a, b) => new Date(b.completed_at || b.updated_date) - new Date(a.completed_at || a.updated_date));
 
   const refreshJobs = async () => {
     const all = await base44.entities.Job.list('-created_date', 100);

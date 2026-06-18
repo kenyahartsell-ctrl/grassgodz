@@ -3,11 +3,7 @@ import { X, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-const SERVICE_OPTIONS = [
-  'Lawn Mowing', 'Edging', 'Lawn Mowing + Edging', 'Full Cleanup',
-  'Hedge Trimming', 'Leaf Removal', 'Spring Cleanup', 'Fall Cleanup',
-  'Spring/Fall Cleanup', 'Mulching', 'Other'
-];
+// We will fetch services dynamically now
 
 const BLANK_FORM = {
   customer_id: '',
@@ -30,6 +26,7 @@ const BLANK_FORM = {
 };
 
 export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], existingJobs = [] }) {
+  const [services, setServices] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [form, setForm] = useState(BLANK_FORM);
   const [saving, setSaving] = useState(false);
@@ -40,6 +37,7 @@ export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], 
 
   useEffect(() => {
     base44.entities.CustomerProfile.list().then(setCustomers).catch(() => {});
+    base44.entities.Service.list().then(setServices).catch(() => {});
   }, []);
 
   const filteredCustomers = customers.filter(c =>
@@ -87,10 +85,16 @@ export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], 
   };
 
   const doSubmit = async () => {
+    if (!form.customer_id) {
+      toast.error('Please select a customer from the dropdown.');
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {
         ...form,
+        service_id: form.service_id || form.service_name,
         quoted_price: form.quoted_price ? parseFloat(form.quoted_price) : undefined,
         recurrence: form.recurrence,
       };
@@ -108,7 +112,7 @@ export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], 
       toast.success(successMsg);
       onJobAdded();
     } catch (err) {
-      toast.error('Failed to create job');
+      toast.error(err.message || 'Failed to create job');
       setSaving(false);
     }
   };
@@ -201,10 +205,13 @@ export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], 
               required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
               value={form.service_name}
-              onChange={e => setForm(f => ({ ...f, service_name: e.target.value }))}
+              onChange={e => {
+                const s = services.find(srv => srv.name === e.target.value);
+                setForm(f => ({ ...f, service_name: e.target.value, service_id: s ? s.id : e.target.value }));
+              }}
             >
               <option value="">Select service...</option>
-              {SERVICE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              {services.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
           </div>
 

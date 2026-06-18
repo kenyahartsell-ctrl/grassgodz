@@ -365,7 +365,7 @@ export default function ProviderPortal() {
     { id: "schedule", label: "My Schedule", icon: CheckCircle2 },
     { id: "route", label: "Route", icon: Navigation },
     { id: "quotes", label: "Quotes", icon: DollarSign },
-    { id: "completed", label: "Completed", icon: CheckCircle2 },
+    { id: "history", label: "History", icon: CheckCircle2 },
     { id: "chat", label: "Messages", icon: MessageCircle },
   ];
   return (
@@ -478,8 +478,8 @@ export default function ProviderPortal() {
             
             {scheduleView === "list" && (
               <div className="space-y-3">
-                {myJobs.filter((j) => j.status !== "completed" && j.date >= startOfWeek(today)).length === 0 && <p className="text-sm text-stone-500">Nothing scheduled.</p>}
-                {myJobs.filter((j) => j.status !== "completed" && j.date >= startOfWeek(today)).map((job) => (
+                {myJobs.filter((j) => j.date >= startOfWeek(today) && (j.status !== "completed" || j.thisWeek)).length === 0 && <p className="text-sm text-stone-500">Nothing scheduled.</p>}
+                {myJobs.filter((j) => j.date >= startOfWeek(today) && (j.status !== "completed" || j.thisWeek)).map((job) => (
                   <Card key={job.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex-1">
@@ -525,7 +525,7 @@ export default function ProviderPortal() {
                 <div className="space-y-4">
                   {Array.from({ length: 7 }).map((_, i) => {
                     const day = addDays(startOfWeek(today), (scheduleWeekOffset * 7) + i);
-                    const dayJobs = myJobs.filter((j) => isSameDay(j.date, day) && j.status !== "completed").sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+                    const dayJobs = myJobs.filter((j) => isSameDay(j.date, day)).sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
                     
                     if (dayJobs.length === 0) return null;
                     
@@ -568,7 +568,7 @@ export default function ProviderPortal() {
                   {myJobs.filter((j) => {
                      const s = addDays(startOfWeek(today), scheduleWeekOffset * 7);
                      const e = addDays(s, 6);
-                     return j.date >= s && j.date <= e && j.status !== "completed";
+                     return j.date >= s && j.date <= e;
                   }).length === 0 && (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
                       <CalendarIcon size={32} className="mb-2 text-stone-300" />
@@ -727,16 +727,16 @@ export default function ProviderPortal() {
             ))}
           </div>
         )}
-        {!loading && activeTab === "completed" && (
+        {!loading && activeTab === "history" && (
           <div className="space-y-2">
-            <Eyebrow>Completed job history</Eyebrow>
-            {myJobs.filter((j) => j.status === "completed").length === 0 && <p className="text-sm text-stone-500">No completed jobs yet.</p>}
-            {myJobs.filter((j) => j.status === "completed").sort((a, b) => b.date - a.date).map((j) => (
+            <Eyebrow>History (Prior to this week)</Eyebrow>
+            {myJobs.filter((j) => j.status === "completed" && j.date < startOfWeek(today)).length === 0 && <p className="text-sm text-stone-500">No completed jobs prior to this week.</p>}
+            {myJobs.filter((j) => j.status === "completed" && j.date < startOfWeek(today)).sort((a, b) => b.date - a.date).map((j) => (
               <Card key={j.id} className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="flex items-center gap-2 font-semibold">{j.service} {j.recurring && <RecurringTag frequency={j.frequency} />}</p>
                   <p className="text-sm text-stone-500">{j.customerName} · {j.address}</p>
-                  <p className="text-xs text-stone-400">{fmtDate(j.date)}{j.thisWeek ? " · counted in this week's pay" : ""}</p>
+                  <p className="text-xs text-stone-400">{fmtDate(j.date)}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <p className="text-lg font-bold text-emerald-800">{fmtMoney(j.price)}</p>

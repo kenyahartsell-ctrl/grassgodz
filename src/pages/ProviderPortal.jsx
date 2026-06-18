@@ -233,6 +233,8 @@ export default function ProviderPortal() {
   const [chatInput, setChatInput] = useState("");
   const [routeMode, setRouteMode] = useState("route");
   const [routeDayOffset, setRouteDayOffset] = useState(0);
+  const [scheduleView, setScheduleView] = useState("week"); // Default to week view as requested
+  const [scheduleWeekOffset, setScheduleWeekOffset] = useState(0);
   const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
   const [selectedCalDay, setSelectedCalDay] = useState(today.getDate());
   const insuranceInputRef = useRef(null);
@@ -459,43 +461,121 @@ export default function ProviderPortal() {
           </div>
         )}
         {!loading && activeTab === "schedule" && (
-          <div className="space-y-3">
-            <Eyebrow>Upcoming and active jobs</Eyebrow>
-            {myJobs.filter((j) => j.status !== "completed").length === 0 && <p className="text-sm text-stone-500">Nothing scheduled.</p>}
-            {myJobs.filter((j) => j.status !== "completed").map((job) => (
-              <Card key={job.id}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="mb-1.5 flex items-center gap-2">
-                      <p className="font-semibold">{job.service}</p>
-                      {job.recurring && <RecurringTag frequency={job.frequency} />}
-                      <StatusPill status={job.status} />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Eyebrow>Upcoming and active jobs</Eyebrow>
+              <div className="flex gap-1 rounded-lg bg-stone-200 p-1">
+                <button onClick={() => setScheduleView("list")} className={`rounded-md px-3 py-1 text-xs font-semibold ${scheduleView === "list" ? "bg-white shadow" : "text-stone-600"}`}>List</button>
+                <button onClick={() => setScheduleView("week")} className={`rounded-md px-3 py-1 text-xs font-semibold ${scheduleView === "week" ? "bg-white shadow" : "text-stone-600"}`}>Week</button>
+              </div>
+            </div>
+            
+            {scheduleView === "list" && (
+              <div className="space-y-3">
+                {myJobs.filter((j) => j.status !== "completed").length === 0 && <p className="text-sm text-stone-500">Nothing scheduled.</p>}
+                {myJobs.filter((j) => j.status !== "completed").map((job) => (
+                  <Card key={job.id}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="mb-1.5 flex items-center gap-2">
+                          <p className="font-semibold">{job.service}</p>
+                          {job.recurring && <RecurringTag frequency={job.frequency} />}
+                          <StatusPill status={job.status} />
+                        </div>
+                        <CustomerInfo name={job.customerName} phone={job.phone} address={job.address} />
+                        <p className="mt-1.5 flex items-center gap-1.5 text-sm text-stone-500"><Clock size={12} /> {fmtDate(job.date)} · {job.time}</p>
+                        <PhotoUploader photos={job.photos} onAdd={(files) => addPhotos(job.id, files)} onRemove={(pid) => removePhoto(job.id, pid)} />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-emerald-800">{fmtMoney(job.price)}</p>
+                        <div className="mt-2 flex flex-col gap-2">
+                          <button onClick={() => { setActiveTab("chat"); setSelectedCustomer(job.customerName); }} className="flex items-center justify-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100">
+                            <MessageCircle size={12} /> Message
+                          </button>
+                          {job.status === "scheduled" && (
+                            <button onClick={() => startJob(job.id)} className="flex items-center justify-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600">
+                              <PlayCircle size={12} /> Start job
+                            </button>
+                          )}
+                          {["in_progress", "scheduled", "accepted"].includes(job.status) && (
+                            <button onClick={() => setPhotoCompleteJob(job)} className="flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
+                              <CheckCircle2 size={12} /> Complete & Photos
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <CustomerInfo name={job.customerName} phone={job.phone} address={job.address} />
-                    <p className="mt-1.5 flex items-center gap-1.5 text-sm text-stone-500"><Clock size={12} /> {fmtDate(job.date)} · {job.time}</p>
-                    <PhotoUploader photos={job.photos} onAdd={(files) => addPhotos(job.id, files)} onRemove={(pid) => removePhoto(job.id, pid)} />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-emerald-800">{fmtMoney(job.price)}</p>
-                    <div className="mt-2 flex flex-col gap-2">
-                      <button onClick={() => { setActiveTab("chat"); setSelectedCustomer(job.customerName); }} className="flex items-center justify-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100">
-                        <MessageCircle size={12} /> Message
-                      </button>
-                      {job.status === "scheduled" && (
-                        <button onClick={() => startJob(job.id)} className="flex items-center justify-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600">
-                          <PlayCircle size={12} /> Start job
-                        </button>
-                      )}
-                      {["in_progress", "scheduled", "accepted"].includes(job.status) && (
-                        <button onClick={() => setPhotoCompleteJob(job)} className="flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
-                          <CheckCircle2 size={12} /> Complete & Photos
-                        </button>
-                      )}
+                  </Card>
+                ))}
+              </div>
+            )}
+            
+            {scheduleView === "week" && (
+              <Card>
+                <div className="mb-4 flex items-center justify-between">
+                  <button onClick={() => setScheduleWeekOffset((o) => o - 1)} className="rounded-lg p-1.5 hover:bg-stone-100"><ChevronLeft size={16} /></button>
+                  <p className="font-semibold text-sm">Week of {fmtDate(addDays(startOfWeek(today), scheduleWeekOffset * 7))}</p>
+                  <button onClick={() => setScheduleWeekOffset((o) => o + 1)} className="rounded-lg p-1.5 hover:bg-stone-100"><ChevronRight size={16} /></button>
+                </div>
+                
+                <div className="space-y-4">
+                  {Array.from({ length: 7 }).map((_, i) => {
+                    const day = addDays(startOfWeek(today), (scheduleWeekOffset * 7) + i);
+                    const dayJobs = myJobs.filter((j) => isSameDay(j.date, day) && j.status !== "completed").sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+                    
+                    if (dayJobs.length === 0) return null;
+                    
+                    return (
+                      <div key={i} className="space-y-2">
+                        <div className="flex items-center gap-2 border-b border-stone-100 pb-1">
+                          <p className={`text-sm font-bold ${isSameDay(day, today) ? "text-emerald-700" : "text-stone-700"}`}>
+                            {fmtDate(day)} {isSameDay(day, today) && <span className="ml-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] uppercase">Today</span>}
+                          </p>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {dayJobs.map((j) => (
+                            <div key={j.id} className="flex flex-col justify-between rounded-xl border border-stone-200 bg-stone-50 p-3">
+                              <div className="mb-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-sm font-semibold">{j.customerName}</p>
+                                  <StatusPill status={j.status} />
+                                </div>
+                                <p className="text-xs font-medium text-stone-600">{j.service} {j.recurring && <span className="text-emerald-700">· Recurring</span>}</p>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-stone-500"><Clock size={12} /> {j.time}</p>
+                                <p className="mt-0.5 flex items-center gap-1 text-xs text-stone-500"><MapPin size={12} /> {j.address}</p>
+                              </div>
+                              <div className="mt-2 flex items-center gap-2 border-t border-stone-200 pt-2">
+                                {j.status === "scheduled" && (
+                                  <button onClick={() => startJob(j.id)} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-amber-500 px-2 py-1.5 text-xs font-semibold text-white hover:bg-amber-600">
+                                    <PlayCircle size={12} /> Start
+                                  </button>
+                                )}
+                                {["in_progress", "scheduled", "accepted"].includes(j.status) && (
+                                  <button onClick={() => setPhotoCompleteJob(j)} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
+                                    <CheckCircle2 size={12} /> Complete
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {myJobs.filter((j) => {
+                     const s = addDays(startOfWeek(today), scheduleWeekOffset * 7);
+                     const e = addDays(s, 6);
+                     return j.date >= s && j.date <= e && j.status !== "completed";
+                  }).length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <CalendarIcon size={32} className="mb-2 text-stone-300" />
+                      <p className="text-sm font-medium text-stone-500">No jobs scheduled for this week.</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               </Card>
-            ))}
+            )}
           </div>
         )}
         {!loading && activeTab === "route" && (

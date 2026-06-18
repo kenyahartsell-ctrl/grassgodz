@@ -257,7 +257,13 @@ export default function ProviderPortal() {
         for (const j of [...byEmail, ...byId]) {
           if (!seen.has(j.id)) { seen.add(j.id); assigned.push(j); }
         }
-        setMyJobs(assigned.map((j) => mapJob(j, customerProfiles)));
+        const cutoff = new Date('2025-06-01T00:00:00');
+        setMyJobs(
+          assigned.map((j) => mapJob(j, customerProfiles)).filter(j => {
+            if (j.status === 'completed' && j.date < cutoff) return false;
+            return true;
+          })
+        );
         setAvailableJobs(
           available
             .filter((j) => !j.provider_id && !j.provider_email)
@@ -472,8 +478,8 @@ export default function ProviderPortal() {
             
             {scheduleView === "list" && (
               <div className="space-y-3">
-                {myJobs.filter((j) => j.status !== "completed").length === 0 && <p className="text-sm text-stone-500">Nothing scheduled.</p>}
-                {myJobs.filter((j) => j.status !== "completed").map((job) => (
+                {myJobs.filter((j) => j.status !== "completed" && j.date >= startOfWeek(today)).length === 0 && <p className="text-sm text-stone-500">Nothing scheduled.</p>}
+                {myJobs.filter((j) => j.status !== "completed" && j.date >= startOfWeek(today)).map((job) => (
                   <Card key={job.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex-1">

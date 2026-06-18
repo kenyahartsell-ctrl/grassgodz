@@ -201,7 +201,12 @@ export default function ProSchedulePage() {
     try {
       setLoading(true);
       const me = await base44.auth.me();
-      const myJobs = await base44.entities.Job.filter({ provider_email: me.email });
+      let myJobs = await base44.entities.Job.filter({ provider_email: me.email });
+      const cutoff = new Date('2025-06-01T00:00:00');
+      myJobs = myJobs.filter(j => {
+        if (j.status === 'completed' && j.scheduled_date && new Date(j.scheduled_date) < cutoff) return false;
+        return true;
+      });
       setJobs(myJobs);
     } catch {
       toast.error('Failed to load schedule.');

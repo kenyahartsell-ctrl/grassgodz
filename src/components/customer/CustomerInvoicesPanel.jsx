@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FileText, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 const STATUS_CONFIG = {
   draft:     { label: 'Draft',     cls: 'bg-gray-100 text-gray-600' },
@@ -95,16 +96,38 @@ function InvoiceCard({ invoice }) {
           )}
 
           {/* Pay Now button */}
-          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.stripe_payment_link && (
-            <a
-              href={invoice.stripe_payment_link}
-              target="_blank"
-              rel="noreferrer"
+          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+            <button
+              onClick={async () => {
+                try {
+                  const toastId = toast.loading('Processing payment...');
+                  const res = await base44.functions.invoke('createInvoicePaymentLink', { invoice_id: invoice.id });
+                  toast.dismiss(toastId);
+                  
+                  if (res.data?.error) {
+                    toast.error(res.data.error);
+                    return;
+                  }
+                  
+                  if (res.data?.charged_card_on_file) {
+                    toast.success('Payment successful using your saved card!');
+                    // local optimistic update handled by parent refresh or local state
+                    window.location.reload();
+                  } else if (res.data?.payment_link) {
+                    window.location.href = res.data.payment_link;
+                  } else if (invoice.stripe_payment_link) {
+                    window.location.href = invoice.stripe_payment_link;
+                  }
+                } catch (err) {
+                  toast.dismiss();
+                  toast.error(err.message || 'Failed to process payment');
+                }
+              }}
               className="flex items-center justify-center gap-2 w-full bg-primary text-primary-foreground font-semibold py-3 rounded-xl hover:bg-primary/90 transition-colors text-sm"
             >
               <ExternalLink size={14} />
               Pay Now — ${(invoice.total || 0).toFixed(2)}
-            </a>
+            </button>
           )}
 
           {invoice.status === 'paid' && (

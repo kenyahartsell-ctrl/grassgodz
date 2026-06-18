@@ -25,6 +25,12 @@ Deno.serve(async (req) => {
         const session = event.data.object;
         const jobId = session.metadata?.job_id;
         const quoteId = session.metadata?.quote_id;
+        const invoiceId = session.metadata?.invoice_id;
+        
+        if (invoiceId) {
+          await base44.asServiceRole.entities.Invoice.update(invoiceId, { status: 'paid' });
+        }
+
         if (jobId) {
           // Fetch job
           const jobs = await base44.asServiceRole.entities.Job.filter({ id: jobId });

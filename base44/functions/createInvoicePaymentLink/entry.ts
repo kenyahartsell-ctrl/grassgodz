@@ -5,8 +5,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { invoice_id } = await req.json();
@@ -17,6 +17,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invoice not found' }, { status: 404 });
     }
     const invoice = invoices[0];
+    
+    if (user.role !== 'admin' && invoice.customer_email !== user.email) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const totalCents = Math.round((invoice.total || 0) * 100);
     if (totalCents <= 0) {

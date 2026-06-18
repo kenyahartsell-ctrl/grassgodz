@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
       currency: 'usd',
       capture_method: 'automatic',
       confirm: true,
+      off_session: true,
       customer: customerProfile.stripe_customer_id,
       payment_method: payment_method_id,
       automatic_payment_methods: {

@@ -44,11 +44,12 @@ Deno.serve(async (req) => {
       : 0;
     const captureMethod = daysUntilJob > 5 ? 'automatic' : 'manual';
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntentParams = {
       amount: amountCents,
       currency: 'usd',
       capture_method: captureMethod,
       confirm: true,
+      off_session: true,
       customer: customerProfile.stripe_customer_id,
       payment_method: payment_method_id,
       application_fee_amount: applicationFeeCents,
@@ -63,7 +64,22 @@ Deno.serve(async (req) => {
         provider_id: providerProfile.id,
         capture_method: captureMethod,
       },
-    });
+    };
+
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+    } catch (piErr) {
+      const isInvalidDestination = piErr.param === 'transfer_data[destination]' || piErr.message?.includes('has been deleted');
+      if (isInvalidDestination && paymentIntentParams.transfer_data) {
+        console.warn('Connect account invalid, retrying as direct charge:', piErr.message);
+        delete paymentIntentParams.transfer_data;
+        delete paymentIntentParams.application_fee_amount;
+        paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+      } else {
+        throw piErr;
+      }
+    }
 
     // Save Payment record
     await base44.asServiceRole.entities.Payment.create({

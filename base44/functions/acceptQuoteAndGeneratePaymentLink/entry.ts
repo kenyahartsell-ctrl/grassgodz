@@ -65,52 +65,62 @@ Deno.serve(async (req) => {
       }
 
       let paymentIntent;
+      let paymentIntentSuccess = false;
       try {
+        paymentIntentParams.off_session = true; // Attempt off-session to use saved card without redirect
         paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+        paymentIntentSuccess = true;
       } catch (piErr) {
         const isInvalidDestination = piErr.param === 'transfer_data[destination]' || piErr.message?.includes('has been deleted');
         if (isInvalidDestination && paymentIntentParams.transfer_data) {
           console.warn('Connect account invalid, retrying as direct charge:', piErr.message);
           delete paymentIntentParams.transfer_data;
           delete paymentIntentParams.application_fee_amount;
-          paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+          try {
+            paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+            paymentIntentSuccess = true;
+          } catch(err2) {
+             console.warn('Direct charge failed:', err2.message);
+          }
         } else {
-          throw piErr;
+          console.warn('PaymentIntent creation failed:', piErr.message);
         }
       }
 
-      // PaymentIntent succeeded — now mark quotes and update job
-      const allQuotes = await base44.asServiceRole.entities.Quote.filter({ job_id: job.id });
-      for (const q of allQuotes) {
-        if (q.id !== quote_id && q.status === 'pending') {
-          await base44.asServiceRole.entities.Quote.update(q.id, { status: 'rejected' });
+      if (paymentIntentSuccess && paymentIntent) {
+        // PaymentIntent succeeded — now mark quotes and update job
+        const allQuotes = await base44.asServiceRole.entities.Quote.filter({ job_id: job.id });
+        for (const q of allQuotes) {
+          if (q.id !== quote_id && q.status === 'pending') {
+            await base44.asServiceRole.entities.Quote.update(q.id, { status: 'rejected' });
+          }
         }
+        await base44.asServiceRole.entities.Quote.update(quote_id, { status: 'accepted' });
+
+        await base44.asServiceRole.entities.Payment.create({
+          job_id: job.id,
+          customer_id: customerProfile.id,
+          provider_id: providerProfile?.id,
+          stripe_payment_intent_id: paymentIntent.id,
+          amount: price,
+          platform_fee: price * 0.10,
+          payout_amount: price * 0.90,
+          status: captureMethod === 'automatic' ? 'captured' : 'authorized',
+        });
+
+        await base44.asServiceRole.entities.Job.update(job.id, {
+          status: 'accepted',
+          accepted_at: new Date().toISOString(),
+          provider_id: quote.provider_id,
+          quoted_price: price,
+          payment_intent_id: paymentIntent.id,
+        });
+
+        return Response.json({ success: true, authorized: true, payment_intent_id: paymentIntent.id });
       }
-      await base44.asServiceRole.entities.Quote.update(quote_id, { status: 'accepted' });
-
-      await base44.asServiceRole.entities.Payment.create({
-        job_id: job.id,
-        customer_id: customerProfile.id,
-        provider_id: providerProfile?.id,
-        stripe_payment_intent_id: paymentIntent.id,
-        amount: price,
-        platform_fee: price * 0.10,
-        payout_amount: price * 0.90,
-        status: captureMethod === 'automatic' ? 'captured' : 'authorized',
-      });
-
-      await base44.asServiceRole.entities.Job.update(job.id, {
-        status: 'accepted',
-        accepted_at: new Date().toISOString(),
-        provider_id: quote.provider_id,
-        quoted_price: price,
-        payment_intent_id: paymentIntent.id,
-      });
-
-      return Response.json({ success: true, authorized: true, payment_intent_id: paymentIntent.id });
     }
 
-    // --- Path B: No card on file — mark quotes and generate a Stripe payment link ---
+    // --- Path B: No card on file OR card charge failed — mark quotes and generate a Stripe payment link ---
     const allQuotes = await base44.asServiceRole.entities.Quote.filter({ job_id: job.id });
     for (const q of allQuotes) {
       if (q.id !== quote_id && q.status === 'pending') {
@@ -139,6 +149,7 @@ Deno.serve(async (req) => {
         paymentIntentData.application_fee_amount = applicationFeeCents;
         paymentIntentData.transfer_data = { destination: providerProfile.stripe_connect_account_id };
       }
+      const origin = req.headers.get('origin') || 'https://grassgodz.com';
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         line_items: [{
@@ -151,8 +162,8 @@ Deno.serve(async (req) => {
         }],
         payment_intent_data: paymentIntentData,
         customer_email: user.email,
-        success_url: `https://app.base44.com/apps/69e949497e5928c679297ebf/?payment=success&job_id=${job.id}`,
-        cancel_url: `https://app.base44.com/apps/69e949497e5928c679297ebf/?payment=cancelled&job_id=${job.id}`,
+        success_url: `${origin}/customer?payment=success&job_id=${job.id}`,
+        cancel_url: `${origin}/customer?payment=cancelled&job_id=${job.id}`,
       });
       paymentLink = session.url;
     } catch (stripeErr) {

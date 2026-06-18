@@ -497,11 +497,9 @@ export default function ProviderPortal() {
                               <PlayCircle size={12} /> Start job
                             </button>
                           )}
-                          {["in_progress", "scheduled", "accepted"].includes(job.status) && (
-                            <button onClick={() => setPhotoCompleteJob(job)} className="flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
-                              <CheckCircle2 size={12} /> Complete & Photos
-                            </button>
-                          )}
+                          <button onClick={() => setPhotoCompleteJob(job)} className="flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
+                            <CheckCircle2 size={12} /> Complete & Photos
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -550,11 +548,9 @@ export default function ProviderPortal() {
                                     <PlayCircle size={12} /> Start
                                   </button>
                                 )}
-                                {["in_progress", "scheduled", "accepted"].includes(j.status) && (
-                                  <button onClick={() => setPhotoCompleteJob(j)} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
-                                    <CheckCircle2 size={12} /> Complete
-                                  </button>
-                                )}
+                                <button onClick={() => setPhotoCompleteJob(j)} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
+                                  <CheckCircle2 size={12} /> Complete
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -617,9 +613,14 @@ export default function ProviderPortal() {
                             <p className="text-xs text-stone-500">{j.service} · {j.time}</p>
                             <p className="text-xs text-stone-500">{j.address}</p>
                           </div>
-                          <a href={mapsLink(j.address)} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">
-                            <Navigation size={12} /> Directions
-                          </a>
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <button onClick={() => setPhotoCompleteJob(j)} className="flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">
+                              <CheckCircle2 size={12} /> Complete
+                            </button>
+                            <a href={mapsLink(j.address)} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">
+                              <Navigation size={12} /> Directions
+                            </a>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -656,9 +657,18 @@ export default function ProviderPortal() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Jobs on {calendarDate.toLocaleDateString("en-US", { month: "short" })} {selectedCalDay}</p>
                   {jobsForSelectedDay.length === 0 && <p className="text-sm text-stone-500">No jobs this day.</p>}
                   {jobsForSelectedDay.map((j) => (
-                    <div key={j.id} className="flex items-center justify-between rounded-lg bg-stone-50 p-2.5 text-sm">
-                      <span>{j.time} — {j.customerName} {j.recurring && <span className="text-emerald-700">(recurring)</span>}</span>
-                      <StatusPill status={j.status} />
+                    <div key={j.id} className="flex flex-col gap-2 rounded-lg bg-stone-50 p-2.5 text-sm sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <span>{j.time} — {j.customerName} {j.recurring && <span className="text-emerald-700">(recurring)</span>}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusPill status={j.status} />
+                        {j.status !== "completed" && (
+                          <button onClick={() => setPhotoCompleteJob(j)} className="flex items-center gap-1 rounded-lg bg-emerald-700 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-800">
+                            <CheckCircle2 size={12} /> Complete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -722,7 +732,12 @@ export default function ProviderPortal() {
                   <p className="text-sm text-stone-500">{j.customerName} · {j.address}</p>
                   <p className="text-xs text-stone-400">{fmtDate(j.date)}{j.thisWeek ? " · counted in this week's pay" : ""}</p>
                 </div>
-                <p className="text-lg font-bold text-emerald-800">{fmtMoney(j.price)}</p>
+                <div className="flex flex-col items-end gap-2">
+                  <p className="text-lg font-bold text-emerald-800">{fmtMoney(j.price)}</p>
+                  <button onClick={() => setPhotoCompleteJob(j)} className="flex items-center justify-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100">
+                    <Camera size={12} /> Upload Photos
+                  </button>
+                </div>
               </Card>
             ))}
           </div>

@@ -308,13 +308,13 @@ export default function ProviderJobCard({ job, onMarkInProgress, onMarkComplete,
                 Can't Make It
               </button>
             )}
-            {['in_progress', 'accepted', 'scheduled'].includes(job.status) && onMarkComplete ? (
+            {onMarkComplete ? (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPhotoModal(true); }}
                 className="flex items-center justify-center gap-1.5 border border-primary bg-primary/10 text-primary rounded-lg px-3 py-2 text-xs font-semibold hover:bg-primary/20 transition-colors"
               >
                 <Image size={13} />
-                Photos & Complete
+                {job.status === 'completed' ? 'Upload Photos' : 'Photos & Complete'}
               </button>
             ) : null}
           </div>

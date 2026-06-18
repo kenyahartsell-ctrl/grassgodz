@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { X, Upload, Loader2, ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import imageCompression from 'browser-image-compression';
 
 export default function AdminPhotoUploadModal({ job, onClose, onUploaded }) {
   const [files, setFiles] = useState([]);
@@ -22,7 +23,8 @@ export default function AdminPhotoUploadModal({ job, onClose, onUploaded }) {
     try {
       const uploadedPhotos = [];
       for (const file of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: compressedFile });
         uploadedPhotos.push({ url: file_url, uploaded_at: new Date().toISOString() });
       }
 

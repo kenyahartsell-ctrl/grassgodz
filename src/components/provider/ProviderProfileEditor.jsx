@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Pencil, Save, X, Bell, Camera, Loader2, LogOut, Trash2, MessageSquare } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import imageCompression from 'browser-image-compression';
 import StarRating from '@/components/shared/StarRating';
 import SmsOptInCard from '@/components/shared/SmsOptInCard';
 import ProviderEquipmentEditor from '@/components/provider/ProviderEquipmentEditor';
@@ -78,14 +79,19 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
     }
     setPhotoUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: compressedFile });
       setPhotoUrl(file_url);
       if (profile?.id) {
         await base44.functions.invoke('updateMyProviderProfile', { profile_id: profile.id, profile_image_url: file_url });
       }
       toast.success('Profile photo updated!');
       onProfileUpdated();
-    } catch {
+    } catch (err) {
       toast.error('Failed to upload photo.');
     } finally {
       setPhotoUploading(false);

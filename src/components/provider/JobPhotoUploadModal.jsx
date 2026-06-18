@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { X, Camera, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import imageCompression from 'browser-image-compression';
 
 const PHOTO_SLOTS = [
   { key: 'front_before', label: 'Front Yard', timing: 'Before', required: true },
@@ -86,9 +87,14 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
     if (!file) return;
     setUploading(u => ({ ...u, [key]: 'uploading' }));
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: compressedFile });
       setPhotos(p => ({ ...p, [key]: file_url }));
-    } catch {
+    } catch (err) {
       toast.error('Photo upload failed. Please try again.');
     } finally {
       setUploading(u => ({ ...u, [key]: false }));

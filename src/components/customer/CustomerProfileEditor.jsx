@@ -3,6 +3,7 @@ import { Pencil, Save, X, Bell, LogOut, Trash2, Camera, Loader2 } from 'lucide-r
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
+import imageCompression from 'browser-image-compression';
 import SmsOptInCard from '@/components/shared/SmsOptInCard';
 
 function Toggle({ checked, onChange, label, description }) {
@@ -39,7 +40,8 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
     if (!file.type.startsWith('image/')) return toast.error('Please select an image file.');
     setPhotoUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: compressedFile });
       setPhotoUrl(file_url);
       if (profile?.id) {
         await base44.entities.CustomerProfile.update(profile.id, { profile_image_url: file_url });

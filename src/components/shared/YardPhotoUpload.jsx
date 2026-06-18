@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Camera, X, Loader2, ImagePlus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import imageCompression from 'browser-image-compression';
 
 export default function YardPhotoUpload({ photos, onChange }) {
   const inputRef = useRef(null);
@@ -13,8 +14,13 @@ export default function YardPhotoUpload({ photos, onChange }) {
     setUploading(true);
     const uploaded = [];
     for (const file of selected) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      uploaded.push(file_url);
+      try {
+        const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: compressedFile });
+        uploaded.push(file_url);
+      } catch (err) {
+        console.error('Photo upload failed:', err);
+      }
     }
     onChange([...photos, ...uploaded]);
     setUploading(false);

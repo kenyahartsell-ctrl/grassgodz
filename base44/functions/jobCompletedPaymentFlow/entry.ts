@@ -4,18 +4,28 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Auth check — require admin
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'admin') return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
 
     const { job_id } = await req.json();
-
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
 
     const jobs = await base44.asServiceRole.entities.Job.filter({ id: job_id });
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
+
+    // Check auth — admin or assigned provider
+    if (user.role !== 'admin') {
+      let isAssignedProvider = job.provider_email === user.email;
+      if (!isAssignedProvider) {
+        const profiles = await base44.asServiceRole.entities.ProviderProfile.filter({ user_email: user.email });
+        const profile = profiles[0];
+        isAssignedProvider = profile && job.provider_id === profile.id;
+      }
+      if (!isAssignedProvider) {
+        return Response.json({ error: 'Forbidden: Admin or assigned provider access required' }, { status: 403 });
+      }
+    }
 
     // Mark job as completed
     await base44.asServiceRole.entities.Job.update(job_id, {

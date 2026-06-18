@@ -299,10 +299,16 @@ export default function ProviderPortal() {
       const updates = { status: "completed", completed_at: new Date().toISOString() };
       if (photos && Object.keys(photos).length > 0) updates.completion_photos = photos;
       await base44.entities.Job.update(id, updates);
+      
+      // Trigger the backend payment flow and notifications
+      await base44.functions.invoke('jobCompletedPaymentFlow', { job_id: id });
+      
       setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "completed", thisWeek: true } : j)));
       toast.success("Job marked complete!");
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error("Failed to mark job complete. Please try again.");
+      throw error;
     }
   }
   function addPhotos(id, files) {
@@ -780,7 +786,10 @@ export default function ProviderPortal() {
         <JobPhotoUploadModal
           job={photoCompleteJob}
           onClose={() => setPhotoCompleteJob(null)}
-          onComplete={(job, photos) => { completeJob(job.id, photos); setPhotoCompleteJob(null); }}
+          onComplete={async (job, photos) => { 
+            await completeJob(job.id, photos); 
+            setPhotoCompleteJob(null); 
+          }}
         />
       )}
       {showAdminModal && (

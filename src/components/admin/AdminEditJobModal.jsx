@@ -27,6 +27,7 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
     customer_phone: job.customer_phone || '',
     provider_name: job.provider_name || '',
     provider_email: job.provider_email || '',
+    final_price: job.final_price || job.quoted_price || '',
   });
   const [photos, setPhotos] = useState(job.completion_photos || {});
   const [uploading, setUploading] = useState({});
@@ -51,6 +52,7 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
     try {
       await base44.entities.Job.update(job.id, {
         ...form,
+        final_price: form.final_price ? Number(form.final_price) : null,
         completion_photos: photos,
       });
       toast.success('Job updated.');
@@ -86,9 +88,15 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1">Service Address</label>
-            <input value={form.address} onChange={e => set('address', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Service Address</label>
+              <input value={form.address} onChange={e => set('address', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Amount ($)</label>
+              <input type="number" step="0.01" value={form.final_price} onChange={e => set('final_price', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

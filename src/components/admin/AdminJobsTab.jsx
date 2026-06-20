@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import AdminAssignProviderModal from './AdminAssignProviderModal';
 import AdminAddJobModal from './AdminAddJobModal';
+import AdminEditJobModal from './AdminEditJobModal';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function fmtAmt(v) { return v != null ? `$${Number(v).toFixed(2)}` : '—'; }
@@ -215,7 +216,7 @@ function ActiveJobCard({ job, onAssigned, handlers, onRefresh }) {
 }
 
 // ─── Completed Job Row ────────────────────────────────────────────────────────
-function CompletedJobRow({ job, invoices, onArchive }) {
+function CompletedJobRow({ job, invoices, onArchive, onEdit }) {
   const hasInvoice = invoices.some(inv => inv.job_id === job.id);
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
@@ -230,6 +231,7 @@ function CompletedJobRow({ job, invoices, onArchive }) {
       }`}>
         {hasInvoice ? '✓ Invoice sent' : 'No invoice'}
       </span>
+      <button onClick={() => onEdit && onEdit(job)} className="text-xs text-blue-600 underline hover:no-underline">Edit</button>
       <button onClick={() => onArchive && onArchive(job)} className="text-xs text-gray-500 underline hover:no-underline">Archive</button>
       <Link to={`/jobs/${job.id}`} className="text-xs text-primary underline hover:no-underline">View</Link>
     </div>
@@ -240,6 +242,7 @@ function CompletedJobRow({ job, invoices, onArchive }) {
 export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
   const [invoices, setInvoices] = useState([]);
   const [showAddJob, setShowAddJob] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
   const [completedCollapsed, setCompletedCollapsed] = useState(true);
 
   useEffect(() => {
@@ -329,7 +332,7 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
             {completedJobs.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-10">No completed jobs yet.</p>
             ) : (
-              completedJobs.map(j => <CompletedJobRow key={j.id} job={j} invoices={invoices} onArchive={handlers.onArchive} />)
+              completedJobs.map(j => <CompletedJobRow key={j.id} job={j} invoices={invoices} onArchive={handlers.onArchive} onEdit={setEditingJob} />)
             )}
           </div>
         )}
@@ -342,6 +345,14 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
           existingJobs={jobs}
           onClose={() => setShowAddJob(false)}
           onJobAdded={async () => { await refreshJobs(); setShowAddJob(false); }}
+        />
+      )}
+      
+      {editingJob && (
+        <AdminEditJobModal
+          job={editingJob}
+          onClose={() => setEditingJob(null)}
+          onSaved={refreshJobs}
         />
       )}
     </div>

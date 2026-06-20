@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Archive, RotateCcw, Trash2, MapPin, User, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '@/components/shared/StatusBadge';
+import AdminEditJobModal from './AdminEditJobModal';
 
 function fmtDate(v) {
   if (!v) return '—';
@@ -14,6 +15,7 @@ export default function AdminArchivedJobsPanel() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [editingJob, setEditingJob] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -118,6 +120,7 @@ export default function AdminArchivedJobsPanel() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Link to={`/jobs/${job.id}`} className="px-3 py-1.5 text-xs font-medium bg-muted rounded-lg hover:bg-muted/80 transition-colors">View</Link>
+                  <button onClick={() => setEditingJob(job)} className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
                   {(!job.status || job.status === 'cancelled' || job.is_archived) && (
                     <button
                       onClick={() => handleRestore(job)}
@@ -137,6 +140,14 @@ export default function AdminArchivedJobsPanel() {
             </div>
           ))}
         </div>
+      )}
+      
+      {editingJob && (
+        <AdminEditJobModal
+          job={editingJob}
+          onClose={() => setEditingJob(null)}
+          onSaved={load}
+        />
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DollarSign, TrendingUp, Briefcase, ChevronDown, ChevronRight, CheckCircle, Clock, List, Users, Pencil, Camera, Banknote, CreditCard } from 'lucide-react';
+import { DollarSign, TrendingUp, Briefcase, ChevronDown, ChevronRight, CheckCircle, Clock, List, Users, Pencil, Camera, Banknote, CreditCard, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import AdminPayoutEditModal from './AdminPayoutEditModal';
@@ -26,6 +26,17 @@ export default function AdminPayoutsPanel({ providers }) {
   const [view, setView] = useState('providers'); // 'jobs' | 'providers'
   const [payoutFilter, setPayoutFilter] = useState('all');
   const [editingJob, setEditingJob] = useState(null);
+
+  const removeJobFromPayout = async (jobId) => {
+    if (!window.confirm("Are you sure you want to remove this job from the provider's payout list?")) return;
+    try {
+      await base44.entities.Job.update(jobId, { excluded_from_payout: true });
+      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, excluded_from_payout: true } : j));
+      toast.success('Job removed from payout list.');
+    } catch {
+      toast.error('Failed to remove job from payout list.');
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -72,6 +83,7 @@ export default function AdminPayoutsPanel({ providers }) {
   });
 
   const filteredJobs = jobsWithStatus.filter(j => {
+    if (j.excluded_from_payout) return false;
     if (payoutFilter === 'processed') return j.isProcessed;
     if (payoutFilter === 'pending') return !j.isProcessed;
     return true;
@@ -94,6 +106,7 @@ export default function AdminPayoutsPanel({ providers }) {
   const weekEndStr = weekEnd.toISOString().slice(0, 10);
 
   jobs.forEach(j => {
+    if (j.excluded_from_payout) return;
     if (j.provider_id && providerMap[j.provider_id]) {
       const pName = (j.provider_name || '').toLowerCase();
       const isFreeman = pName.includes('freeman');
@@ -259,6 +272,13 @@ export default function AdminPayoutsPanel({ providers }) {
                       >
                         <Pencil size={10} /> Edit
                       </button>
+                      <button
+                        onClick={() => removeJobFromPayout(j.id)}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-muted/70 rounded-lg text-muted-foreground hover:text-red-600 transition-colors"
+                        title="Remove from payout"
+                      >
+                        <X size={10} />
+                      </button>
                     </span>
                   </div>
                 );
@@ -374,6 +394,13 @@ export default function AdminPayoutsPanel({ providers }) {
                                           className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-muted/70 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                                         >
                                           <Pencil size={10} /> Edit
+                                        </button>
+                                        <button
+                                          onClick={() => removeJobFromPayout(j.id)}
+                                          className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-muted/70 rounded-lg text-muted-foreground hover:text-red-600 transition-colors"
+                                          title="Remove from payout"
+                                        >
+                                          <X size={10} />
                                         </button>
                                       </div>
                                     </td>

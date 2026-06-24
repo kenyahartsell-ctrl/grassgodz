@@ -343,17 +343,17 @@
       "default": 0,
       "description": "Number of times this job has been cancelled by a provider after acceptance. Tracked for accountability."
     },
+    "excluded_from_payout": {
+      "type": "boolean",
+      "default": false,
+      "description": "Flag to manually exclude this job from provider payout lists"
+    },
     "declined_by": {
       "type": "array",
       "items": {
         "type": "string"
       },
       "description": "Array of ProviderProfile IDs that have declined this job. Used to hide the job from providers who already declined it."
-    },
-    "is_archived": {
-      "type": "boolean",
-      "default": false,
-      "description": "True if the job has been archived by an admin (hides it from active views)."
     }
   },
   "required": [

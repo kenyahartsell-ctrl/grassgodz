@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import JobPhotoUploadModal from "@/components/provider/JobPhotoUploadModal";
+import AvailableJobCard from "@/components/provider/AvailableJobCard";
 import {
   MapPin, Calendar as CalendarIcon, MessageCircle, ShieldCheck, ShieldAlert,
   DollarSign, Camera, Phone, Repeat, CheckCircle2, Clock, Send, X, ChevronLeft,
@@ -207,6 +208,7 @@ function mapJob(j, customerProfiles) {
     thisWeek: dateObj >= monday && dateObj <= sunday,
     photos: [],
     notes: j.customer_notes || "",
+    rawJob: j
   };
 }
 
@@ -214,6 +216,7 @@ function mapJob(j, customerProfiles) {
 export default function ProviderPortal() {
   const [activeTab, setActiveTab] = useState("jobs");
   const [currentUser, setCurrentUser] = useState(null);
+  const [providerProfile, setProviderProfile] = useState(null);
   const [availableJobs, setAvailableJobs] = useState([]);
   const [myJobs, setMyJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -248,6 +251,7 @@ export default function ProviderPortal() {
         const customerProfiles = await base44.entities.CustomerProfile.list();
         const myProfiles = await base44.entities.ProviderProfile.filter({ user_email: me.email });
         const myProfile = myProfiles[0];
+        setProviderProfile(myProfile || null);
         
         const queries = [
           base44.entities.Job.filter({ provider_email: me.email }),
@@ -319,8 +323,8 @@ export default function ProviderPortal() {
   const [quotePrice, setQuotePrice] = useState("");
   const [quoteMessage, setQuoteMessage] = useState("");
 
-  async function submitJobQuote(job) {
-    if (!quotePrice) return toast.error("Please enter a price");
+  async function submitJobQuote(job, price, message) {
+    if (!price) return toast.error("Please enter a price");
     try {
       setLoading(true);
       const myProfiles = await base44.entities.ProviderProfile.filter({ user_email: currentUser.email });
@@ -332,18 +336,14 @@ export default function ProviderPortal() {
         provider_id: myProfile.id,
         provider_name: myProfile.name,
         provider_email: currentUser.email,
-        price: Number(quotePrice),
-        message: quoteMessage,
+        price: Number(price),
+        message: message || '',
         status: "pending"
       });
       
-      await base44.functions.invoke('notifyQuoteSubmitted', { job_id: job.id, provider_id: myProfile.id, price: Number(quotePrice) }).catch(() => {});
+      await base44.functions.invoke('notifyQuoteSubmitted', { job_id: job.id, provider_id: myProfile.id, price: Number(price) }).catch(() => {});
       
       toast.success("Quote submitted!");
-      setQuotingJobId(null);
-      setQuotePrice("");
-      setQuoteMessage("");
-      // Optionally remove from job board
       setAvailableJobs((prev) => prev.filter((j) => j.id !== job.id));
     } catch (err) {
       toast.error(err.message || "Failed to submit quote.");
@@ -513,26 +513,16 @@ export default function ProviderPortal() {
             <Eyebrow>Available tasks near you</Eyebrow>
             {availableJobs.length === 0 && <p className="text-sm text-stone-500">No available jobs right now — check back soon.</p>}
             {availableJobs.map((job) => (
-              <Card key={job.id}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="mb-1.5 flex items-center gap-2">
-                      <p className="font-semibold">{job.service}</p>
-                      {job.recurring && <RecurringTag frequency={job.frequency} />}
-                    </div>
-                    <CustomerInfo name={job.customerName} phone={job.phone} address={job.address} />
-                    <p className="mt-1.5 flex items-center gap-1.5 text-sm text-stone-500"><Clock size={12} /> {fmtDate(job.date)} · {job.time}</p>
-                    {job.notes && <p className="mt-1 text-xs italic text-stone-500">{job.notes}</p>}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-emerald-800">{fmtMoney(job.price)}</p>
-                    <div className="mt-2 flex gap-2">
-                      <button onClick={() => passJob(job.id)} className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100">Pass</button>
-                      <button onClick={() => acceptJob(job)} className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">Accept</button>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              <AvailableJobCard
+                key={job.id}
+                job={job.rawJob}
+                providerProfile={providerProfile}
+                onAcceptCashJob={() => acceptJob(job)}
+                onSubmitQuote={(rawJob, quoteDetails) => {
+                  submitJobQuote(rawJob, quoteDetails.price, quoteDetails.message);
+                }}
+                onboardingComplete={true}
+              />
             ))}
           </div>
         )}

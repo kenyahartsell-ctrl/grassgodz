@@ -38,10 +38,11 @@ export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, 
               </span>
             )}
           </div>
+          <p className="text-sm font-medium text-muted-foreground mt-0.5">{job.customer_name || 'Customer'}</p>
           <div className="mt-1.5 space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Calendar size={11} />
-              <span>{new Date(job.scheduled_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+              <span>{new Date(job.scheduled_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}{job.scheduled_time ? ` · ${job.scheduled_time}` : ''}</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <MapPin size={11} />
@@ -55,9 +56,18 @@ export default function AvailableJobCard({ job, providerProfile, onSubmitQuote, 
             )}
           </div>
         </div>
-        <button onClick={() => setExpanded(e => !e)} className="text-muted-foreground hover:text-foreground transition-colors">
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
+        <div className="flex items-center gap-3 text-right">
+          <div className="flex flex-col items-end">
+            {adminPrice ? (
+              <p className="text-lg font-bold text-emerald-800">${adminPrice.toFixed(2)}</p>
+            ) : (
+              <p className="text-sm font-semibold text-muted-foreground">Quote</p>
+            )}
+          </div>
+          <button onClick={() => setExpanded(e => !e)} className="text-muted-foreground hover:text-foreground transition-colors">
+            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+        </div>
       </div>
 
       {expanded && (

@@ -295,12 +295,61 @@ export default function ProviderPortal() {
     () => myJobs.filter((j) => j.status === "completed" && j.thisWeek).reduce((sum, j) => sum + j.price, 0),
     [myJobs]
   );
-  function acceptJob(job) {
-    setAvailableJobs((prev) => prev.filter((j) => j.id !== job.id));
-    setMyJobs((prev) => [...prev, { ...job, status: "scheduled", thisWeek: isSameDay(job.date, today) || job.date >= startOfWeek(today), photos: [] }]);
+  async function acceptJob(job) {
+    try {
+      setLoading(true);
+      const res = await base44.functions.invoke('providerAcceptJob', { job_id: job.id });
+      if (res.data?.error) throw new Error(res.data.error);
+      
+      setAvailableJobs((prev) => prev.filter((j) => j.id !== job.id));
+      setMyJobs((prev) => [...prev, { ...job, status: "scheduled", thisWeek: isSameDay(job.date, today) || job.date >= startOfWeek(today), photos: [] }]);
+      toast.success("Job claimed successfully!");
+    } catch (err) {
+      toast.error(err.message || "Failed to accept job.");
+    } finally {
+      setLoading(false);
+    }
   }
+
   function passJob(id) {
     setAvailableJobs((prev) => prev.filter((j) => j.id !== id));
+  }
+
+  const [quotingJobId, setQuotingJobId] = useState(null);
+  const [quotePrice, setQuotePrice] = useState("");
+  const [quoteMessage, setQuoteMessage] = useState("");
+
+  async function submitJobQuote(job) {
+    if (!quotePrice) return toast.error("Please enter a price");
+    try {
+      setLoading(true);
+      const myProfiles = await base44.entities.ProviderProfile.filter({ user_email: currentUser.email });
+      const myProfile = myProfiles[0];
+      if (!myProfile) throw new Error("Provider profile not found");
+      
+      await base44.entities.Quote.create({
+        job_id: job.id,
+        provider_id: myProfile.id,
+        provider_name: myProfile.name,
+        provider_email: currentUser.email,
+        price: Number(quotePrice),
+        message: quoteMessage,
+        status: "pending"
+      });
+      
+      await base44.functions.invoke('notifyQuoteSubmitted', { job_id: job.id, provider_id: myProfile.id, price: Number(quotePrice) }).catch(() => {});
+      
+      toast.success("Quote submitted!");
+      setQuotingJobId(null);
+      setQuotePrice("");
+      setQuoteMessage("");
+      // Optionally remove from job board
+      setAvailableJobs((prev) => prev.filter((j) => j.id !== job.id));
+    } catch (err) {
+      toast.error(err.message || "Failed to submit quote.");
+    } finally {
+      setLoading(false);
+    }
   }
   function startJob(id) {
     setMyJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "in_progress" } : j)));
@@ -382,7 +431,7 @@ export default function ProviderPortal() {
   const firstWeekday = calendarDate.getDay();
   const jobsForSelectedDay = myJobs.filter((j) => j.date.getFullYear() === calendarDate.getFullYear() && j.date.getMonth() === calendarDate.getMonth() && j.date.getDate() === selectedCalDay);
   const tabs = [
-    { id: "jobs", label: "Available", icon: ListChecks },
+    { id: "jobs", label: "Job Board", icon: ListChecks },
     { id: "schedule", label: "My Schedule", icon: CheckCircle2 },
     { id: "route", label: "Route", icon: Navigation },
     { id: "quotes", label: "Quotes", icon: DollarSign },

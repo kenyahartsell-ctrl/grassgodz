@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/lib/LanguageContext';
 import imageCompression from 'browser-image-compression';
 import SmsOptInCard from '@/components/shared/SmsOptInCard';
+import SaveCardModal from './SaveCardModal';
+import { CreditCard, CheckCircle2 } from 'lucide-react';
 
 function Toggle({ checked, onChange, label, description }) {
   return (
@@ -33,6 +35,7 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoUrl, setPhotoUrl] = useState(profile?.profile_image_url || '');
   const photoInputRef = useRef(null);
+  const [showSaveCard, setShowSaveCard] = useState(false);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -277,8 +280,56 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
         )}
       </div>
 
+      {/* Payment Method */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <CreditCard size={15} className="text-primary" />
+            <h3 className="text-sm font-bold text-foreground">Payment Method</h3>
+          </div>
+          {profile?.default_payment_method_id && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold border border-green-200">
+              <CheckCircle2 size={12} /> Card Saved
+            </div>
+          )}
+        </div>
+        
+        {profile?.default_payment_method_id ? (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">You have a card on file for future bookings.</p>
+            <button
+              onClick={() => setShowSaveCard(true)}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Update Payment Method
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">No payment method on file. Add one to speed up booking.</p>
+            <button
+              onClick={() => setShowSaveCard(true)}
+              className="bg-primary text-primary-foreground text-xs font-semibold px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Add Card
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* SMS Opt-In */}
       <SmsOptInCard profile={profile} onSaved={onProfileUpdated} entityName="CustomerProfile" />
+
+      {showSaveCard && (
+        <SaveCardModal
+          customerProfile={profile}
+          onClose={() => setShowSaveCard(false)}
+          onSuccess={() => {
+            setShowSaveCard(false);
+            onProfileUpdated();
+          }}
+        />
+      )}
 
       {/* Account Actions */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-3">

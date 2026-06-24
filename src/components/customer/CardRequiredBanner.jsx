@@ -22,9 +22,12 @@ function CardForm({ customerProfile, onCardSaved }) {
       });
       if (result.error) throw new Error(result.error.message);
       const pmId = result.setupIntent.payment_method;
-      await base44.entities.CustomerProfile.update(customerProfile.id, {
-        default_payment_method_id: pmId,
+      const saveRes = await base44.functions.invoke('savePaymentMethod', { 
+        profile_id: customerProfile.id, 
+        payment_method_id: pmId 
       });
+      if (saveRes.data?.error) throw new Error(saveRes.data.error);
+
       toast.success('Card saved — booking confirmed!');
       onCardSaved(pmId);
     } catch (err) {

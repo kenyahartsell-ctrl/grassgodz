@@ -41,7 +41,8 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
     setPhotoUploading(true);
     try {
       const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: compressedFile });
+      const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
       setPhotoUrl(file_url);
       if (profile?.id) {
         await base44.entities.CustomerProfile.update(profile.id, { profile_image_url: file_url });

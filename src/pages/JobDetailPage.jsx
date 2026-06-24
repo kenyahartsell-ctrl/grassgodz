@@ -7,6 +7,7 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import JobChat from '@/components/shared/JobChat';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import JobPhotoUploadModal from '@/components/provider/JobPhotoUploadModal';
+import AdminPhotoUploadModal from '@/components/admin/AdminPhotoUploadModal';
 import { format } from 'date-fns';
 
 const STATUS_ORDER = ['requested', 'quoted', 'accepted', 'scheduled', 'in_progress', 'completed', 'cancelled'];
@@ -31,6 +32,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('order');
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showAdminPhotoModal, setShowAdminPhotoModal] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const [markingCash, setMarkingCash] = useState(false);
@@ -488,6 +490,15 @@ export default function JobDetailPage() {
               </button>
             )}
 
+            {isAdmin && (
+              <button
+                onClick={() => setShowAdminPhotoModal(true)}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 text-sm font-medium text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors mb-4"
+              >
+                <Camera size={16} /> Upload Admin Photos
+              </button>
+            )}
+
             {/* Provider photos */}
             {hasPhotos && (
               <div className="mb-5">
@@ -681,6 +692,16 @@ export default function JobDetailPage() {
           job={job}
           onClose={() => setShowPhotoModal(false)}
           onComplete={handleMarkComplete}
+        />
+      )}
+      {showAdminPhotoModal && (
+        <AdminPhotoUploadModal
+          job={job}
+          onClose={() => setShowAdminPhotoModal(false)}
+          onUploaded={(newAdminPhotos) => {
+            setJob(prev => ({ ...prev, admin_photos: newAdminPhotos }));
+            setShowAdminPhotoModal(false);
+          }}
         />
       )}
     </div>

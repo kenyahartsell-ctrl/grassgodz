@@ -37,7 +37,6 @@ export default function CustomerProfileEditor({ user, profile, onProfileUpdated 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) return toast.error('Please select an image file.');
     setPhotoUploading(true);
     try {
       const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });

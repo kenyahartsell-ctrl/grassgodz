@@ -3,6 +3,7 @@ import { X, Upload, Loader2, Image } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import imageCompression from 'browser-image-compression';
 
 const JOB_STATUSES = ['pending_deposit', 'requested', 'quoted', 'accepted', 'scheduled', 'in_progress', 'completed', 'cancelled'];
 
@@ -38,7 +39,9 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
   const handlePhotoUpload = async (slotKey, file) => {
     setUploading(u => ({ ...u, [slotKey]: true }));
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+      const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
       setPhotos(p => ({ ...p, [slotKey]: file_url }));
     } catch {
       toast.error('Failed to upload photo.');

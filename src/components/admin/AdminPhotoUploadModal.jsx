@@ -68,13 +68,13 @@ export default function AdminPhotoUploadModal({ job, onClose, onUploaded }) {
         >
           <ImagePlus size={24} />
           <span className="text-sm font-medium">Click to select photos</span>
-          <span className="text-xs">JPG, PNG, WEBP</span>
+          <span className="text-xs">Any image format</span>
         </button>
         <input
           ref={inputRef}
           type="file"
           multiple
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/*"
           className="hidden"
           onChange={handleFileChange}
         />

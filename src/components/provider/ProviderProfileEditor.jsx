@@ -73,10 +73,6 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file.');
-      return;
-    }
     setPhotoUploading(true);
     try {
       const compressedFile = await imageCompression(file, {

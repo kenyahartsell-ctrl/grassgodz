@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, DollarSign, Camera, Upload, Check, Banknote, CreditCard, ArrowRightLeft, CircleDollarSign } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import imageCompression from 'browser-image-compression';
 
 const PHOTO_SLOTS = [
   { key: 'front_before', label: 'Front Before' },
@@ -34,7 +35,9 @@ export default function AdminPayoutEditModal({ job, onClose, onSaved }) {
     if (!file) return;
     setUploading(u => ({ ...u, [slot]: true }));
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+      const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
       setPhotos(p => ({ ...p, [slot]: file_url }));
       toast.success(`${slot.replace(/_/g, ' ')} uploaded`);
     } catch {
@@ -48,7 +51,9 @@ export default function AdminPayoutEditModal({ job, onClose, onSaved }) {
     if (!file) return;
     setUploadingPayout(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+      const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
       setPayoutPhotos(prev => [...prev, { url: file_url, uploaded_at: new Date().toISOString() }]);
       toast.success('Payout photo uploaded');
     } catch {

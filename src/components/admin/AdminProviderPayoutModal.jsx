@@ -4,6 +4,7 @@ import { X, Upload, Loader2, ImagePlus, CheckCircle2, Clock, Banknote, DollarSig
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import imageCompression from 'browser-image-compression';
 
 /**
  * AdminProviderPayoutModal
@@ -50,7 +51,9 @@ export default function AdminProviderPayoutModal({ job, onClose, onSaved }) {
 
       // Upload new receipt if one was selected
       if (receiptFile) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: receiptFile });
+        const compressedFile = await imageCompression(receiptFile, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+        const safeFile = new File([compressedFile], receiptFile.name, { type: receiptFile.type || 'image/jpeg' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
         receiptData = { url: file_url, uploaded_at: new Date().toISOString() };
       }
 

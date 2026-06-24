@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Camera, X, Loader2, ImagePlus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import imageCompression from 'browser-image-compression';
+import { toast } from 'sonner';
 
 export default function YardPhotoUpload({ photos, onChange }) {
   const inputRef = useRef(null);
@@ -21,6 +22,7 @@ export default function YardPhotoUpload({ photos, onChange }) {
         uploaded.push(file_url);
       } catch (err) {
         console.error('Photo upload failed:', err);
+        toast.error('Photo upload failed. Please try again.');
       }
     }
     onChange([...photos, ...uploaded]);
@@ -86,7 +88,7 @@ export default function YardPhotoUpload({ photos, onChange }) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png"
+        accept="image/*"
         multiple
         className="hidden"
         onChange={e => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ''; }}

@@ -101,8 +101,12 @@ export default function CustomerDetailModal({ customer, jobs, quotes, onClose })
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium ml-1">{customer.phone || '—'}</span></div>
               <div><span className="text-muted-foreground">ZIP:</span> <span className="font-medium ml-1">{customer.zip_code || '—'}</span></div>
-              <div className="col-span-2"><span className="text-muted-foreground">Service Address:</span> <span className="font-medium ml-1">{customer.service_address || '—'}</span></div>
-              <div className="col-span-2"><span className="text-muted-foreground">Billing Address:</span> <span className="font-medium ml-1">{customer.billing_address || '—'}</span></div>
+              <div className="col-span-2">
+                <span className="text-muted-foreground">Address:</span> 
+                <span className="font-medium ml-1">
+                  {[customer.street, customer.city, customer.state].filter(Boolean).join(', ') || customer.service_address || '—'}
+                </span>
+              </div>
             </div>
           </div>
 

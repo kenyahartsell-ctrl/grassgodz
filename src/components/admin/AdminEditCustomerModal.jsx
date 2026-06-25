@@ -7,8 +7,9 @@ export default function AdminEditCustomerModal({ customer, onClose, onSaved }) {
   const [form, setForm] = useState({
     name: customer.name || '',
     phone: customer.phone || '',
-    service_address: customer.service_address || '',
-    billing_address: customer.billing_address || '',
+    street: customer.street || '',
+    city: customer.city || '',
+    state: customer.state || '',
     zip_code: customer.zip_code || '',
     description: customer.description || '',
   });
@@ -63,22 +64,33 @@ export default function AdminEditCustomerModal({ customer, onClose, onSaved }) {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Service Address</label>
+            <label className="text-xs font-medium text-muted-foreground">Street</label>
             <input
-              value={form.service_address}
-              onChange={e => set('service_address', e.target.value)}
-              placeholder="123 Main St, City, State"
+              value={form.street}
+              onChange={e => set('street', e.target.value)}
+              placeholder="123 Main St"
               className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Billing Address</label>
-            <input
-              value={form.billing_address}
-              onChange={e => set('billing_address', e.target.value)}
-              placeholder="Same as service address"
-              className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">City</label>
+              <input
+                value={form.city}
+                onChange={e => set('city', e.target.value)}
+                placeholder="Springfield"
+                className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">State</label>
+              <input
+                value={form.state}
+                onChange={e => set('state', e.target.value)}
+                placeholder="IL"
+                className="mt-1 w-full border border-input rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground">ZIP Code</label>

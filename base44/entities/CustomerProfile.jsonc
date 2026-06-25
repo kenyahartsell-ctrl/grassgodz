@@ -18,6 +18,15 @@
     "service_address": {
       "type": "string"
     },
+    "street": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
     "zip_code": {
       "type": "string"
     },

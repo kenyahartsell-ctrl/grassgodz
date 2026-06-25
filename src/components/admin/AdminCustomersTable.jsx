@@ -171,7 +171,7 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-4">
                     <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium ml-1">{c.phone || '—'}</span></div>
                     <div><span className="text-muted-foreground">ZIP:</span> <span className="font-medium ml-1">{c.zip_code || '—'}</span></div>
-                    <div><span className="text-muted-foreground">Address:</span> <span className="font-medium ml-1">{c.service_address || '—'}</span></div>
+                    <div className="col-span-2 md:col-span-1"><span className="text-muted-foreground">Address:</span> <span className="font-medium ml-1">{[c.street, c.city, c.state].filter(Boolean).join(', ') || c.service_address || '—'}</span></div>
                   </div>
 
                   {/* Jobs list */}

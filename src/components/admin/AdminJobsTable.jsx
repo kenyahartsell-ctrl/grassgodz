@@ -11,9 +11,10 @@ function parseLocalDate(dateStr) {
   const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
   return new Date(y, m - 1, d);
 }
-import { Camera, Pencil, Check, X, UserX } from 'lucide-react';
+import { Camera, Pencil, Check, X, UserX, UserPlus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import AdminAssignProviderModal from './AdminAssignProviderModal';
 
 async function unassignJob(job, onDone) {
   try {
@@ -105,6 +106,7 @@ function PriceCell({ job }) {
 
 export default function AdminJobsTable({ jobs, onUpdateStatus, onRefresh }) {
   const [selectedPhotos, setSelectedPhotos] = useState(null);
+  const [assigningJob, setAssigningJob] = useState(null);
   return (
     <div className="rounded-xl border border-border overflow-hidden">
       <Table>
@@ -132,6 +134,15 @@ export default function AdminJobsTable({ jobs, onUpdateStatus, onRefresh }) {
               <TableCell><StatusBadge status={job.status} /></TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-blue-600 hover:bg-blue-50"
+                    title={job.provider_id ? "Change provider" : "Assign provider"}
+                    onClick={() => setAssigningJob(job)}
+                  >
+                    <UserPlus size={14} />
+                  </Button>
                   {job.provider_id && (
                     <Button
                       size="sm"
@@ -172,6 +183,13 @@ export default function AdminJobsTable({ jobs, onUpdateStatus, onRefresh }) {
 
       {selectedPhotos && (
         <PhotoLightbox photos={selectedPhotos} onClose={() => setSelectedPhotos(null)} />
+      )}
+      {assigningJob && (
+        <AdminAssignProviderModal
+          job={assigningJob}
+          onClose={() => setAssigningJob(null)}
+          onAssigned={() => { setAssigningJob(null); if(onRefresh) onRefresh(); }}
+        />
       )}
     </div>
   );

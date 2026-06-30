@@ -7,7 +7,7 @@ import {
   MapPin, Calendar as CalendarIcon, MessageCircle, ShieldCheck, ShieldAlert,
   DollarSign, Camera, Phone, Repeat, CheckCircle2, Clock, Send, X, ChevronLeft,
   ChevronRight, Upload, AlertCircle, Plus, Navigation, ListChecks, ThumbsDown,
-  ThumbsUp, PlayCircle, Trash2, LogOut
+  ThumbsUp, PlayCircle, Trash2, LogOut, Banknote
 } from "lucide-react";
 /* ---------------- helpers ---------------- */
 const addDays = (date, n) => { const d = new Date(date); d.setDate(d.getDate() + n); return d; };
@@ -208,6 +208,8 @@ function mapJob(j, customerProfiles) {
     thisWeek: dateObj >= monday && dateObj <= sunday,
     photos: [],
     notes: j.customer_notes || "",
+    earnings: Number((j.final_price || j.quoted_price || 0) * 0.9),
+    paidOut: j.provider_payout_status === 'paid_out' || j.provider_paid_out === true,
     rawJob: j
   };
 }
@@ -436,6 +438,7 @@ export default function ProviderPortal() {
     { id: "route", label: "Route", icon: Navigation },
     { id: "quotes", label: "Quotes", icon: DollarSign },
     { id: "history", label: "History", icon: CheckCircle2 },
+    { id: "earnings", label: "Earnings", icon: Banknote },
     { id: "chat", label: "Messages", icon: MessageCircle },
   ];
   return (
@@ -806,6 +809,66 @@ export default function ProviderPortal() {
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+        {!loading && activeTab === "earnings" && (
+          <div className="space-y-4">
+            <Eyebrow>Earnings Summary</Eyebrow>
+            {(() => {
+              const completedJobs = myJobs.filter((j) => j.status === "completed").sort((a, b) => b.date - a.date);
+              const totalEarned = completedJobs.reduce((sum, j) => sum + j.earnings, 0);
+              const amountPaidOut = completedJobs.filter((j) => j.paidOut).reduce((sum, j) => sum + j.earnings, 0);
+              const balanceRemaining = totalEarned - amountPaidOut;
+              
+              return (
+                <>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Card className="flex flex-col items-center justify-center py-6">
+                      <p className="text-sm font-medium text-stone-500">Total Earned</p>
+                      <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(totalEarned)}</p>
+                    </Card>
+                    <Card className="flex flex-col items-center justify-center py-6">
+                      <p className="text-sm font-medium text-stone-500">Amount Paid Out</p>
+                      <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(amountPaidOut)}</p>
+                    </Card>
+                    <Card className="flex flex-col items-center justify-center py-6">
+                      <p className="text-sm font-medium text-stone-500">Balance Remaining</p>
+                      <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(balanceRemaining)}</p>
+                    </Card>
+                  </div>
+                  <div className="mt-6 space-y-2">
+                    <Eyebrow>Completed Jobs</Eyebrow>
+                    {completedJobs.length === 0 ? (
+                      <p className="text-sm text-stone-500">No completed jobs yet.</p>
+                    ) : (
+                      completedJobs.map(j => (
+                        <Card key={j.id} className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold">{j.customerName}</p>
+                            {j.address && <p className="text-xs text-stone-500">{j.address}</p>}
+                            <p className="mt-1 flex items-center gap-1 text-xs text-stone-400">
+                              <CalendarIcon size={12} /> {fmtDate(j.date)}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end text-right">
+                            <p className="text-lg font-bold text-emerald-800">{fmtMoney(j.earnings)}</p>
+                            {j.paidOut ? (
+                              <span className="mt-1 flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                                <CheckCircle2 size={10} /> Paid Out
+                              </span>
+                            ) : (
+                              <span className="mt-1 flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                                <Clock size={10} /> Pending
+                              </span>
+                            )}
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
         {!loading && activeTab === "chat" && (

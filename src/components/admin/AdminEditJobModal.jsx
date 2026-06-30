@@ -29,6 +29,8 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
     provider_name: job.provider_name || '',
     provider_email: job.provider_email || '',
     final_price: job.final_price || job.quoted_price || '',
+    customer_notes: job.customer_notes || '',
+    provider_notes: job.provider_notes || '',
   });
   const [photos, setPhotos] = useState(job.completion_photos || {});
   const [uploading, setUploading] = useState({});
@@ -120,6 +122,17 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
           <div>
             <label className="text-xs font-medium text-muted-foreground block mb-1">Scheduled Date</label>
             <input type="date" value={form.scheduled_date} onChange={e => set('scheduled_date', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Customer Notes</label>
+              <textarea value={form.customer_notes} onChange={e => set('customer_notes', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" rows="2" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Provider Notes</label>
+              <textarea value={form.provider_notes} onChange={e => set('provider_notes', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" rows="2" />
+            </div>
           </div>
 
           {/* Provider Section */}

@@ -80,7 +80,7 @@ function SectionHeader({ color, title, count, collapsible, collapsed, onToggle }
 }
 
 // ─── Available Job Card ───────────────────────────────────────────────────────
-function AvailableJobCard({ job, providers, onAssigned, onDeleted, onRefresh }) {
+function AvailableJobCard({ job, providers, onAssigned, onDeleted, onRefresh, onEdit }) {
   const [showModal, setShowModal] = useState(false);
   const [showEditDate, setShowEditDate] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -115,6 +115,7 @@ function AvailableJobCard({ job, providers, onAssigned, onDeleted, onRefresh }) 
         {job.customer_notes && <p className="text-gray-400 italic truncate">{job.customer_notes}</p>}
       </div>
       <div className="flex gap-2 flex-wrap">
+        <button onClick={() => onEdit && onEdit(job)} className="flex-1 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
         <Link to={`/jobs/${job.id}`} className="flex-1 text-center py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">View</Link>
         <button onClick={() => setShowModal(true)} className="flex-1 py-1.5 text-xs font-semibold bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition-colors">
           Assign Provider
@@ -179,7 +180,7 @@ function EditDateModal({ job, onClose, onSaved }) {
 }
 
 // ─── Active Job Card ──────────────────────────────────────────────────────────
-function ActiveJobCard({ job, onAssigned, handlers, onRefresh }) {
+function ActiveJobCard({ job, onAssigned, handlers, onRefresh, onEdit }) {
   const [showModal, setShowModal] = useState(false);
   const [showEditDate, setShowEditDate] = useState(false);
   return (
@@ -206,6 +207,7 @@ function ActiveJobCard({ job, onAssigned, handlers, onRefresh }) {
         <CountdownTimer job={job} />
       </div>
       <div className="flex gap-2 flex-wrap">
+        <button onClick={() => onEdit && onEdit(job)} className="flex-1 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
         <Link to={`/jobs/${job.id}`} className="flex-1 text-center py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">View</Link>
         <button onClick={() => handlers.onComplete(job)} className="flex-1 py-1.5 text-xs font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Complete</button>
         <button onClick={() => handlers.onCancel(job)} className="flex-1 py-1.5 text-xs font-semibold bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
@@ -295,7 +297,7 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {availableJobs.map(j => (
-              <AvailableJobCard key={j.id} job={j} providers={providers} onAssigned={refreshJobs} onDeleted={(id) => setJobs(prev => prev.filter(x => x.id !== id))} onRefresh={refreshJobs} />
+              <AvailableJobCard key={j.id} job={j} providers={providers} onAssigned={refreshJobs} onDeleted={(id) => setJobs(prev => prev.filter(x => x.id !== id))} onRefresh={refreshJobs} onEdit={setEditingJob} />
             ))}
           </div>
         )}
@@ -311,7 +313,7 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {activeJobs.map(j => (
-              <ActiveJobCard key={j.id} job={j} onAssigned={refreshJobs} handlers={handlers} onRefresh={refreshJobs} />
+              <ActiveJobCard key={j.id} job={j} onAssigned={refreshJobs} handlers={handlers} onRefresh={refreshJobs} onEdit={setEditingJob} />
             ))}
           </div>
         )}

@@ -813,62 +813,121 @@ export default function ProviderPortal() {
         )}
         {!loading && activeTab === "earnings" && (
           <div className="space-y-4">
-            <Eyebrow>Earnings Summary</Eyebrow>
-            {(() => {
-              const completedJobs = myJobs.filter((j) => j.status === "completed").sort((a, b) => b.date - a.date);
-              const totalEarned = completedJobs.reduce((sum, j) => sum + j.earnings, 0);
-              const amountPaidOut = completedJobs.filter((j) => j.paidOut).reduce((sum, j) => sum + j.earnings, 0);
-              const balanceRemaining = totalEarned - amountPaidOut;
-              
-              return (
-                <>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <Card className="flex flex-col items-center justify-center py-6">
-                      <p className="text-sm font-medium text-stone-500">Total Earned</p>
-                      <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(totalEarned)}</p>
+            {currentUser?.full_name?.toLowerCase().includes('jeffrey') || currentUser?.full_name?.toLowerCase().includes('gunselman') ? (
+              <>
+                <Eyebrow>Earnings Summary (Kenya-Verified)</Eyebrow>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Card className="flex flex-col items-center justify-center py-6">
+                    <p className="text-sm font-medium text-stone-500">Total Earned</p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-800">$984.50</p>
+                  </Card>
+                  <Card className="flex flex-col items-center justify-center py-6">
+                    <p className="text-sm font-medium text-stone-500">Paid Out</p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-800">$250.00</p>
+                  </Card>
+                  <Card className="flex flex-col items-center justify-center py-6">
+                    <p className="text-sm font-medium text-stone-500">Balance Owed</p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-800">$734.50</p>
+                  </Card>
+                </div>
+                <div className="mt-6 space-y-2">
+                  <Eyebrow>Verified Job Breakdown</Eyebrow>
+                  {[
+                    { customer: "Thorne Waugh", gross: 60, fee: 6, net: 54 },
+                    { customer: "Clarey Walker", gross: 40, fee: 4, net: 36 },
+                    { customer: "Teresa Cordoza", gross: 40, fee: 4, net: 36 },
+                    { customer: "Mike Lattimore", gross: 60, fee: 6, net: 54 },
+                    { customer: "Lorna Anderson", gross: 65, fee: 6.5, net: 58.5 },
+                    { customer: "Kwasi", gross: 50, fee: 5, net: 45 },
+                    { customer: "Jake Anderson", gross: 60, fee: 6, net: 54 },
+                    { customer: "HTWR Properties", gross: 50, fee: 5, net: 45 },
+                    { customer: "Angelique Ventling", gross: 60, fee: 6, net: 54 },
+                    { customer: "Larry", gross: 40, fee: 4, net: 36 },
+                    { customer: "Veronica Kelly", gross: 55, fee: 5.5, net: 49.5 },
+                    { customer: "Ryan Jones", gross: 65, fee: 6.5, net: 58.5 },
+                    { customer: "Julion Francis", gross: 50, fee: 5, net: 45 },
+                    { customer: "Bill Langley", gross: 50, fee: 5, net: 45 },
+                    { customer: "Aletta Law (1st job)", gross: 40, fee: 4, net: 36 },
+                    { customer: "Aletta Law (2nd job)", gross: 40, fee: 4, net: 36 },
+                    { customer: "Saddi Williams", gross: 65, fee: 6.5, net: 58.5 },
+                    { customer: "Ahmad Iravani", gross: 35, fee: 0, net: 35, note: "partial payment (no fee deducted)" },
+                    { customer: "LaTanya Ford", gross: 65, fee: 6.5, net: 58.5 },
+                    { customer: "Tonya Swanson", gross: 50, fee: 5, net: 45 },
+                    { customer: "Tee", gross: 50, fee: 5, net: 45 },
+                  ].map((j, i) => (
+                    <Card key={i} className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">{i + 1}. {j.customer}</p>
+                        {j.note && <p className="text-xs text-stone-500">{j.note}</p>}
+                      </div>
+                      <div className="flex flex-col items-end text-right">
+                        <p className="text-sm text-stone-600">Gross: {fmtMoney(j.gross)} | App Fee: {fmtMoney(j.fee)}</p>
+                        <p className="text-lg font-bold text-emerald-800">Net Earned: {fmtMoney(j.net)}</p>
+                      </div>
                     </Card>
-                    <Card className="flex flex-col items-center justify-center py-6">
-                      <p className="text-sm font-medium text-stone-500">Amount Paid Out</p>
-                      <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(amountPaidOut)}</p>
-                    </Card>
-                    <Card className="flex flex-col items-center justify-center py-6">
-                      <p className="text-sm font-medium text-stone-500">Balance Remaining</p>
-                      <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(balanceRemaining)}</p>
-                    </Card>
-                  </div>
-                  <div className="mt-6 space-y-2">
-                    <Eyebrow>Completed Jobs</Eyebrow>
-                    {completedJobs.length === 0 ? (
-                      <p className="text-sm text-stone-500">No completed jobs yet.</p>
-                    ) : (
-                      completedJobs.map(j => (
-                        <Card key={j.id} className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold">{j.customerName}</p>
-                            {j.address && <p className="text-xs text-stone-500">{j.address}</p>}
-                            <p className="mt-1 flex items-center gap-1 text-xs text-stone-400">
-                              <CalendarIcon size={12} /> {fmtDate(j.date)}
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-end text-right">
-                            <p className="text-lg font-bold text-emerald-800">{fmtMoney(j.earnings)}</p>
-                            {j.paidOut ? (
-                              <span className="mt-1 flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-                                <CheckCircle2 size={10} /> Paid Out
-                              </span>
-                            ) : (
-                              <span className="mt-1 flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800">
-                                <Clock size={10} /> Pending
-                              </span>
-                            )}
-                          </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <Eyebrow>Earnings Summary</Eyebrow>
+                {(() => {
+                  const completedJobs = myJobs.filter((j) => j.status === "completed").sort((a, b) => b.date - a.date);
+                  const totalEarned = completedJobs.reduce((sum, j) => sum + j.earnings, 0);
+                  const amountPaidOut = completedJobs.filter((j) => j.paidOut).reduce((sum, j) => sum + j.earnings, 0);
+                  const balanceRemaining = totalEarned - amountPaidOut;
+                  
+                  return (
+                    <>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <Card className="flex flex-col items-center justify-center py-6">
+                          <p className="text-sm font-medium text-stone-500">Total Earned</p>
+                          <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(totalEarned)}</p>
                         </Card>
-                      ))
-                    )}
-                  </div>
-                </>
-              );
-            })()}
+                        <Card className="flex flex-col items-center justify-center py-6">
+                          <p className="text-sm font-medium text-stone-500">Amount Paid Out</p>
+                          <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(amountPaidOut)}</p>
+                        </Card>
+                        <Card className="flex flex-col items-center justify-center py-6">
+                          <p className="text-sm font-medium text-stone-500">Balance Remaining</p>
+                          <p className="mt-1 text-2xl font-bold text-emerald-800">{fmtMoney(balanceRemaining)}</p>
+                        </Card>
+                      </div>
+                      <div className="mt-6 space-y-2">
+                        <Eyebrow>Completed Jobs</Eyebrow>
+                        {completedJobs.length === 0 ? (
+                          <p className="text-sm text-stone-500">No completed jobs yet.</p>
+                        ) : (
+                          completedJobs.map(j => (
+                            <Card key={j.id} className="flex flex-wrap items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold">{j.customerName}</p>
+                                {j.address && <p className="text-xs text-stone-500">{j.address}</p>}
+                                <p className="mt-1 flex items-center gap-1 text-xs text-stone-400">
+                                  <CalendarIcon size={12} /> {fmtDate(j.date)}
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end text-right">
+                                <p className="text-lg font-bold text-emerald-800">{fmtMoney(j.earnings)}</p>
+                                {j.paidOut ? (
+                                  <span className="mt-1 flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                                    <CheckCircle2 size={10} /> Paid Out
+                                  </span>
+                                ) : (
+                                  <span className="mt-1 flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                                    <Clock size={10} /> Pending
+                                  </span>
+                                )}
+                              </div>
+                            </Card>
+                          ))
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+              </>
+            )}
           </div>
         )}
         {!loading && activeTab === "chat" && (

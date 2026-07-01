@@ -208,11 +208,19 @@ function ActiveJobCard({ job, onAssigned, handlers, onRefresh, onEdit }) {
       </div>
       <div className="flex gap-2 flex-wrap">
         <button onClick={() => onEdit && onEdit(job)} className="flex-1 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
+        <button onClick={() => setShowModal(true)} className="flex-1 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors">Reassign</button>
         <Link to={`/jobs/${job.id}`} className="flex-1 text-center py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">View</Link>
         <button onClick={() => handlers.onComplete(job)} className="flex-1 py-1.5 text-xs font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Complete</button>
         <button onClick={() => handlers.onCancel(job)} className="flex-1 py-1.5 text-xs font-semibold bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors">Cancel</button>
-        <button onClick={() => { if(window.confirm('Delete this active job?')) { handlers.onDelete(job); } }} className="py-1.5 px-2 text-xs font-semibold bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"><Trash2 size={11} /></button>
+        <button onClick={() => { if(window.confirm('Delete this active job?')) { handlers.onDelete && handlers.onDelete(job); } }} className="py-1.5 px-2 text-xs font-semibold bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"><Trash2 size={11} /></button>
       </div>
+      {showModal && (
+        <AdminAssignProviderModal
+          job={job}
+          onClose={() => setShowModal(false)}
+          onAssigned={() => { setShowModal(false); onAssigned && onAssigned(); toast.success('Job reassigned!'); }}
+        />
+      )}
       {showEditDate && <EditDateModal job={job} onClose={() => setShowEditDate(false)} onSaved={onRefresh} />}
     </div>
   );

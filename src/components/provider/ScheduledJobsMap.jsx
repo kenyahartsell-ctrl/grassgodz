@@ -40,9 +40,18 @@ export default function ScheduledJobsMap({ jobs = [] }) {
   });
 
   useEffect(() => {
-    const scheduledJobs = Array.isArray(jobs)
-      ? jobs.filter(j => ['scheduled', 'accepted', 'in_progress'].includes(j.status))
-      : [];
+    let scheduledJobs = Array.isArray(jobs) ? jobs : [];
+
+    scheduledJobs = Object.values(scheduledJobs.reduce((acc, job) => {
+      const key = `${job.customer_id}_${job.scheduled_date}_${job.service_id}`;
+      if (!acc[key] || new Date(job.updated_date || 0) > new Date(acc[key].updated_date || 0)) {
+        acc[key] = job;
+      }
+      return acc;
+    }, {}));
+
+    scheduledJobs = scheduledJobs.filter(j => ['scheduled', 'accepted', 'in_progress'].includes(j.status));
+
     if (scheduledJobs.length === 0) {
       setGeocodedJobs([]);
       return;

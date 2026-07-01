@@ -75,7 +75,15 @@ export default function ProviderJobMap({ jobs = [], onAcceptJob, providerProfile
 
   // Geocode all job addresses
   useEffect(() => {
-    const availableJobs = Array.isArray(jobs) ? jobs : [];
+    let availableJobs = Array.isArray(jobs) ? jobs : [];
+
+    availableJobs = Object.values(availableJobs.reduce((acc, job) => {
+      const key = `${job.customer_id}_${job.scheduled_date}_${job.service_id}`;
+      if (!acc[key] || new Date(job.updated_date || 0) > new Date(acc[key].updated_date || 0)) {
+        acc[key] = job;
+      }
+      return acc;
+    }, {}));
 
     if (availableJobs.length === 0) {
       setGeocodedJobs([]);

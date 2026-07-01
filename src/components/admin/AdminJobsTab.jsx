@@ -210,7 +210,8 @@ function ActiveJobCard({ job, onAssigned, handlers, onRefresh, onEdit }) {
         <button onClick={() => onEdit && onEdit(job)} className="flex-1 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
         <Link to={`/jobs/${job.id}`} className="flex-1 text-center py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">View</Link>
         <button onClick={() => handlers.onComplete(job)} className="flex-1 py-1.5 text-xs font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Complete</button>
-        <button onClick={() => handlers.onCancel(job)} className="flex-1 py-1.5 text-xs font-semibold bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors">Cancel</button>
+        <button onClick={() => handlers.onCancel(job)} className="flex-1 py-1.5 text-xs font-semibold bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors">Cancel</button>
+        <button onClick={() => { if(window.confirm('Delete this active job?')) { handlers.onDelete(job); } }} className="py-1.5 px-2 text-xs font-semibold bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors"><Trash2 size={11} /></button>
       </div>
       {showEditDate && <EditDateModal job={job} onClose={() => setShowEditDate(false)} onSaved={onRefresh} />}
     </div>
@@ -218,7 +219,7 @@ function ActiveJobCard({ job, onAssigned, handlers, onRefresh, onEdit }) {
 }
 
 // ─── Completed Job Row ────────────────────────────────────────────────────────
-function CompletedJobRow({ job, invoices, onArchive, onEdit }) {
+function CompletedJobRow({ job, invoices, onArchive, onEdit, onDelete }) {
   const hasInvoice = invoices.some(inv => inv.job_id === job.id);
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
@@ -233,8 +234,9 @@ function CompletedJobRow({ job, invoices, onArchive, onEdit }) {
       }`}>
         {hasInvoice ? '✓ Invoice sent' : 'No invoice'}
       </span>
-      <button onClick={() => onEdit && onEdit(job)} className="text-xs text-blue-600 underline hover:no-underline">Edit</button>
-      <button onClick={() => onArchive && onArchive(job)} className="text-xs text-gray-500 underline hover:no-underline">Archive</button>
+      <button onClick={() => onEdit && onEdit(job)} className="text-xs text-blue-600 underline hover:no-underline flex items-center gap-1"><Edit2 size={10} /> Edit</button>
+      <button onClick={() => onArchive && onArchive(job)} className="text-xs text-gray-500 underline hover:no-underline flex items-center gap-1"><Archive size={10} /> Archive</button>
+      <button onClick={() => { if(window.confirm('Delete this job permanently?')) { onDelete && onDelete(job); } }} className="text-xs text-red-600 underline hover:no-underline flex items-center gap-1"><Trash2 size={10} /> Delete</button>
       <Link to={`/jobs/${job.id}`} className="text-xs text-primary underline hover:no-underline">View</Link>
     </div>
   );
@@ -334,7 +336,7 @@ export default function AdminJobsTab({ jobs, setJobs, providers, handlers }) {
             {completedJobs.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-10">No completed jobs yet.</p>
             ) : (
-              completedJobs.map(j => <CompletedJobRow key={j.id} job={j} invoices={invoices} onArchive={handlers.onArchive} onEdit={setEditingJob} />)
+              completedJobs.map(j => <CompletedJobRow key={j.id} job={j} invoices={invoices} onArchive={handlers.onArchive} onEdit={setEditingJob} onDelete={handlers.onDelete} />)
             )}
           </div>
         )}

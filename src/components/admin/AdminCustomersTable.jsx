@@ -161,7 +161,21 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="text-xs text-muted-foreground hidden sm:block">{customerJobs.length} job{customerJobs.length !== 1 ? 's' : ''}</span>
                   {c.zip_code && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground hidden sm:block">{c.zip_code}</span>}
-                  <ChevronDown size={14} className={`text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
+                  
+                  <div className="flex items-center gap-1 ml-2" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => setEditingCustomer(c)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                      <Pencil size={14} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(c.id, c.name || c.user_email)} 
+                      disabled={deletingId === c.id}
+                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50" 
+                      title="Delete"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <ChevronDown size={14} className={`ml-1 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
                 </div>
               </button>
 

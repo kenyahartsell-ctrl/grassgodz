@@ -3,11 +3,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import StarRating from '@/components/shared/StarRating';
-import { Check, Ban, ShieldCheck, AlertCircle, Eye, ChevronDown, Trash2, Mail, Briefcase } from 'lucide-react';
+import { Check, Ban, ShieldCheck, AlertCircle, Eye, ChevronDown, Trash2, Mail, Briefcase, Pencil } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import ProviderDetailModal from './ProviderDetailModal';
 import AdminProviderJobsModal from './AdminProviderJobsModal';
+import AdminEditProviderModal from './AdminEditProviderModal';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Pending Review' },
@@ -24,6 +25,7 @@ export default function AdminProvidersTable({ providers, jobs = [], onRefresh })
   const [loadingId, setLoadingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [selectedProvider, setSelectedProvider] = useState(null);
+  const [editingProvider, setEditingProvider] = useState(null);
   const [jobsProvider, setJobsProvider] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [invitingId, setInvitingId] = useState(null);
@@ -109,6 +111,13 @@ export default function AdminProvidersTable({ providers, jobs = [], onRefresh })
   return (
     <>
     {selectedProvider && <ProviderDetailModal provider={selectedProvider} onClose={() => setSelectedProvider(null)} />}
+    {editingProvider && (
+      <AdminEditProviderModal 
+        provider={editingProvider} 
+        onClose={() => setEditingProvider(null)} 
+        onSaved={() => { setEditingProvider(null); onRefresh?.(); }} 
+      />
+    )}
     {jobsProvider && (
       <AdminProviderJobsModal
         provider={jobsProvider}
@@ -189,6 +198,9 @@ export default function AdminProvidersTable({ providers, jobs = [], onRefresh })
                   <div className="flex gap-1 flex-wrap">
                     <Button size="sm" variant="ghost" className="h-7 text-xs text-primary hover:bg-primary/10" onClick={() => setSelectedProvider(p)}>
                       <Eye className="w-3.5 h-3.5 mr-1" /> View
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs text-blue-600 hover:bg-blue-50" onClick={() => setEditingProvider(p)}>
+                      <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
                     </Button>
                     {p.consented_background_check && !['clear', 'pending'].includes(p.background_check_status) && (
                       <Button

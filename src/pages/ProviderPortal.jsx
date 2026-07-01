@@ -531,6 +531,12 @@ export default function ProviderPortal() {
         )}
         {!loading && activeTab === "schedule" && (
           <div className="space-y-4">
+            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              <AlertCircle size={16} className="mt-0.5 flex-shrink-0 text-amber-600" />
+              <p>
+                <strong>Payment Requirement:</strong> You must upload job photos and mark jobs as <strong>Completed</strong> in the app to receive your payout.
+              </p>
+            </div>
             <div className="flex items-center justify-between">
               <Eyebrow>Upcoming and active jobs</Eyebrow>
               <div className="flex gap-1 rounded-lg bg-stone-200 p-1">

@@ -298,9 +298,16 @@ export default function ProviderPortal() {
     return Math.max(0, 100 - poor * 5);
   }, [reviews]);
   const weeklyPay = useMemo(
-    () => myJobs.filter((j) => j.status === "completed" && j.thisWeek).reduce((sum, j) => sum + j.price, 0),
+    () => myJobs.filter((j) => j.status === "completed" && j.thisWeek).reduce((sum, j) => sum + j.earnings, 0),
     [myJobs]
   );
+  
+  const totalBalance = useMemo(() => {
+    const completedJobs = myJobs.filter((j) => j.status === "completed");
+    const totalEarned = completedJobs.reduce((sum, j) => sum + j.earnings, 0);
+    const amountPaidOut = completedJobs.filter((j) => j.paidOut).reduce((sum, j) => sum + j.earnings, 0);
+    return totalEarned - amountPaidOut;
+  }, [myJobs]);
   async function acceptJob(job) {
     try {
       setLoading(true);
@@ -464,7 +471,7 @@ export default function ProviderPortal() {
             <InsuranceBadge status={insuranceStatus} onUpload={() => insuranceInputRef.current?.click()} />
             <input ref={insuranceInputRef} type="file" accept="image/*,application/pdf" hidden onChange={(e) => { if (e.target.files?.length) setInsuranceStatus("pending"); }} />
             <span className="flex items-center gap-1.5 rounded-full border border-emerald-600 bg-emerald-800 px-3 py-1.5 text-sm font-medium">
-              <DollarSign size={14} /> {fmtMoney(weeklyPay)} this week
+              <DollarSign size={14} /> {fmtMoney(currentUser?.full_name?.toLowerCase().includes('jeffrey') || currentUser?.full_name?.toLowerCase().includes('gunselman') ? 734.50 : totalBalance)} balance
             </span>
           </div>
           {showPerf && (

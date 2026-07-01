@@ -403,6 +403,7 @@ export default function AdminPortal() {
               onComplete: handleCompleteJob,
               onArchive: handleArchiveJob,
               onCancel: (j) => setCancellingJob(j),
+              onDelete: handleDeleteJob,
             }}
           />
         )}

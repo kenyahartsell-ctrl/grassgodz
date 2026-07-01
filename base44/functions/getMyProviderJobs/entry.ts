@@ -25,10 +25,22 @@ Deno.serve(async (req) => {
     const seen = new Set();
     const jobs = [];
     for (const j of [...byId, ...byEmail]) {
-      if (!seen.has(j.id)) { seen.add(j.id); jobs.push(j); }
+      if (!seen.has(j.id) && j.status !== 'cancelled') { 
+        seen.add(j.id); 
+        jobs.push(j); 
+      }
     }
+    
+    // Deduplicate by customer + date to ensure no stale duplicate entries
+    const dedupedJobs = Object.values(jobs.reduce((acc, job) => {
+      const key = `${job.customer_id}_${job.scheduled_date}_${job.service_id}`;
+      if (!acc[key] || new Date(job.updated_date || 0) > new Date(acc[key].updated_date || 0)) {
+        acc[key] = job;
+      }
+      return acc;
+    }, {}));
 
-    return Response.json({ jobs, profile });
+    return Response.json({ jobs: dedupedJobs, profile });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

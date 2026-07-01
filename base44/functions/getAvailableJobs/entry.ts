@@ -38,9 +38,20 @@ Deno.serve(async (req) => {
       const cardCutCount = completedCardJobs.filter(j => !j.is_cash_job && j.payment_method !== 'cash').length;
 
       // Hide cash jobs until provider has at least 5 completed card-paying cuts
-      const claimableJobs = cardCutCount >= 5
+      const claimableJobsRaw = cardCutCount >= 5
               ? availableJobs
               : availableJobs.filter(j => !j.is_cash_job && j.payment_method !== 'cash');
+
+      // Deduplicate claimable jobs by customer_name + scheduled_date to hide stale duplicates
+      const dedupedClaimable = Object.values(claimableJobsRaw.reduce((acc, job) => {
+        const key = `${job.customer_name}_${job.scheduled_date}_${job.service_id}`;
+        if (!acc[key] || new Date(job.updated_date || 0) > new Date(acc[key].updated_date || 0)) {
+          acc[key] = job;
+        }
+        return acc;
+      }, {}));
+      
+      const claimableJobs = dedupedClaimable;
 
       // Also fetch all active (non-completed, non-cancelled) jobs scheduled TODAY for the map view
       // These are already assigned jobs shown so providers see the full day's workload on the map

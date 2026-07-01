@@ -204,10 +204,20 @@ export default function ProSchedulePage() {
       let myJobs = await base44.entities.Job.filter({ provider_email: me.email });
       const cutoff = new Date('2025-06-01T00:00:00');
       myJobs = myJobs.filter(j => {
+        if (j.status === 'cancelled') return false;
         if (j.status === 'completed' && j.scheduled_date && new Date(j.scheduled_date) < cutoff) return false;
         return true;
       });
-      setJobs(myJobs);
+      
+      const dedupedJobs = Object.values(myJobs.reduce((acc, job) => {
+        const key = `${job.customer_id}_${job.scheduled_date}_${job.service_id}`;
+        if (!acc[key] || new Date(job.updated_date || 0) > new Date(acc[key].updated_date || 0)) {
+          acc[key] = job;
+        }
+        return acc;
+      }, {}));
+      
+      setJobs(dedupedJobs);
     } catch {
       toast.error('Failed to load schedule.');
     } finally {

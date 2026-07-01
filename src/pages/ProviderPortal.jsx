@@ -275,17 +275,41 @@ export default function ProviderPortal() {
           if (!seen.has(j.id)) { seen.add(j.id); assigned.push(j); }
         }
         const cutoff = new Date('2025-06-01T00:00:00');
-        setMyJobs(
-          assigned.map((j) => mapJob(j, customerProfiles)).filter(j => {
+        // Deduplicate stale/duplicate entries by picking the most recently updated one per customer+date
+        const myMapped = assigned
+          .map((j) => mapJob(j, customerProfiles))
+          .filter(j => {
+            if (j.status === 'cancelled') return false;
             if (j.status === 'completed' && j.date < cutoff) return false;
             return true;
-          })
+          });
+        
+        const dedupedMy = Object.values(
+          myMapped.reduce((acc, job) => {
+            const key = `${job.customerName}_${job.rawJob.scheduled_date}_${job.service}`;
+            if (!acc[key] || new Date(job.rawJob.updated_date || 0) > new Date(acc[key].rawJob.updated_date || 0)) {
+              acc[key] = job;
+            }
+            return acc;
+          }, {})
         );
-        setAvailableJobs(
-          available
-            .filter((j) => !j.provider_id && !j.provider_email)
-            .map((j) => mapJob(j, customerProfiles))
+
+        setMyJobs(dedupedMy);
+        const availableMapped = available
+            .filter((j) => !j.provider_id && !j.provider_email && j.status !== 'cancelled')
+            .map((j) => mapJob(j, customerProfiles));
+            
+        const dedupedAvailable = Object.values(
+          availableMapped.reduce((acc, job) => {
+            const key = `${job.customerName}_${job.rawJob.scheduled_date}_${job.service}`;
+            if (!acc[key] || new Date(job.rawJob.updated_date || 0) > new Date(acc[key].rawJob.updated_date || 0)) {
+              acc[key] = job;
+            }
+            return acc;
+          }, {})
         );
+
+        setAvailableJobs(dedupedAvailable);
       } finally {
         setLoading(false);
       }

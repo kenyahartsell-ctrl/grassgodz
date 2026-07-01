@@ -25,6 +25,7 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
     service_name: job.service_name || '',
     status: job.status || 'requested',
     scheduled_date: job.scheduled_date || '',
+    scheduled_time: job.scheduled_time || '',
     customer_phone: job.customer_phone || '',
     provider_name: job.provider_name || '',
     provider_email: job.provider_email || '',
@@ -119,9 +120,15 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1">Scheduled Date</label>
-            <input type="date" value={form.scheduled_date} onChange={e => set('scheduled_date', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Scheduled Date</label>
+              <input type="date" value={form.scheduled_date} onChange={e => set('scheduled_date', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Scheduled Time</label>
+              <input type="time" value={form.scheduled_time} onChange={e => set('scheduled_time', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

@@ -31,6 +31,75 @@ async function unassignJob(job, onDone) {
   }
 }
 
+function DateCell({ job, onRefresh }) {
+  const [editing, setEditing] = useState(false);
+  const [date, setDate] = useState(job.scheduled_date || '');
+  const [time, setTime] = useState(job.scheduled_time || '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await base44.entities.Job.update(job.id, {
+        scheduled_date: date || null,
+        scheduled_time: time || null,
+      });
+      job.scheduled_date = date || null;
+      job.scheduled_time = time || null;
+      toast.success('Date/Time updated');
+      setEditing(false);
+      if (onRefresh) onRefresh();
+    } catch {
+      toast.error('Failed to update date/time');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          type="date"
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          className="w-32 border border-input rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+        <input
+          type="time"
+          value={time}
+          onChange={e => setTime(e.target.value)}
+          className="w-24 border border-input rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-green-600" onClick={handleSave} disabled={saving}>
+          <Check size={12} />
+        </Button>
+        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => setEditing(false)}>
+          <X size={12} />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1 group">
+      <span className="text-sm">
+        {job.scheduled_date ? format(parseLocalDate(job.scheduled_date), 'MMM d') : '—'}
+        {job.scheduled_time ? ` @ ${job.scheduled_time}` : ''}
+      </span>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-5 w-5 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={() => setEditing(true)}
+        title="Edit date/time"
+      >
+        <Pencil size={10} />
+      </Button>
+    </div>
+  );
+}
+
 function PriceCell({ job }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(job.final_price ?? job.quoted_price ?? '');
@@ -127,8 +196,8 @@ export default function AdminJobsTable({ jobs, onUpdateStatus, onRefresh }) {
               <TableCell className="font-medium">{job.service_name}</TableCell>
               <TableCell className="text-sm">{job.customer_name}</TableCell>
               <TableCell className="text-sm">{job.provider_name || '—'}</TableCell>
-              <TableCell className="text-sm">
-                {job.scheduled_date ? format(parseLocalDate(job.scheduled_date), 'MMM d') : '—'}
+              <TableCell>
+                <DateCell job={job} onRefresh={onRefresh} />
               </TableCell>
               <TableCell><PriceCell job={job} /></TableCell>
               <TableCell><StatusBadge status={job.status} /></TableCell>

@@ -18,8 +18,7 @@ Deno.serve(async (req) => {
     const providerProfiles = await base44.entities.ProviderProfile.filter({ user_email: user.email });
     const providerProfile = providerProfiles[0];
 
-    const jobs = await base44.asServiceRole.entities.Job.filter({ id: job_id });
-    const job = jobs[0];
+    const job = await base44.asServiceRole.entities.Job.get(job_id);
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
     const isProvider =
@@ -30,7 +29,7 @@ Deno.serve(async (req) => {
 
     // Photo check — photos are stored as fields on the Job record (completion_photos object)
     if (!skip_photos) {
-      const photoCount = Object.keys(job.completion_photos || {}).length;
+      const photoCount = Object.values(job.completion_photos || {}).filter(url => typeof url === 'string' && url.trim().length > 0).length;
       if (photoCount < MIN_PHOTO_COUNT) {
         return Response.json({
           error: `At least ${MIN_PHOTO_COUNT} completion photos are required`,

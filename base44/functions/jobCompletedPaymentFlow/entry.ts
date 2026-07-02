@@ -10,8 +10,7 @@ Deno.serve(async (req) => {
     const { job_id } = await req.json();
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
 
-    const jobs = await base44.asServiceRole.entities.Job.filter({ id: job_id });
-    const job = jobs[0];
+    const job = await base44.asServiceRole.entities.Job.get(job_id);
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
     // Check auth — admin or assigned provider

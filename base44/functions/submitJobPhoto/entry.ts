@@ -15,8 +15,7 @@ Deno.serve(async (req) => {
     if (!job_id || !photos) return Response.json({ error: 'job_id and photos required' }, { status: 400 });
 
     // Verify the requesting user is the assigned provider on this job
-    const jobs = await base44.asServiceRole.entities.Job.filter({ id: job_id });
-    const job = jobs[0];
+    const job = await base44.asServiceRole.entities.Job.get(job_id);
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
     // Admin can upload photos (admin overriding)

@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
 
-    if (job.customer_email !== user.email && job.provider_email !== user.email) {
+    if (job.customer_email !== user.email && job.provider_email !== user.email && user.role !== 'admin') {
       return Response.json({ error: 'Not authorized to view messages for this job' }, { status: 403 });
     }
 

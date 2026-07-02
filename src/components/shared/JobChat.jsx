@@ -149,6 +149,11 @@ export default function JobChat({ job, user, senderRole, otherPartyName }) {
                       ? 'bg-primary text-primary-foreground rounded-br-sm'
                       : 'bg-muted text-foreground rounded-bl-sm'
                   } ${msg._sending ? 'opacity-60' : ''}`}>
+                    {!isMine && (
+                      <div className="text-[10px] font-bold opacity-50 mb-0.5 uppercase">
+                        {msg.sender_role}
+                      </div>
+                    )}
                     {msg.body}
                   </div>
                   <div className="flex items-center gap-1 mt-0.5 px-1">

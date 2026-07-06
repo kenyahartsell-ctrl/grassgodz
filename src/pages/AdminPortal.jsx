@@ -9,6 +9,7 @@ import AdminEditJobModal from '@/components/admin/AdminEditJobModal';
 import AdminPriceAdjustModal from '@/components/admin/AdminPriceAdjustModal';
 import PhotoLightbox from '@/components/shared/PhotoLightbox';
 import AdminAddJobModal from '@/components/admin/AdminAddJobModal';
+import AdminAddCustomerModal from '@/components/admin/AdminAddCustomerModal';
 import AdminAddProviderModal from '@/components/admin/AdminAddProviderModal';
 import AdminAssignProviderModal from '@/components/admin/AdminAssignProviderModal';
 import AdminCustomersTable from '@/components/admin/AdminCustomersTable';
@@ -67,6 +68,7 @@ export default function AdminPortal() {
   const [adminUser, setAdminUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddJob, setShowAddJob] = useState(false);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [assigningJob, setAssigningJob] = useState(null);
   const [viewingPhotos, setViewingPhotos] = useState(null);
@@ -341,6 +343,9 @@ export default function AdminPortal() {
                   <h2 className="text-xl font-bold text-foreground">Customers</h2>
                   <p className="text-sm text-muted-foreground">{customers.length} registered customer{customers.length !== 1 ? 's' : ''}</p>
                 </div>
+                <Button size="sm" onClick={() => setShowAddCustomer(true)} className="flex items-center gap-2">
+                  <Plus size={14} /> Add Customer
+                </Button>
               </div>
               {duplicates.length > 0 && (
                 <div className="mb-4 bg-amber-50 border border-amber-300 rounded-xl p-4">
@@ -487,6 +492,16 @@ export default function AdminPortal() {
           onAssigned={async () => {
             const allJobs = await base44.entities.Job.list('-created_date', 100);
             setJobs(allJobs);
+          }}
+        />
+      )}
+
+      {showAddCustomer && (
+        <AdminAddCustomerModal
+          onClose={() => setShowAddCustomer(false)}
+          onAdded={async () => {
+            const allCustomers = await base44.entities.CustomerProfile.list();
+            setCustomers(allCustomers);
           }}
         />
       )}

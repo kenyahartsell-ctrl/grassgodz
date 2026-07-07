@@ -137,7 +137,13 @@ export default function JobDetailPage() {
     }
     const res = await base44.functions.invoke('capturePayment', {
       job_id: j.id,
-      skip_photos: false,
+      // Photos are already required client-side (JobPhotoUploadModal enforces a 4-photo
+      // minimum before submit is enabled) and just written via submitJobPhoto above.
+      // Re-checking the count here re-reads the Job record in a separate call and can
+      // race with that write, causing spurious 400s ("At least 4 completion photos are
+      // required") even though the photos were uploaded. Match the other completion
+      // paths (ProviderPortal.jsx, ProSchedulePage.jsx) and skip the redundant recount.
+      skip_photos: true,
     });
     if (res.data?.success) {
       toast.success('Job completed! Payment captured.');

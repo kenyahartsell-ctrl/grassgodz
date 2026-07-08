@@ -25,12 +25,19 @@ const BLANK_FORM = {
   is_cash_job: false,
 };
 
-export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], existingJobs = [] }) {
+export default function AdminAddJobModal({ onClose, onJobAdded, providers = [], existingJobs = [], initialCustomer = null }) {
   const [services, setServices] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState(BLANK_FORM);
+  const [form, setForm] = useState(initialCustomer ? {
+    ...BLANK_FORM,
+    customer_id: initialCustomer.id,
+    customer_name: initialCustomer.name || '',
+    customer_email: initialCustomer.user_email || '',
+    address: initialCustomer.service_address || initialCustomer.street || '',
+    zip_code: initialCustomer.zip_code || '',
+  } : BLANK_FORM);
   const [saving, setSaving] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerSearch, setCustomerSearch] = useState(initialCustomer ? (initialCustomer.name || initialCustomer.user_email) : '');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [duplicate, setDuplicate] = useState(null);
   const [confirming, setConfirming] = useState(false);

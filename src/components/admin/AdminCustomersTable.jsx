@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Eye, Mail, Trash2, Pencil, X, Send, Loader2 } from 'lucide-react';
+import { ChevronDown, Eye, Mail, Trash2, Pencil, X, Send, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/shared/StatusBadge';
 import CustomerDetailModal from './CustomerDetailModal';
@@ -79,7 +79,7 @@ function EmailComposeModal({ customer, onClose }) {
   );
 }
 
-export default function AdminCustomersTable({ customers, jobs, quotes, onCustomerDeleted }) {
+export default function AdminCustomersTable({ customers, jobs, quotes, onCustomerDeleted, onAddJobRequest }) {
   const [expandedId, setExpandedId] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [editingCustomer, setEditingCustomer] = useState(null);
@@ -239,6 +239,9 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
                     </Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEmailingCustomer(c)}>
                       <Mail size={12} /> Email
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onAddJobRequest?.(c)}>
+                      <Plus size={12} /> Add Job / 2nd Address
                     </Button>
                     <Button 
                       size="sm" 

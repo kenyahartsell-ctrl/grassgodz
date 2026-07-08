@@ -68,6 +68,7 @@ export default function AdminPortal() {
   const [adminUser, setAdminUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddJob, setShowAddJob] = useState(false);
+  const [addJobCustomer, setAddJobCustomer] = useState(null);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [assigningJob, setAssigningJob] = useState(null);
@@ -392,6 +393,10 @@ export default function AdminPortal() {
                     const allJobs = await base44.entities.Job.list('-created_date', 100);
                     setJobs(allJobs);
                   }}
+                  onAddJobRequest={(c) => {
+                    setAddJobCustomer(c);
+                    setShowAddJob(true);
+                  }}
                 />
               )}
             </div>
@@ -598,10 +603,18 @@ export default function AdminPortal() {
 
       {showAddJob && (
         <AdminAddJobModal
-          onClose={() => setShowAddJob(false)}
+          providers={providers}
+          existingJobs={jobs}
+          onClose={() => {
+            setShowAddJob(false);
+            setAddJobCustomer(null);
+          }}
+          initialCustomer={addJobCustomer}
           onJobAdded={async () => {
             const allJobs = await base44.entities.Job.list('-created_date', 100);
             setJobs(allJobs);
+            setShowAddJob(false);
+            setAddJobCustomer(null);
           }}
         />
       )}

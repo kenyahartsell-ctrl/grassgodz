@@ -186,13 +186,24 @@ export default function AdminPortal() {
   };
 
   const handleCompleteJob = async (job) => {
-    if (!window.confirm(`Mark "${job.service_name}" for ${job.customer_name} as complete? This will also capture payment if authorized.`)) return;
+    if (!window.confirm(`Mark "${job.service_name}" for ${job.customer_name} as complete? For Stripe jobs this will request payment, for cash jobs it will leave it pending.`)) return;
     try {
       await base44.functions.invoke('jobCompletedPaymentFlow', { job_id: job.id });
       setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'completed' } : j));
-      toast.success('Job marked as complete and payment captured.');
+      toast.success('Job marked as complete.');
     } catch (err) {
       toast.error('Failed to complete job: ' + err.message);
+    }
+  };
+
+  const handleCompleteAndPaidJob = async (job) => {
+    if (!window.confirm(`Mark "${job.service_name}" for ${job.customer_name} as complete AND already paid?`)) return;
+    try {
+      await base44.functions.invoke('jobCompletedPaymentFlow', { job_id: job.id, mark_as_paid: true });
+      setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'completed', admin_payment_status: 'paid' } : j));
+      toast.success('Job marked as complete and paid.');
+    } catch (err) {
+      toast.error('Failed to complete and pay job: ' + err.message);
     }
   };
 
@@ -406,6 +417,7 @@ export default function AdminPortal() {
             providers={providers}
             handlers={{
               onComplete: handleCompleteJob,
+              onCompleteAndPaid: handleCompleteAndPaidJob,
               onArchive: handleArchiveJob,
               onCancel: (j) => setCancellingJob(j),
               onDelete: handleDeleteJob,

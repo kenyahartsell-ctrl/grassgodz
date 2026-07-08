@@ -101,6 +101,17 @@ Deno.serve(async (req) => {
     if (!payment?.job_id) {
       return Response.json({ skipped: true, reason: 'No job_id on payment' });
     }
+    
+    // Safety check - we only want to send a receipt if it's explicitly paid/captured
+    if (payment.status !== 'captured') {
+      return Response.json({ skipped: true, reason: 'Payment is not captured' });
+    }
+    
+    // If it's an update, only send if it JUST changed to captured
+    const { old_data: oldPayment } = body;
+    if (oldPayment && oldPayment.status === 'captured') {
+      return Response.json({ skipped: true, reason: 'Payment was already captured' });
+    }
 
     // Fetch the related job to get customer info
     const jobs = await base44.asServiceRole.entities.Job.filter({ id: payment.job_id });

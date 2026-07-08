@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { job_id } = await req.json();
+    const { job_id, mark_as_paid } = await req.json();
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
 
     const job = await base44.asServiceRole.entities.Job.get(job_id);
@@ -27,28 +27,44 @@ Deno.serve(async (req) => {
     }
 
     // Mark job as completed
-    await base44.asServiceRole.entities.Job.update(job_id, {
+    const updateData = {
       status: 'completed',
       completed_at: new Date().toISOString(),
-    });
+    };
+    if (mark_as_paid) {
+      updateData.admin_payment_status = 'paid';
+    }
+    await base44.asServiceRole.entities.Job.update(job_id, updateData);
 
-    // Cash jobs: no Stripe processing needed
-    if (job.is_cash_job || job.payment_method === 'cash') {
+    // If marked as paid, explicitly create/update payment as captured and stop further logic
+    if (mark_as_paid) {
       const existingPayments = await base44.asServiceRole.entities.Payment.filter({ job_id });
+      const amount = job.final_price || job.quoted_price || 0;
       if (existingPayments.length === 0) {
         await base44.asServiceRole.entities.Payment.create({
           job_id: job.id,
           customer_id: job.customer_id,
           provider_id: job.provider_id,
-          amount: job.final_price || job.quoted_price || 0,
+          amount: amount,
           platform_fee: 0,
-          payout_amount: job.final_price || job.quoted_price || 0,
+          payout_amount: amount,
           stripe_payment_intent_id: '',
           status: 'captured',
-          description: 'Cash payment — collected directly by provider',
+          description: 'Marked as completed and already paid by Admin',
+        });
+      } else {
+        await base44.asServiceRole.entities.Payment.update(existingPayments[0].id, {
+          status: 'captured',
+          description: 'Marked as completed and already paid by Admin'
         });
       }
-      return Response.json({ success: true, cash_job: true });
+      return Response.json({ success: true, mark_as_paid: true });
+    }
+
+    // Cash jobs: no Stripe processing needed. Only create payment if marked as paid.
+    // So if not marked as paid, we just complete it and leave it pending.
+    if (job.is_cash_job || job.payment_method === 'cash') {
+      return Response.json({ success: true, cash_job: true, payment_pending: true });
     }
 
     const price = job.final_price || job.quoted_price;

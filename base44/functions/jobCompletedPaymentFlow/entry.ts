@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { job_id, mark_as_paid } = await req.json();
+    const { job_id, mark_as_paid, skip_payment } = await req.json();
     if (!job_id) return Response.json({ error: 'job_id required' }, { status: 400 });
 
     const job = await base44.asServiceRole.entities.Job.get(job_id);
@@ -35,6 +35,10 @@ Deno.serve(async (req) => {
       updateData.admin_payment_status = 'paid';
     }
     await base44.asServiceRole.entities.Job.update(job_id, updateData);
+
+    if (skip_payment) {
+      return Response.json({ success: true, skipped_payment: true });
+    }
 
     // If marked as paid, explicitly create/update payment as captured and stop further logic
     if (mark_as_paid) {

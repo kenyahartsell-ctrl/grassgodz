@@ -207,6 +207,17 @@ export default function AdminPortal() {
     }
   };
 
+  const handleCompleteNoPaymentJob = async (job) => {
+    if (!window.confirm(`Mark "${job.service_name}" for ${job.customer_name} as complete WITHOUT payment capture?`)) return;
+    try {
+      await base44.functions.invoke('jobCompletedPaymentFlow', { job_id: job.id, skip_payment: true });
+      setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'completed' } : j));
+      toast.success('Job marked as complete (skipped payment).');
+    } catch (err) {
+      toast.error('Failed to complete job: ' + err.message);
+    }
+  };
+
   const handleDeleteJob = async (job) => {
     if (!window.confirm(`Permanently delete this job (${job.service_name} for ${job.customer_name})? This cannot be undone.`)) return;
     await base44.entities.Job.delete(job.id);
@@ -418,6 +429,7 @@ export default function AdminPortal() {
             handlers={{
               onComplete: handleCompleteJob,
               onCompleteAndPaid: handleCompleteAndPaidJob,
+              onCompleteNoPayment: handleCompleteNoPaymentJob,
               onArchive: handleArchiveJob,
               onCancel: (j) => setCancellingJob(j),
               onDelete: handleDeleteJob,

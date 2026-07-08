@@ -8,7 +8,11 @@ import AdminEditJobModal from './AdminEditJobModal';
 
 function fmtDate(v) {
   if (!v) return '—';
-  try { return new Date(v + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch { return v; }
+  try {
+    const dateObj = v.includes('T') ? new Date(v) : new Date(v + 'T12:00:00');
+    if (isNaN(dateObj.getTime())) return v;
+    return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch { return v; }
 }
 
 export default function AdminArchivedJobsPanel() {

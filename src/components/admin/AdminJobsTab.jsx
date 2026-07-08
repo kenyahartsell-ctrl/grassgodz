@@ -16,7 +16,12 @@ import AdminEditJobModal from './AdminEditJobModal';
 function fmtAmt(v) { return v != null ? `$${Number(v).toFixed(2)}` : '—'; }
 function fmtDate(v) {
   if (!v) return '—';
-  try { return new Date(v + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch { return v; }
+  try {
+    // If it's already an ISO string with a T, parse it directly, otherwise append T12:00:00 to avoid timezone shifting
+    const dateObj = v.includes('T') ? new Date(v) : new Date(v + 'T12:00:00');
+    if (isNaN(dateObj.getTime())) return v;
+    return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch { return v; }
 }
 
 function CountdownTimer({ job }) {

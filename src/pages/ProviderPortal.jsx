@@ -216,7 +216,7 @@ function mapJob(j, customerProfiles) {
 
 /* ---------------- main component ---------------- */
 export default function ProviderPortal() {
-  const [activeTab, setActiveTab] = useState("jobs");
+  const [activeTab, setActiveTab] = useState("schedule");
   const [currentUser, setCurrentUser] = useState(null);
   const [providerProfile, setProviderProfile] = useState(null);
   const [availableJobs, setAvailableJobs] = useState([]);
@@ -464,7 +464,6 @@ export default function ProviderPortal() {
   const firstWeekday = calendarDate.getDay();
   const jobsForSelectedDay = myJobs.filter((j) => j.date.getFullYear() === calendarDate.getFullYear() && j.date.getMonth() === calendarDate.getMonth() && j.date.getDate() === selectedCalDay);
   const tabs = [
-    { id: "jobs", label: "Job Board", icon: ListChecks },
     { id: "schedule", label: "My Schedule", icon: CheckCircle2 },
     { id: "route", label: "Route", icon: Navigation },
     { id: "quotes", label: "Quotes", icon: DollarSign },
@@ -542,24 +541,7 @@ export default function ProviderPortal() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" />
           </div>
         ) : null}
-        {!loading && activeTab === "jobs" && (
-          <div className="space-y-3">
-            <Eyebrow>Available tasks near you</Eyebrow>
-            {availableJobs.length === 0 && <p className="text-sm text-stone-500">No available jobs right now — check back soon.</p>}
-            {availableJobs.map((job) => (
-              <AvailableJobCard
-                key={job.id}
-                job={job.rawJob}
-                providerProfile={providerProfile}
-                onAcceptCashJob={() => acceptJob(job)}
-                onSubmitQuote={(rawJob, quoteDetails) => {
-                  submitJobQuote(rawJob, quoteDetails.price, quoteDetails.message);
-                }}
-                onboardingComplete={true}
-              />
-            ))}
-          </div>
-        )}
+
         {!loading && activeTab === "schedule" && (
           <div className="space-y-4">
             <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">

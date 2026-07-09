@@ -83,6 +83,9 @@ export default function SmsOptInCard({ profile, onSaved, entityName }) {
           <p className="text-xs text-muted-foreground/70 leading-relaxed">
             By opting in, you agree to receive SMS notifications from Grassgodz including job alerts, chat message notifications, and account updates. Message and data rates may apply. Reply STOP at any time to opt out.
           </p>
+          <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
+            Grassgodz is a brand operated by Tradegodz LLC.
+          </p>
           <button
             onClick={handleOptIn}
             disabled={saving}

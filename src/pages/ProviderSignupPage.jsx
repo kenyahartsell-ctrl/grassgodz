@@ -428,6 +428,8 @@ export default function ProviderSignupPage() {
                     />
                     <span className="text-xs text-muted-foreground leading-relaxed">
                       By creating an account, you agree to receive SMS notifications from Grassgodz including job alerts, chat message notifications, and account updates. Message and data rates may apply. Reply STOP at any time to opt out.
+                      <br />
+                      <span className="text-[10px] opacity-70">Grassgodz is a brand operated by Tradegodz LLC.</span>
                     </span>
                   </label>
                 </div>

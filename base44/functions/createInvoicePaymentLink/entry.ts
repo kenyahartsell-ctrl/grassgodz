@@ -41,63 +41,86 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If customer has a card on file, charge it directly via PaymentIntent
-    if (stripeCustomerId && defaultPaymentMethodId) {
-      const paymentIntent = await stripe.paymentIntents.create({
+    if (!stripeCustomerId && (invoice.customer_email || invoice.customer_name)) {
+      const newCustomer = await stripe.customers.create({
+        email: invoice.customer_email || undefined,
+        name: invoice.customer_name || undefined,
+      });
+      stripeCustomerId = newCustomer.id;
+    }
+
+    if (!stripeCustomerId) {
+      return Response.json({ error: 'Customer email or name is required to create a Stripe invoice.' }, { status: 400 });
+    }
+
+    // Create invoice items in Stripe
+    if (invoice.line_items && invoice.line_items.length > 0) {
+      for (const item of invoice.line_items) {
+        if (item.line_total > 0) {
+          await stripe.invoiceItems.create({
+            customer: stripeCustomerId,
+            amount: Math.round(item.line_total * 100),
+            currency: 'usd',
+            description: item.description || 'Line Item',
+          });
+        }
+      }
+      if (invoice.tax_amount > 0) {
+        await stripe.invoiceItems.create({
+          customer: stripeCustomerId,
+          amount: Math.round(invoice.tax_amount * 100),
+          currency: 'usd',
+          description: 'Tax',
+        });
+      }
+    } else {
+      await stripe.invoiceItems.create({
+        customer: stripeCustomerId,
         amount: totalCents,
         currency: 'usd',
-        customer: stripeCustomerId,
-        payment_method: defaultPaymentMethodId,
-        description,
-        receipt_email: invoice.customer_email,
-        confirm: true,
-        off_session: true,
-        metadata: { invoice_id: invoice.id },
+        description: description,
       });
+    }
 
-      if (paymentIntent.status === 'succeeded') {
-        await base44.asServiceRole.entities.Invoice.update(invoice.id, {
-          status: 'paid',
-          stripe_payment_link: `https://dashboard.stripe.com/payments/${paymentIntent.id}`,
-        });
-        return Response.json({
-          charged_card_on_file: true,
-          payment_intent_id: paymentIntent.id,
-          status: paymentIntent.status,
-          payment_link: null,
-        });
+    const stripeInvoice = await stripe.invoices.create({
+      customer: stripeCustomerId,
+      collection_method: (stripeCustomerId && defaultPaymentMethodId) ? 'charge_automatically' : 'send_invoice',
+      days_until_due: (stripeCustomerId && defaultPaymentMethodId) ? undefined : 0,
+      metadata: { invoice_id: invoice.id },
+      description: invoice.notes || undefined,
+    });
+
+    if (stripeCustomerId && defaultPaymentMethodId) {
+      try {
+        const finalized = await stripe.invoices.pay(stripeInvoice.id);
+        if (finalized.status === 'paid') {
+          await base44.asServiceRole.entities.Invoice.update(invoice.id, {
+            status: 'paid',
+            stripe_payment_link: finalized.hosted_invoice_url,
+          });
+          return Response.json({
+            charged_card_on_file: true,
+            payment_intent_id: finalized.payment_intent,
+            status: finalized.status,
+            payment_link: finalized.hosted_invoice_url,
+          });
+        }
+      } catch (e) {
+        // If automatic payment fails, fallback to sending the invoice
+        console.error('Auto payment failed:', e);
       }
     }
 
-    // Fallback: create a Stripe Checkout Session (works with restricted keys)
-    const origin = req.headers.get('origin') || 'https://grassgodz.com';
-
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: totalCents,
-            product_data: { name: description },
-          },
-          quantity: 1,
-        },
-      ],
-      customer_email: invoice.customer_email || undefined,
-      success_url: `${origin}/customer?payment=success`,
-      cancel_url: `${origin}/customer?payment=cancelled`,
-      metadata: { invoice_id: invoice.id },
-    });
+    const finalized = await stripe.invoices.finalizeInvoice(stripeInvoice.id);
 
     await base44.asServiceRole.entities.Invoice.update(invoice.id, {
-      stripe_payment_link: session.url,
+      stripe_payment_link: finalized.hosted_invoice_url,
       status: 'sent',
     });
 
     return Response.json({
       charged_card_on_file: false,
-      payment_link: session.url,
+      payment_link: finalized.hosted_invoice_url,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

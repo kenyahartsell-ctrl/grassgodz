@@ -25,46 +25,46 @@ const timeToMinutes = (t) => {
   if (mer === "AM" && h === 12) h = 0;
   return h * 60 + min;
 };
-const today = new Date();
+const todaySeed = new Date();
 let idCounter = 1000;
 const nextId = () => idCounter++;
 /* ---------------- seed data ---------------- */
 const seedAvailableJobs = [
-  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Lawn Mowing", recurring: false, frequency: null, date: addDays(today, 1), time: "9:00 AM", price: 45, notes: "Gate code 4471. Dog stays inside during service." },
-  { id: nextId(), customerName: "Daniel Osei", phone: "(301) 555-0198", address: "8822 Piney Branch Rd, Silver Spring, MD", service: "Lawn Mowing + Edging", recurring: true, frequency: "Weekly", date: addDays(today, 1), time: "11:30 AM", price: 60, notes: "Side gate unlocked Tuesdays only." },
-  { id: nextId(), customerName: "Priya Nair", phone: "(703) 555-0117", address: "212 Hume Ave, Alexandria, VA", service: "Full Yard Cleanup", recurring: false, frequency: null, date: addDays(today, 2), time: "1:00 PM", price: 120, notes: "Large leaf pile near fence to bag and remove." },
+  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Lawn Mowing", recurring: false, frequency: null, date: addDays(todaySeed, 1), time: "9:00 AM", price: 45, notes: "Gate code 4471. Dog stays inside during service." },
+  { id: nextId(), customerName: "Daniel Osei", phone: "(301) 555-0198", address: "8822 Piney Branch Rd, Silver Spring, MD", service: "Lawn Mowing + Edging", recurring: true, frequency: "Weekly", date: addDays(todaySeed, 1), time: "11:30 AM", price: 60, notes: "Side gate unlocked Tuesdays only." },
+  { id: nextId(), customerName: "Priya Nair", phone: "(703) 555-0117", address: "212 Hume Ave, Alexandria, VA", service: "Full Yard Cleanup", recurring: false, frequency: null, date: addDays(todaySeed, 2), time: "1:00 PM", price: 120, notes: "Large leaf pile near fence to bag and remove." },
 ];
 const seedMyJobs = [
-  { id: nextId(), customerName: "Marcus Webb", phone: "(202) 555-0166", address: "504 Quincy St NW, Washington, DC", service: "Lawn Mowing", recurring: true, frequency: "Weekly", date: today, time: "8:00 AM", price: 40, status: "scheduled", thisWeek: true, photos: [], notes: "Park in driveway, not street." },
-  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Lawn Mowing", recurring: false, frequency: null, date: today, time: "10:30 AM", price: 45, status: "scheduled", thisWeek: true, photos: [], notes: "" },
-  { id: nextId(), customerName: "Joanna Ruiz", phone: "(202) 555-0190", address: "1820 Irving St NW, Washington, DC", service: "Spring Cleanup", recurring: false, frequency: null, date: today, time: "1:30 PM", price: 95, status: "scheduled", thisWeek: true, photos: [], notes: "" },
-  { id: nextId(), customerName: "Tasha Greene", phone: "(301) 555-0177", address: "67 Forest Glen Rd, Silver Spring, MD", service: "Lawn Mowing + Edging", recurring: true, frequency: "Biweekly", date: addDays(today, -2), time: "9:00 AM", price: 55, status: "completed", thisWeek: true, photos: [], notes: "" },
-  { id: nextId(), customerName: "Greg Holloway", phone: "(703) 555-0133", address: "39 Quaker Ln, Alexandria, VA", service: "Full Yard Cleanup", recurring: false, frequency: null, date: addDays(today, -3), time: "2:00 PM", price: 110, status: "completed", thisWeek: true, photos: [], notes: "" },
-  { id: nextId(), customerName: "Marcus Webb", phone: "(202) 555-0166", address: "504 Quincy St NW, Washington, DC", service: "Lawn Mowing", recurring: true, frequency: "Weekly", date: addDays(today, -9), time: "8:00 AM", price: 40, status: "completed", thisWeek: false, photos: [], notes: "" },
-  { id: nextId(), customerName: "Dana Okafor", phone: "(703) 555-0188", address: "14 Pendleton St, Alexandria, VA", service: "Hedge Trimming", recurring: false, frequency: null, date: addDays(today, 5), time: "10:00 AM", price: 75, status: "scheduled", thisWeek: false, photos: [], notes: "" },
+  { id: nextId(), customerName: "Marcus Webb", phone: "(202) 555-0166", address: "504 Quincy St NW, Washington, DC", service: "Lawn Mowing", recurring: true, frequency: "Weekly", date: todaySeed, time: "8:00 AM", price: 40, status: "scheduled", thisWeek: true, photos: [], notes: "Park in driveway, not street." },
+  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Lawn Mowing", recurring: false, frequency: null, date: todaySeed, time: "10:30 AM", price: 45, status: "scheduled", thisWeek: true, photos: [], notes: "" },
+  { id: nextId(), customerName: "Joanna Ruiz", phone: "(202) 555-0190", address: "1820 Irving St NW, Washington, DC", service: "Spring Cleanup", recurring: false, frequency: null, date: todaySeed, time: "1:30 PM", price: 95, status: "scheduled", thisWeek: true, photos: [], notes: "" },
+  { id: nextId(), customerName: "Tasha Greene", phone: "(301) 555-0177", address: "67 Forest Glen Rd, Silver Spring, MD", service: "Lawn Mowing + Edging", recurring: true, frequency: "Biweekly", date: addDays(todaySeed, -2), time: "9:00 AM", price: 55, status: "completed", thisWeek: true, photos: [], notes: "" },
+  { id: nextId(), customerName: "Greg Holloway", phone: "(703) 555-0133", address: "39 Quaker Ln, Alexandria, VA", service: "Full Yard Cleanup", recurring: false, frequency: null, date: addDays(todaySeed, -3), time: "2:00 PM", price: 110, status: "completed", thisWeek: true, photos: [], notes: "" },
+  { id: nextId(), customerName: "Marcus Webb", phone: "(202) 555-0166", address: "504 Quincy St NW, Washington, DC", service: "Lawn Mowing", recurring: true, frequency: "Weekly", date: addDays(todaySeed, -9), time: "8:00 AM", price: 40, status: "completed", thisWeek: false, photos: [], notes: "" },
+  { id: nextId(), customerName: "Dana Okafor", phone: "(703) 555-0188", address: "14 Pendleton St, Alexandria, VA", service: "Hedge Trimming", recurring: false, frequency: null, date: addDays(todaySeed, 5), time: "10:00 AM", price: 75, status: "scheduled", thisWeek: false, photos: [], notes: "" },
 ];
 const seedQuotes = [
-  { id: nextId(), customerName: "Joanna Ruiz", phone: "(202) 555-0190", address: "1820 Irving St NW, Washington, DC", service: "Spring Cleanup + Mulching", amount: 180, status: "pending", date: addDays(today, -1) },
-  { id: nextId(), customerName: "Bill Hartman", phone: "(301) 555-0144", address: "905 Bonifant St, Silver Spring, MD", service: "Lawn Mowing", amount: 42, status: "accepted", date: addDays(today, -4) },
-  { id: nextId(), customerName: "Dana Okafor", phone: "(703) 555-0188", address: "14 Pendleton St, Alexandria, VA", service: "Hedge Trimming", amount: 75, status: "declined", date: addDays(today, -6) },
-  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Fall Leaf Removal", amount: 95, status: "expired", date: addDays(today, -12) },
+  { id: nextId(), customerName: "Joanna Ruiz", phone: "(202) 555-0190", address: "1820 Irving St NW, Washington, DC", service: "Spring Cleanup + Mulching", amount: 180, status: "pending", date: addDays(todaySeed, -1) },
+  { id: nextId(), customerName: "Bill Hartman", phone: "(301) 555-0144", address: "905 Bonifant St, Silver Spring, MD", service: "Lawn Mowing", amount: 42, status: "accepted", date: addDays(todaySeed, -4) },
+  { id: nextId(), customerName: "Dana Okafor", phone: "(703) 555-0188", address: "14 Pendleton St, Alexandria, VA", service: "Hedge Trimming", amount: 75, status: "declined", date: addDays(todaySeed, -6) },
+  { id: nextId(), customerName: "Renee Carter", phone: "(202) 555-0142", address: "1417 Holbrook St NE, Washington, DC", service: "Fall Leaf Removal", amount: 95, status: "expired", date: addDays(todaySeed, -12) },
 ];
 const seedReviews = [
-  { id: nextId(), type: "poor", date: addDays(today, -6), note: "Lawn lines uneven, asked for redo." },
+  { id: nextId(), type: "poor", date: addDays(todaySeed, -6), note: "Lawn lines uneven, asked for redo." },
 ];
 const seedChatThreads = {
   "Marcus Webb": [
-    { from: "customer", text: "Can you come a little earlier this week? Maybe 7:45?", time: addDays(today, -1) },
-    { from: "provider", text: "I can do 7:45 — works on my end.", time: addDays(today, -1) },
+    { from: "customer", text: "Can you come a little earlier this week? Maybe 7:45?", time: addDays(todaySeed, -1) },
+    { from: "provider", text: "I can do 7:45 — works on my end.", time: addDays(todaySeed, -1) },
   ],
   "Renee Carter": [
-    { from: "customer", text: "Gate code is 4471, please make sure it latches when you leave.", time: addDays(today, -2) },
+    { from: "customer", text: "Gate code is 4471, please make sure it latches when you leave.", time: addDays(todaySeed, -2) },
   ],
   "Tasha Greene": [
-    { from: "customer", text: "Yard looked great last time, thank you!", time: addDays(today, -2) },
+    { from: "customer", text: "Yard looked great last time, thank you!", time: addDays(todaySeed, -2) },
   ],
   "Joanna Ruiz": [
-    { from: "customer", text: "Sent over a quote request for spring cleanup, let me know what you think.", time: addDays(today, -1) },
+    { from: "customer", text: "Sent over a quote request for spring cleanup, let me know what you think.", time: addDays(todaySeed, -1) },
   ],
 };
 /* ---------------- small UI pieces ---------------- */
@@ -181,7 +181,7 @@ function PhotoUploader({ photos, onAdd, onRemove }) {
   );
 }
 /* ---------------- helpers ---------------- */
-function mapJob(j, customerProfiles) {
+function mapJob(j, customerProfiles, today) {
   const profile = customerProfiles.find(
     (p) => p.user_email === j.customer_email || p.id === j.customer_id
   );
@@ -216,6 +216,7 @@ function mapJob(j, customerProfiles) {
 
 /* ---------------- main component ---------------- */
 export default function ProviderPortal() {
+  const today = new Date();
   const [activeTab, setActiveTab] = useState("schedule");
   const [currentUser, setCurrentUser] = useState(null);
   const [providerProfile, setProviderProfile] = useState(null);
@@ -277,7 +278,7 @@ export default function ProviderPortal() {
         const cutoff = new Date('2025-06-01T00:00:00');
         // Deduplicate stale/duplicate entries by picking the most recently updated one per customer+date
         const myMapped = assigned
-          .map((j) => mapJob(j, customerProfiles))
+          .map((j) => mapJob(j, customerProfiles, today))
           .filter(j => {
             if (j.status === 'cancelled') return false;
             if (j.status === 'completed' && j.date < cutoff) return false;
@@ -297,7 +298,7 @@ export default function ProviderPortal() {
         setMyJobs(dedupedMy);
         const availableMapped = available
             .filter((j) => !j.provider_id && !j.provider_email && j.status !== 'cancelled')
-            .map((j) => mapJob(j, customerProfiles));
+            .map((j) => mapJob(j, customerProfiles, today));
             
         const dedupedAvailable = Object.values(
           availableMapped.reduce((acc, job) => {
@@ -580,7 +581,7 @@ export default function ProviderPortal() {
                           <button onClick={() => { setActiveTab("chat"); setSelectedCustomer(job.customerName); }} className="flex items-center justify-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100">
                             <MessageCircle size={12} /> Message
                           </button>
-                          {job.status === "scheduled" && (
+                          {(job.status === "scheduled" || job.status === "accepted") && (
                             <button onClick={() => startJob(job.id)} className="flex items-center justify-center gap-1 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600">
                               <PlayCircle size={12} /> Start job
                             </button>
@@ -631,7 +632,7 @@ export default function ProviderPortal() {
                                 <p className="mt-0.5 flex items-center gap-1 text-xs text-stone-500"><MapPin size={12} /> {j.address}</p>
                               </div>
                               <div className="mt-2 flex items-center gap-2 border-t border-stone-200 pt-2">
-                                {j.status === "scheduled" && (
+                                {(j.status === "scheduled" || j.status === "accepted") && (
                                   <button onClick={() => startJob(j.id)} className="flex-1 flex items-center justify-center gap-1 rounded-lg bg-amber-500 px-2 py-1.5 text-xs font-semibold text-white hover:bg-amber-600">
                                     <PlayCircle size={12} /> Start
                                   </button>

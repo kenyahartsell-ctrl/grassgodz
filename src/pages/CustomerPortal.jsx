@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import PageMeta from '@/components/shared/PageMeta';
-import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt, RefreshCw, LogOut } from 'lucide-react';
+import { Home, Briefcase, User, Leaf, CalendarPlus, CheckCircle2, Clock, History, Loader2, FileText, Receipt, RefreshCw, LogOut, AlertCircle } from 'lucide-react';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { useLanguage } from '@/lib/LanguageContext';
 import CustomerInvoicesPanel from '@/components/customer/CustomerInvoicesPanel';
@@ -131,6 +131,15 @@ export default function CustomerPortal() {
   const pastJobs = jobs.filter(j => ['completed', 'cancelled'].includes(j.status));
   const activeScheduledJobs = scheduledJobs.filter(sj => sj.status !== 'stopped');
 
+  const isJobPaid = (job) => {
+    if (job.admin_payment_status === 'paid') return true;
+    if (job.admin_payment_status === 'payment_pending') return false;
+    return !!(job.final_payment_intent_id || job.is_cash_job || (job.final_price && job.platform_fee));
+  };
+
+  const unpaidJobs = pastJobs.filter(j => j.status === 'completed' && !isJobPaid(j));
+  const hasUnpaidJobs = unpaidJobs.length > 0;
+
   const LAWN_KEYWORDS = ['mow', 'mowing', 'grass', 'lawn', 'cut'];
   const isLawnJob = (name) => LAWN_KEYWORDS.some(k => name?.toLowerCase().includes(k));
 
@@ -249,6 +258,28 @@ export default function CustomerPortal() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
         {tab === 'home' && (
           <div>
+            {hasUnpaidJobs && (
+              <div className="mb-4 bg-red-50 border border-red-300 rounded-2xl p-4 flex items-start gap-3">
+                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="text-red-600" size={24} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-base font-bold text-red-900">Past Due Balance</p>
+                  <p className="text-sm text-red-800 mt-0.5">
+                    You have {unpaidJobs.length} completed service{unpaidJobs.length !== 1 ? 's' : ''} that requires payment. New requests are temporarily locked until your past due balance is covered.
+                  </p>
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setTab('jobs')}
+                      className="bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-red-800 transition-colors"
+                    >
+                      View Past Jobs
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {jobs.filter(j => j.status === 'quoted' && !isLawnJob(j.service_name)).length > 0 && (
               <div className="mb-4 bg-green-600 border border-green-700 rounded-2xl p-5 shadow-lg">
                 <div className="flex items-start gap-3 mb-3">
@@ -326,13 +357,32 @@ export default function CustomerPortal() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-bold text-foreground">{t('request_service')}</h2>
-                <button onClick={() => setTab('book')} className="text-xs font-semibold text-primary flex items-center gap-1">
+                <button 
+                  onClick={() => {
+                    if (hasUnpaidJobs) {
+                      toast.error("Please settle your past due balance to request new services.");
+                      return;
+                    }
+                    setTab('book');
+                  }} 
+                  className="text-xs font-semibold text-primary flex items-center gap-1"
+                >
                   <CalendarPlus size={13} /> {t('book_a_date')}
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {services.map(s => (
-                  <ServiceCard key={s.id} service={s} onSelect={setSelectedService} />
+                  <ServiceCard 
+                    key={s.id} 
+                    service={s} 
+                    onSelect={(srv) => {
+                      if (hasUnpaidJobs) {
+                        toast.error("Please settle your past due balance to request new services.");
+                        return;
+                      }
+                      setSelectedService(srv);
+                    }} 
+                  />
                 ))}
               </div>
             </div>
@@ -363,7 +413,13 @@ export default function CustomerPortal() {
               {services.map(s => (
                 <button
                   key={s.id}
-                  onClick={() => setShowBookingModal(s)}
+                  onClick={() => {
+                    if (hasUnpaidJobs) {
+                      toast.error("Please settle your past due balance to request new services.");
+                      return;
+                    }
+                    setShowBookingModal(s);
+                  }}
                   className="group text-left bg-card border border-border rounded-xl p-4 hover:border-primary/40 hover:shadow-md transition-all flex items-center gap-4"
                 >
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">

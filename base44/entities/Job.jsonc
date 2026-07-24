@@ -378,6 +378,9 @@
     "read": {
       "$or": [
         {
+          "data.status": "requested"
+        },
+        {
           "data.customer_email": "{{user.email}}"
         },
         {

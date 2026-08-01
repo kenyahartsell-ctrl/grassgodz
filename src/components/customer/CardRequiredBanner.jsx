@@ -5,7 +5,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-function CardForm({ customerProfile, onCardSaved }) {
+function CardForm({ customerProfile, job, onCardSaved }) {
   const stripe = useStripe();
   const elements = useElements();
   const [saving, setSaving] = useState(false);
@@ -27,6 +27,16 @@ function CardForm({ customerProfile, onCardSaved }) {
         payment_method_id: pmId 
       });
       if (saveRes.data?.error) throw new Error(saveRes.data.error);
+
+      if (job?.id) {
+        const authRes = await base44.functions.invoke('authorizePayment', {
+          job_id: job.id,
+          payment_method_id: pmId
+        });
+        if (authRes.data?.error) {
+          throw new Error(authRes.data.error);
+        }
+      }
 
       toast.success('Card saved — booking confirmed!');
       onCardSaved(pmId);
@@ -67,7 +77,7 @@ function CardForm({ customerProfile, onCardSaved }) {
   );
 }
 
-export default function CardRequiredBanner({ customerProfile, onCardSaved }) {
+export default function CardRequiredBanner({ customerProfile, job, onCardSaved }) {
   const [stripePromise, setStripePromise] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -102,6 +112,7 @@ export default function CardRequiredBanner({ customerProfile, onCardSaved }) {
             <Elements stripe={stripePromise}>
               <CardForm
                 customerProfile={customerProfile}
+                job={job}
                 onCardSaved={onCardSaved}
               />
             </Elements>

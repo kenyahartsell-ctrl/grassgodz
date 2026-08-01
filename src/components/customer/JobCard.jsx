@@ -99,6 +99,7 @@ onDepositPaid={onAcceptQuote}
 {/* Card required banner — shown for scheduled jobs without a card on file */}
 {job.status === 'scheduled' && !cardSaved && !customerProfile?.default_payment_method_id && (
 <CardRequiredBanner
+job={job}
 customerProfile={customerProfile}
 onCardSaved={() => setCardSaved(true)}
 />

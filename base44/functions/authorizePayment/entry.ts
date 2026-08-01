@@ -18,11 +18,11 @@ Deno.serve(async (req) => {
     const jobs = await base44.asServiceRole.entities.Job.filter({ id: job_id });
     const job = jobs[0];
     if (!job) return Response.json({ error: 'Job not found' }, { status: 404 });
-    if (job.customer_email !== user.email) return Response.json({ error: 'Forbidden' }, { status: 403 });
+    if (job.customer_email !== user.email && user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     if (!job.quoted_price) return Response.json({ error: 'Job has no quoted price' }, { status: 400 });
 
     // Load customer profile (service role to bypass RLS — profiles may be created by admins)
-    const customerProfiles = await base44.asServiceRole.entities.CustomerProfile.filter({ user_email: user.email });
+    const customerProfiles = await base44.asServiceRole.entities.CustomerProfile.filter({ user_email: job.customer_email });
     const customerProfile = customerProfiles[0];
     if (!customerProfile?.stripe_customer_id) {
       return Response.json({ error: 'No Stripe customer on file. Please add a payment method first.' }, { status: 400 });

@@ -67,7 +67,12 @@ className="w-full text-left p-4"
 </div>
 <div className="flex-shrink-0 flex flex-col items-end gap-1">
 {job.quoted_price && (
-<p className="text-base font-bold text-foreground">${job.quoted_price}</p>
+<div className="text-right">
+  <p className="text-base font-bold text-foreground">${job.quoted_price}</p>
+  {job.additional_fee > 0 && (
+    <p className="text-xs text-muted-foreground mt-0.5">+ ${job.additional_fee} fee</p>
+  )}
+</div>
 )}
 {chatAvailable && (
 <button
@@ -118,9 +123,16 @@ onCardSaved={() => setCardSaved(true)}
 )}
 {/* For lawn mowing: show fixed price confirmation instead */}
 {!['completed', 'cancelled'].includes(job.status) && isLawnJob(job.service_name) && job.quoted_price && (
-  <div className="mt-3 border-t border-border pt-3 flex items-center gap-2 text-sm text-green-800 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
-    <CheckCircle2 size={14} className="text-green-600 flex-shrink-0" />
-    <span>Fixed price: <strong>${job.quoted_price}</strong> — charged after job completion.</span>
+  <div className="mt-3 border-t border-border pt-3 flex flex-col gap-1.5 text-sm text-green-800 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+    <div className="flex items-center gap-2">
+      <CheckCircle2 size={14} className="text-green-600 flex-shrink-0" />
+      <span>Fixed price: <strong>${job.quoted_price}</strong> — charged after job completion.</span>
+    </div>
+    {job.additional_fee > 0 && (
+      <div className="flex items-center gap-2 pl-5">
+        <span className="text-xs opacity-90">+ ${job.additional_fee} additional fee {job.additional_fee_reason && `(${job.additional_fee_reason})`}</span>
+      </div>
+    )}
   </div>
 )}
 

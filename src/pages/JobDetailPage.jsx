@@ -267,6 +267,9 @@ export default function JobDetailPage() {
                   <div className="text-right flex-shrink-0">
                     <p className="text-xl font-bold text-primary">${job.quoted_price}</p>
                     <p className="text-xs text-muted-foreground">Total</p>
+                    {job.additional_fee > 0 && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">+ ${job.additional_fee} fee</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -412,6 +415,12 @@ export default function JobDetailPage() {
                   <div className="flex justify-between items-center py-2 border-b border-border">
                     <span className="text-sm text-muted-foreground">Quoted Price</span>
                     <span className="text-sm font-bold text-foreground">${job.quoted_price}</span>
+                  </div>
+                )}
+                {job.additional_fee > 0 && (
+                  <div className="flex justify-between items-center py-2 border-b border-border">
+                    <span className="text-sm text-muted-foreground">Additional Fee {job.additional_fee_reason ? `(${job.additional_fee_reason})` : ''}</span>
+                    <span className="text-sm font-bold text-foreground">${job.additional_fee}</span>
                   </div>
                 )}
                 {job.final_price && (
@@ -624,6 +633,9 @@ export default function JobDetailPage() {
             <div className="bg-card border border-border rounded-xl p-4">
               <p className="text-xs font-bold text-foreground uppercase tracking-wide mb-3">Pricing</p>
               <DetailRow label="Quoted Price" value={job.quoted_price ? `$${job.quoted_price}` : null} />
+              {job.additional_fee > 0 && (
+                <DetailRow label={`Additional Fee ${job.additional_fee_reason ? `(${job.additional_fee_reason})` : ''}`} value={`$${job.additional_fee}`} />
+              )}
               <DetailRow label="Final Price" value={job.final_price ? `$${job.final_price}` : null} />
               <DetailRow label="Payment Method" value={job.payment_method === 'cash' ? '💵 Cash' : job.payment_method === 'stripe' ? '💳 Stripe' : null} />
               {job.cash_paid && (

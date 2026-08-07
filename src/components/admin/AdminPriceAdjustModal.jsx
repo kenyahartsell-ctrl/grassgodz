@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 export default function AdminPriceAdjustModal({ payment, job, onClose, onSaved }) {
   const currentAmount = payment?.amount ?? job?.final_price ?? job?.quoted_price ?? '';
   const [newPrice, setNewPrice] = useState(currentAmount !== '' ? Number(currentAmount).toFixed(2) : '');
+  const [additionalFee, setAdditionalFee] = useState(job?.additional_fee ? Number(job.additional_fee).toFixed(2) : '');
+  const [additionalFeeReason, setAdditionalFeeReason] = useState(job?.additional_fee_reason || '');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -13,17 +15,22 @@ export default function AdminPriceAdjustModal({ payment, job, onClose, onSaved }
     const price = parseFloat(newPrice);
     if (isNaN(price) || price < 0) { toast.error('Enter a valid price'); return; }
     if (!notes.trim()) { toast.error('Please add a note explaining the adjustment'); return; }
+    
+    const fee = additionalFee !== '' ? parseFloat(additionalFee) : null;
+    const finalCharged = fee ? price + fee : price;
 
     setSaving(true);
     try {
-      const platform_fee = parseFloat((price * 0.10).toFixed(2));
-      const provider_payout = parseFloat((price * 0.90).toFixed(2));
+      const platform_fee = parseFloat((finalCharged * 0.10).toFixed(2));
+      const provider_payout = parseFloat((finalCharged * 0.90).toFixed(2));
 
       // Update job pricing
       if (job) {
         await base44.entities.Job.update(job.id, {
           final_price: price,
           quoted_price: price,
+          additional_fee: fee,
+          additional_fee_reason: additionalFeeReason,
           platform_fee,
           provider_payout,
           provider_notes: notes,
@@ -33,7 +40,7 @@ export default function AdminPriceAdjustModal({ payment, job, onClose, onSaved }
       // Update payment record if exists
       if (payment) {
         await base44.entities.Payment.update(payment.id, {
-          amount: price,
+          amount: finalCharged,
           platform_fee,
           payout_amount: provider_payout,
         });
@@ -92,8 +99,8 @@ export default function AdminPriceAdjustModal({ payment, job, onClose, onSaved }
 
           {/* New price input */}
           <div>
-            <label className="text-xs font-semibold text-foreground block mb-1.5">New Final Price</label>
-            <div className="flex items-center border border-input rounded-xl overflow-hidden bg-background focus-within:ring-2 focus-within:ring-ring">
+            <label className="text-xs font-semibold text-foreground block mb-1.5">New Final Price (Base)</label>
+            <div className="flex items-center border border-input rounded-xl overflow-hidden bg-background focus-within:ring-2 focus-within:ring-ring mb-3">
               <span className="px-3 text-muted-foreground font-medium">$</span>
               <input
                 type="number"
@@ -106,10 +113,42 @@ export default function AdminPriceAdjustModal({ payment, job, onClose, onSaved }
                 autoFocus
               />
             </div>
+            
+            <label className="text-xs font-semibold text-foreground block mb-1.5">Additional Fee (Optional)</label>
+            <div className="flex gap-2">
+              <div className="flex items-center border border-input rounded-xl overflow-hidden bg-background focus-within:ring-2 focus-within:ring-ring w-1/3">
+                <span className="px-3 text-muted-foreground font-medium">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={additionalFee}
+                  onChange={e => setAdditionalFee(e.target.value)}
+                  placeholder="0.00"
+                  className="flex-1 py-2.5 pr-3 text-sm bg-transparent focus:outline-none"
+                />
+              </div>
+              <input
+                type="text"
+                placeholder="Reason (e.g. Gate fee)"
+                value={additionalFeeReason}
+                onChange={e => setAdditionalFeeReason(e.target.value)}
+                className="w-2/3 border border-input rounded-xl px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            
             {valid && newPrice && (
               <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
-                <span>Platform fee: <strong className="text-foreground">${(price * 0.10).toFixed(2)}</strong></span>
-                <span>Provider payout: <strong className="text-foreground">${(price * 0.90).toFixed(2)}</strong></span>
+                {(() => {
+                   const fee = additionalFee !== '' ? parseFloat(additionalFee) : 0;
+                   const finalCharged = price + (isNaN(fee) ? 0 : fee);
+                   return (
+                     <>
+                       <span>Platform fee: <strong className="text-foreground">${(finalCharged * 0.10).toFixed(2)}</strong></span>
+                       <span>Provider payout: <strong className="text-foreground">${(finalCharged * 0.90).toFixed(2)}</strong></span>
+                     </>
+                   );
+                })()}
               </div>
             )}
           </div>

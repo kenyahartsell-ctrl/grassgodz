@@ -5,6 +5,8 @@ import { DollarSign, X } from 'lucide-react';
 
 export default function AdminEditPriceModal({ job, onClose, onSaved }) {
   const [price, setPrice] = useState(job.quoted_price ?? '');
+  const [additionalFee, setAdditionalFee] = useState(job.additional_fee ?? '');
+  const [additionalFeeReason, setAdditionalFeeReason] = useState(job.additional_fee_reason ?? '');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -13,7 +15,12 @@ export default function AdminEditPriceModal({ job, onClose, onSaved }) {
       return;
     }
     setSaving(true);
-    const res = await base44.functions.invoke('adminUpdateJobPrice', { job_id: job.id, quoted_price: Number(price) });
+    const res = await base44.functions.invoke('adminUpdateJobPrice', { 
+      job_id: job.id, 
+      quoted_price: Number(price),
+      additional_fee: additionalFee !== '' ? Number(additionalFee) : null,
+      additional_fee_reason: additionalFeeReason
+    });
     setSaving(false);
     if (res.data?.error) {
       toast.error(res.data.error);
@@ -36,16 +43,39 @@ export default function AdminEditPriceModal({ job, onClose, onSaved }) {
         <p className="text-sm text-muted-foreground mb-4">
           Set the quoted price for <span className="font-semibold text-foreground">{job.service_name}</span> — {job.customer_name}
         </p>
-        <div className="relative">
+        <div className="relative mb-4">
           <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="number"
             min="0"
             step="0.01"
-            placeholder="0.00"
+            placeholder="Quoted Price (0.00)"
             value={price}
             onChange={e => setPrice(e.target.value)}
             className="w-full pl-8 pr-4 py-2.5 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-2">Additional Fee (Optional)</p>
+        <div className="flex gap-2">
+          <div className="relative w-1/3">
+            <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Fee"
+              value={additionalFee}
+              onChange={e => setAdditionalFee(e.target.value)}
+              className="w-full pl-8 pr-4 py-2.5 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <input
+            type="text"
+            placeholder="Reason (e.g., Gate fee)"
+            value={additionalFeeReason}
+            onChange={e => setAdditionalFeeReason(e.target.value)}
+            className="w-2/3 px-3 py-2.5 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <div className="flex gap-3 mt-5">

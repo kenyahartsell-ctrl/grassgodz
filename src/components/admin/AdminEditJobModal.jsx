@@ -30,6 +30,8 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
     provider_name: job.provider_name || '',
     provider_email: job.provider_email || '',
     final_price: job.final_price || job.quoted_price || '',
+    additional_fee: job.additional_fee || '',
+    additional_fee_reason: job.additional_fee_reason || '',
     customer_notes: job.customer_notes || '',
     provider_notes: job.provider_notes || '',
   });
@@ -59,6 +61,7 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
       await base44.entities.Job.update(job.id, {
         ...form,
         final_price: form.final_price ? Number(form.final_price) : null,
+        additional_fee: form.additional_fee ? Number(form.additional_fee) : null,
         completion_photos: photos,
       });
       toast.success('Job updated.');
@@ -102,6 +105,17 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
             <div>
               <label className="text-xs font-medium text-muted-foreground block mb-1">Amount ($)</label>
               <input type="number" step="0.01" value={form.final_price} onChange={e => set('final_price', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Additional Fee ($)</label>
+              <input type="number" step="0.01" value={form.additional_fee} onChange={e => set('additional_fee', e.target.value)} className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Fee Reason</label>
+              <input type="text" value={form.additional_fee_reason} onChange={e => set('additional_fee_reason', e.target.value)} placeholder="e.g. Gate fee" className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background" />
             </div>
           </div>
 

@@ -39,7 +39,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    const chargedPrice = final_price || job.quoted_price || job.final_price;
+    const basePrice = final_price || job.quoted_price || job.final_price || 0;
+    const additionalFee = job.additional_fee || 0;
+    const chargedPrice = basePrice + additionalFee;
     const providerPayout = chargedPrice * 0.90;
     const platformFee = chargedPrice * 0.10;
 
@@ -149,13 +151,25 @@ Deno.serve(async (req) => {
 
         // Create Invoice entity record
         try {
+          const lineItems = [
+            { description: job.service_name || 'Lawn Service', type: 'labor', quantity: 1, unit_price: basePrice, line_total: basePrice }
+          ];
+          if (additionalFee > 0) {
+            lineItems.push({
+              description: job.additional_fee_reason || 'Additional Fee',
+              type: 'labor',
+              quantity: 1,
+              unit_price: additionalFee,
+              line_total: additionalFee
+            });
+          }
           await base44.asServiceRole.entities.Invoice.create({
             job_id,
             customer_name: job.customer_name || '',
             customer_email: job.customer_email,
             service_address: job.address || '',
             service_description: job.service_name || 'Lawn Service',
-            line_items: [{ description: job.service_name || 'Lawn Service', type: 'labor', quantity: 1, unit_price: chargedPrice, line_total: chargedPrice }],
+            line_items: lineItems,
             labor_subtotal: chargedPrice,
             supplies_subtotal: 0,
             subtotal: chargedPrice,

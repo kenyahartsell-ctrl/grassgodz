@@ -116,6 +116,14 @@
     "provider_payout": {
       "type": "number"
     },
+    "additional_fee": {
+      "type": "number",
+      "description": "Additional fee added by admin"
+    },
+    "additional_fee_reason": {
+      "type": "string",
+      "description": "Reason for the additional fee"
+    },
     "completed_at": {
       "type": "string",
       "format": "date-time"

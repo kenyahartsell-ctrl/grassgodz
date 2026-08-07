@@ -8,12 +8,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { job_id, quoted_price } = await req.json();
+    const { job_id, quoted_price, additional_fee, additional_fee_reason } = await req.json();
     if (!job_id || quoted_price == null) {
       return Response.json({ error: 'job_id and quoted_price are required' }, { status: 400 });
     }
 
-    const updated = await base44.asServiceRole.entities.Job.update(job_id, { quoted_price: Number(quoted_price) });
+    const updated = await base44.asServiceRole.entities.Job.update(job_id, { 
+      quoted_price: Number(quoted_price),
+      additional_fee: additional_fee != null ? Number(additional_fee) : null,
+      additional_fee_reason: additional_fee_reason || null
+    });
     return Response.json({ job: updated });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

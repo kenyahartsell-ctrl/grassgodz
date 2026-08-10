@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
       customer: stripeCustomerId,
       collection_method: (stripeCustomerId && defaultPaymentMethodId) ? 'charge_automatically' : 'send_invoice',
       days_until_due: (stripeCustomerId && defaultPaymentMethodId) ? undefined : 0,
-      metadata: { invoice_id: invoice.id },
+      metadata: { invoice_id: invoice.id, job_id: invoice.job_id || '' },
       description: invoice.notes || undefined,
     });
 

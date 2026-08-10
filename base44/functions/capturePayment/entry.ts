@@ -222,16 +222,7 @@ Deno.serve(async (req) => {
         console.error('Post-completion payment flow error:', postPaymentErr.message);
       }
     } else if (stripeResult && job.customer_email) {
-      // Card was already captured — send simple receipt
-      try {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: job.customer_email,
-          subject: 'Your lawn service is complete! 🌿',
-          body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz service has been completed and <strong>$${chargedPrice.toFixed(2)}</strong> has been charged. Thank you for choosing Grassgodz!</p>`,
-        });
-      } catch (emailErr) {
-        console.error('Receipt email error:', emailErr.message);
-      }
+      // Receipt will be handled by sendPaymentReceipt automation on Payment update
     }
 
     return Response.json({

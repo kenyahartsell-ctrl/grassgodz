@@ -81,9 +81,14 @@ Deno.serve(async (req) => {
           ${inv.notes ? `<div style="margin-top:16px;background:#f9fafb;border-radius:8px;padding:12px;color:#374151;font-size:14px;"><strong>Notes:</strong> ${inv.notes}</div>` : ''}
 
           <div style="margin-top:24px;text-align:center;">
-            <a href="${inv.stripe_payment_link}" style="background:#166534;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block;">
-              Pay Now — ${formatCurrency(inv.total)}
-            </a>
+            ${inv.status === 'paid' 
+              ? `<a href="${inv.stripe_payment_link}" style="background:#f3f4f6;color:#374151;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block;border:1px solid #e5e7eb;">
+                  View Receipt (Paid)
+                 </a>`
+              : `<a href="${inv.stripe_payment_link}" style="background:#166534;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block;">
+                  Pay Now — ${formatCurrency(inv.total)}
+                 </a>`
+            }
           </div>
           <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px;">GrassGodz · Washington DC Lawn Care</p>
         </div>
@@ -93,7 +98,10 @@ Deno.serve(async (req) => {
     // Use Gmail connector to send to any external email address
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('gmail');
 
-    const subject = `Invoice from GrassGodz — ${formatCurrency(inv.total)} Due`;
+    const subject = inv.status === 'paid'
+      ? `Receipt: Invoice Paid — GrassGodz`
+      : `Invoice from GrassGodz — ${formatCurrency(inv.total)} Due`;
+      
     const to = inv.customer_email;
 
     // Build RFC 2822 email message
@@ -123,7 +131,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: `Gmail send failed: ${err}` }, { status: 500 });
     }
 
-    await base44.asServiceRole.entities.Invoice.update(inv.id, { status: 'sent' });
+    if (inv.status !== 'paid') {
+      await base44.asServiceRole.entities.Invoice.update(inv.id, { status: 'sent' });
+    }
 
     return Response.json({ success: true });
   } catch (error) {

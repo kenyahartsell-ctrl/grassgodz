@@ -112,6 +112,15 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case 'invoice.paid': {
+        const invoice = event.data.object;
+        const invoiceId = invoice.metadata?.invoice_id;
+        if (invoiceId) {
+          await base44.asServiceRole.entities.Invoice.update(invoiceId, { status: 'paid' });
+        }
+        break;
+      }
+
       case 'payment_intent.succeeded': {
         const pi = event.data.object;
         const jobId = pi.metadata?.job_id;

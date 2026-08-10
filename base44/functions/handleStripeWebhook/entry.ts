@@ -128,6 +128,25 @@ Deno.serve(async (req) => {
           const payments = await base44.asServiceRole.entities.Payment.filter({ job_id: jobId });
           if (payments[0]) {
             await base44.asServiceRole.entities.Payment.update(payments[0].id, { status: 'captured' });
+          } else {
+            // Find job to get fees
+            const jobs = await base44.asServiceRole.entities.Job.filter({ id: jobId });
+            const job = jobs[0];
+            if (job) {
+              const amount = pi.amount / 100;
+              const platformFee = amount * 0.10;
+              const payout = amount * 0.90;
+              await base44.asServiceRole.entities.Payment.create({
+                job_id: jobId,
+                customer_id: job.customer_id,
+                provider_id: job.provider_id,
+                stripe_payment_intent_id: pi.id,
+                amount,
+                platform_fee: platformFee,
+                payout_amount: payout,
+                status: 'captured',
+              });
+            }
           }
         }
         break;

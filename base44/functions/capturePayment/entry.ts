@@ -90,66 +90,25 @@ Deno.serve(async (req) => {
       try {
         const customerProfiles = await base44.asServiceRole.entities.CustomerProfile.filter({ user_email: job.customer_email });
         const customerProfile = customerProfiles[0];
-        const stripeCustomerId = customerProfile?.stripe_customer_id;
+        let stripeCustomerId = customerProfile?.stripe_customer_id;
         const defaultPaymentMethodId = customerProfile?.default_payment_method_id;
+
+        if (!stripeCustomerId) {
+          const newCustomer = await stripe.customers.create({
+            email: job.customer_email,
+            name: job.customer_name || undefined,
+          });
+          stripeCustomerId = newCustomer.id;
+          if (customerProfile) {
+            await base44.asServiceRole.entities.CustomerProfile.update(customerProfile.id, { stripe_customer_id: stripeCustomerId });
+          }
+        }
 
         let chargedViaCard = false;
         let paymentLink = null;
 
-        if (stripeCustomerId && defaultPaymentMethodId) {
-          // Attempt off-session charge
-          try {
-            const offSessionIntent = await stripe.paymentIntents.create({
-              amount: Math.round(chargedPrice * 100),
-              currency: 'usd',
-              customer: stripeCustomerId,
-              payment_method: defaultPaymentMethodId,
-              confirm: true,
-              off_session: true,
-              description: `Grassgodz — ${job.service_name || 'Lawn Service'} at ${job.address}`,
-            });
-            if (offSessionIntent.status === 'succeeded') {
-              chargedViaCard = true;
-              await base44.asServiceRole.entities.Payment.create({
-                job_id,
-                customer_id: customerProfile?.id || job.customer_id,
-                provider_id: providerProfile?.id || job.provider_id,
-                stripe_payment_intent_id: offSessionIntent.id,
-                amount: chargedPrice,
-                platform_fee: platformFee,
-                payout_amount: providerPayout,
-                status: 'captured',
-              });
-            }
-          } catch (offSessionErr) {
-            console.error('Off-session charge failed:', offSessionErr.message);
-          }
-        }
-
-        if (!chargedViaCard) {
-          // Create Stripe Checkout Session for payment link
-          try {
-            const session = await stripe.checkout.sessions.create({
-              mode: 'payment',
-              customer_email: job.customer_email,
-              line_items: [{
-                price_data: {
-                  currency: 'usd',
-                  product_data: { name: job.service_name || 'Lawn Service', description: job.address },
-                  unit_amount: Math.round(chargedPrice * 100),
-                },
-                quantity: 1,
-              }],
-              success_url: 'https://grassgodz.com/customer',
-              cancel_url: 'https://grassgodz.com/customer',
-            });
-            paymentLink = session.url;
-          } catch (sessionErr) {
-            console.error('Checkout session error:', sessionErr.message);
-          }
-        }
-
-        // Create Invoice entity record
+        // Create Invoice entity record first
+        let invoiceEntityId = null;
         try {
           const lineItems = [
             { description: job.service_name || 'Lawn Service', type: 'labor', quantity: 1, unit_price: basePrice, line_total: basePrice }
@@ -157,13 +116,10 @@ Deno.serve(async (req) => {
           if (additionalFee > 0) {
             lineItems.push({
               description: job.additional_fee_reason || 'Additional Fee',
-              type: 'labor',
-              quantity: 1,
-              unit_price: additionalFee,
-              line_total: additionalFee
+              type: 'labor', quantity: 1, unit_price: additionalFee, line_total: additionalFee
             });
           }
-          await base44.asServiceRole.entities.Invoice.create({
+          const newInvoice = await base44.asServiceRole.entities.Invoice.create({
             job_id,
             customer_name: job.customer_name || '',
             customer_email: job.customer_email,
@@ -176,37 +132,91 @@ Deno.serve(async (req) => {
             tax_rate: 0,
             tax_amount: 0,
             total: chargedPrice,
-            stripe_payment_link: paymentLink || null,
-            status: chargedViaCard ? 'paid' : (paymentLink ? 'sent' : 'draft'),
+            status: 'draft',
             created_by_admin: false,
           });
+          invoiceEntityId = newInvoice.id;
         } catch (invoiceErr) {
           console.error('Invoice create error:', invoiceErr.message);
         }
 
-        // Send email
-        try {
-          if (chargedViaCard) {
-            await base44.asServiceRole.integrations.Core.SendEmail({
-              to: job.customer_email,
-              subject: 'Payment received — Grassgodz service complete 🌿',
-              body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz lawn service has been completed and <strong>$${chargedPrice.toFixed(2)}</strong> has been charged to your card on file. Thank you for choosing Grassgodz!</p>`,
+        // Create Stripe Invoice
+        if (stripeCustomerId) {
+          try {
+            await stripe.invoiceItems.create({
+              customer: stripeCustomerId,
+              amount: Math.round(basePrice * 100),
+              currency: 'usd',
+              description: job.service_name || 'Lawn Service',
             });
-          } else if (paymentLink) {
-            await base44.asServiceRole.integrations.Core.SendEmail({
-              to: job.customer_email,
-              subject: 'Your lawn service is complete — invoice enclosed 🌿',
-              body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz lawn service at <strong>${job.address}</strong> has been completed.</p><p>Please pay your invoice of <strong>$${chargedPrice.toFixed(2)}</strong> using the button below:</p><p style="margin:24px 0;"><a href="${paymentLink}" style="background:#16a34a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Pay Now — $${chargedPrice.toFixed(2)}</a></p><p>Thank you for choosing Grassgodz!</p>`,
+            if (additionalFee > 0) {
+              await stripe.invoiceItems.create({
+                customer: stripeCustomerId,
+                amount: Math.round(additionalFee * 100),
+                currency: 'usd',
+                description: job.additional_fee_reason || 'Additional Fee',
+              });
+            }
+
+            const stripeInvoice = await stripe.invoices.create({
+              customer: stripeCustomerId,
+              collection_method: (stripeCustomerId && defaultPaymentMethodId) ? 'charge_automatically' : 'send_invoice',
+              days_until_due: (stripeCustomerId && defaultPaymentMethodId) ? undefined : 0,
+              metadata: { job_id, invoice_id: invoiceEntityId },
+              description: `Grassgodz — ${job.service_name || 'Lawn Service'} at ${job.address}`,
             });
-          } else {
-            await base44.asServiceRole.integrations.Core.SendEmail({
-              to: job.customer_email,
-              subject: 'Your lawn service is complete 🌿',
-              body: `<p>Hi ${job.customer_name || 'there'},</p><p>Your Grassgodz lawn service has been completed. Amount due: <strong>$${chargedPrice.toFixed(2)}</strong>. Our team will be in touch regarding payment.</p>`,
-            });
+
+            if (stripeCustomerId && defaultPaymentMethodId) {
+               try {
+                 const finalized = await stripe.invoices.pay(stripeInvoice.id);
+                 if (finalized.status === 'paid') {
+                   chargedViaCard = true;
+                   paymentLink = finalized.hosted_invoice_url;
+                   await base44.asServiceRole.entities.Payment.create({
+                     job_id,
+                     customer_id: customerProfile?.id || job.customer_id,
+                     provider_id: providerProfile?.id || job.provider_id,
+                     stripe_payment_intent_id: finalized.payment_intent,
+                     amount: chargedPrice,
+                     platform_fee: platformFee,
+                     payout_amount: providerPayout,
+                     status: 'captured',
+                   });
+                   if (invoiceEntityId) {
+                     await base44.asServiceRole.entities.Invoice.update(invoiceEntityId, {
+                       status: 'paid',
+                       stripe_payment_link: paymentLink,
+                     });
+                   }
+                 }
+               } catch (payErr) {
+                 console.error('Auto payment failed, falling back to send_invoice:', payErr.message);
+                 const updatedInvoice = await stripe.invoices.update(stripeInvoice.id, {
+                   collection_method: 'send_invoice',
+                   days_until_due: 0,
+                 });
+                 const finalized = await stripe.invoices.finalizeInvoice(updatedInvoice.id);
+                 paymentLink = finalized.hosted_invoice_url;
+                 if (invoiceEntityId) {
+                   await base44.asServiceRole.entities.Invoice.update(invoiceEntityId, {
+                     status: 'sent',
+                     stripe_payment_link: paymentLink,
+                   });
+                 }
+               }
+            } else {
+               const finalized = await stripe.invoices.finalizeInvoice(stripeInvoice.id);
+               paymentLink = finalized.hosted_invoice_url;
+               if (invoiceEntityId) {
+                 await base44.asServiceRole.entities.Invoice.update(invoiceEntityId, {
+                   status: 'sent',
+                   stripe_payment_link: paymentLink,
+                 });
+               }
+            }
+          } catch (stripeErr) {
+            console.error('Stripe invoice error:', stripeErr.message);
           }
-        } catch (emailErr) {
-          console.error('Email send error:', emailErr.message);
         }
       } catch (postPaymentErr) {
         console.error('Post-completion payment flow error:', postPaymentErr.message);

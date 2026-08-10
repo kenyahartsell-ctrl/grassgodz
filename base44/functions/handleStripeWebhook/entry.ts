@@ -105,7 +105,15 @@ Deno.serve(async (req) => {
 
       case 'payment_intent.succeeded': {
         const pi = event.data.object;
-        const jobId = pi.metadata?.job_id;
+        let jobId = pi.metadata?.job_id;
+        if (!jobId && pi.invoice) {
+          try {
+            const invoice = await stripe.invoices.retrieve(pi.invoice as string);
+            jobId = invoice.metadata?.job_id;
+          } catch (err) {
+            console.error('Failed to retrieve invoice for payment intent:', err.message);
+          }
+        }
         if (jobId) {
           const payments = await base44.asServiceRole.entities.Payment.filter({ job_id: jobId });
           if (payments[0]) {

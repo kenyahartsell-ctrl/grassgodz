@@ -89,25 +89,7 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Notify customer
-          if (job.customer_email) {
-            await base44.asServiceRole.integrations.Core.SendEmail({
-              to: job.customer_email,
-              subject: `Your ${job.service_name} job is confirmed!`,
-              body: `
-<p>Hi ${job.customer_name || 'there'},</p>
-<p>Your payment was received and your job is now <strong>confirmed</strong>.</p>
-<ul>
-  <li>Service: ${job.service_name}</li>
-  <li>Provider: ${job.provider_name}</li>
-  <li>Address: ${job.address}</li>
-  <li>Amount Paid: $${amount.toFixed(2)}</li>
-</ul>
-<p>We'll keep you updated as your job progresses.</p>
-<p>The Grassgodz Team</p>
-              `.trim(),
-            });
-          }
+          // Customer receipt is handled by sendPaymentReceipt automation on Payment entity
         }
         break;
       }

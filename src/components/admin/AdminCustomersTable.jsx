@@ -103,6 +103,29 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
     }
   };
 
+  const handleExportCSV = () => {
+    const headers = ['Name', 'Email', 'Phone', 'Service Address', 'City', 'State', 'Zip'];
+    const rows = customerList.map(p => [
+      p.name || '',
+      p.user_email || '',
+      p.phone || '',
+      p.service_address || p.street || '',
+      p.city || '',
+      p.state || '',
+      p.zip_code || ''
+    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(','));
+    const csv = [headers.join(','), ...rows].join('\\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'customers.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Customer CSV exported');
+  };
+
   return (
     <>
       {selectedCustomer && (
@@ -136,7 +159,10 @@ export default function AdminCustomersTable({ customers, jobs, quotes, onCustome
           }}
         />
       )}
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
+          Export CSV
+        </Button>
         <Button variant="outline" size="sm" onClick={() => setShowMergeModal(true)} className="gap-2">
           Merge Duplicate Accounts
         </Button>

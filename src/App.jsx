@@ -15,6 +15,8 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import OAuthConsent from '@/pages/OAuthConsent';
+import Connect from '@/pages/Connect';
 
 import JobDetailPage from '@/pages/JobDetailPage';
 import ProSchedulePage from '@/pages/ProSchedulePage';
@@ -82,6 +84,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/oauth/consent" element={<OAuthConsent />} />
 
       {/* Public / marketing routes */}
       <Route path="/" element={<HomePage />} />
@@ -90,6 +93,7 @@ const AuthenticatedApp = () => {
       <Route path="/how-it-works" element={<HowItWorksPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/book" element={<BookingPage />} />
+      <Route path="/connect" element={<Connect />} />
       <Route path="/signup/customer" element={<CustomerSignupPage />} />
       <Route path="/signin/customer" element={<CustomerSignInPage />} />
       <Route path="/signup" element={<CustomerSignupPage />} />

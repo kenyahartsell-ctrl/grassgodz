@@ -21,6 +21,7 @@ export default function PublicNav() {
           <Link to="/how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How it Works</Link>
           <Link to="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
           <Link to="/become-provider" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">For Pros</Link>
+          <Link to="/faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
         </div>
 
         {/* Right side */}
@@ -54,6 +55,7 @@ export default function PublicNav() {
           <Link to="/how-it-works" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">How it Works</Link>
           <Link to="/pricing" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">Pricing</Link>
           <Link to="/become-provider" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">For Pros</Link>
+          <Link to="/faq" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">FAQ</Link>
           <hr className="border-border" />
           <Link to="/signin/customer" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-foreground py-2">Sign In</Link>
           <Link

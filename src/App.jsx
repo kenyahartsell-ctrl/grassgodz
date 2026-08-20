@@ -53,6 +53,7 @@ import ArlingtonVAPage from '@/pages/city/ArlingtonVAPage';
 import AlexandriaVAPage from '@/pages/city/AlexandriaVAPage';
 import SilverSpringMDPage from '@/pages/city/SilverSpringMDPage';
 import BethesdaMDPage from '@/pages/city/BethesdaMDPage';
+import FAQPage from '@/pages/FAQPage';
 
 function CustomerApp() {
   return <CustomerPortal />;
@@ -92,6 +93,7 @@ const AuthenticatedApp = () => {
       <Route path="/become-provider" element={<BecomeProviderPage />} />
       <Route path="/how-it-works" element={<HowItWorksPage />} />
       <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/faq" element={<FAQPage />} />
       <Route path="/book" element={<BookingPage />} />
       <Route path="/connect" element={<Connect />} />
       <Route path="/signup/customer" element={<CustomerSignupPage />} />

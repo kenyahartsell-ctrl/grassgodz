@@ -29,7 +29,7 @@ export default function PublicFooter() {
             <ul className="space-y-2 text-sm text-white/60">
               <li><Link to="/how-it-works" className="hover:text-white transition-colors">How it Works</Link></li>
               <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-              <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+              <li><Link to="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
             </ul>
           </div>
 

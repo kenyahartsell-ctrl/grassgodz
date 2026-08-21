@@ -317,8 +317,26 @@ function CustomersNoCardTable({ customers, jobs }) {
 }
 
 // ─── Main Dashboard Panel ─────────────────────────────────────────────────────
-export default function AdminDashboardPanel({ jobs, customers, providers, quotes, payments, onNavigate, onAssignJob }) {
+export default function AdminDashboardPanel({ adminUser, jobs, customers, providers, quotes, payments, onNavigate, onAssignJob }) {
   const todayStr = getTodayStr();
+  const [notes, setNotes] = useState(adminUser?.dashboard_notes || '');
+  const [savingNotes, setSavingNotes] = useState(false);
+
+  useEffect(() => {
+    if (adminUser) setNotes(adminUser.dashboard_notes || '');
+  }, [adminUser]);
+
+  const saveNotes = async () => {
+    setSavingNotes(true);
+    try {
+      await base44.auth.updateMe({ dashboard_notes: notes });
+      toast.success('Notes saved');
+    } catch (e) {
+      toast.error('Failed to save notes');
+    } finally {
+      setSavingNotes(false);
+    }
+  };
 
   // Job pools
   const availableJobs = jobs.filter(j => ['requested', 'pending_payment', 'pending_deposit'].includes(j.status) && !j.provider_id && !j.provider_email);
@@ -400,6 +418,28 @@ export default function AdminDashboardPanel({ jobs, customers, providers, quotes
 
       {/* 4. Customers Without Card */}
       <CustomersNoCardTable customers={customers} jobs={jobs} />
+
+      {/* 5. Admin Notes */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-gray-900">My Notes & Reminders</h2>
+          <Button 
+            onClick={saveNotes} 
+            disabled={savingNotes || notes === adminUser?.dashboard_notes}
+            size="sm"
+            className="h-8"
+          >
+            {savingNotes ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+            Save Notes
+          </Button>
+        </div>
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="Leave yourself notes or reminders here..."
+          className="w-full h-32 p-3 border border-gray-200 rounded-lg text-sm resize-y focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        />
+      </div>
 
     </div>
   );

@@ -332,6 +332,7 @@ export default function AdminPortal() {
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
         {tab === 'dashboard' && (
           <AdminDashboardPanel
+            adminUser={adminUser}
             jobs={jobs}
             customers={customers}
             providers={providers}

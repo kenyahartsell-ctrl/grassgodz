@@ -148,10 +148,10 @@ if (!form.password) errs.password = 'Password is required';
     setLoading(true);
     try {
       // Verify the OTP code
-      await base44.auth.verifyOtp({ email: form.email, otpCode: otpCode.trim() });
+      const result = await base44.auth.verifyOtp({ email: form.email, otpCode: otpCode.trim() });
 
-      // Log in to get a session token
-      await base44.auth.loginViaEmailPassword(form.email, form.password);
+      // Set session token
+      await base44.auth.setToken(result.access_token);
 
       // Set role to 'user' (customer)
       await base44.auth.updateMe({ role: 'user' });

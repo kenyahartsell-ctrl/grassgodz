@@ -1,0 +1,37 @@
+{
+  "name": "Notify Customer - New Quote Received",
+  "description": "",
+  "trigger": {
+    "condition": "${ (.trigger.data.status == \"pending\") }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Quote"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "notify_customer_new_quote_received",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "notifyCustomerNewQuote",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "notifyCustomerNewQuote"
+  }
+}

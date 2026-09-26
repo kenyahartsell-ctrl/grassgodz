@@ -25,7 +25,7 @@ export default function AdminPhotoUploadModal({ job, onClose, onUploaded }) {
       for (const file of files) {
         const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
         const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: safeFile });
         uploadedPhotos.push({ url: file_url, uploaded_at: new Date().toISOString() });
       }
 

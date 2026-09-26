@@ -95,7 +95,7 @@ export default function JobPhotoUploadModal({ job, onClose, onComplete }) {
       // Ensure we pass a File object, as imageCompression sometimes returns a Blob without a proper name
       const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
       
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: safeFile });
       if (file_url) {
         setPhotos(p => ({ ...p, [key]: file_url }));
       } else {

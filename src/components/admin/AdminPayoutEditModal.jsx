@@ -37,7 +37,7 @@ export default function AdminPayoutEditModal({ job, onClose, onSaved }) {
     try {
       const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
       const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: safeFile });
       setPhotos(p => ({ ...p, [slot]: file_url }));
       toast.success(`${slot.replace(/_/g, ' ')} uploaded`);
     } catch {
@@ -53,7 +53,7 @@ export default function AdminPayoutEditModal({ job, onClose, onSaved }) {
     try {
       const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
       const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: safeFile });
       setPayoutPhotos(prev => [...prev, { url: file_url, uploaded_at: new Date().toISOString() }]);
       toast.success('Payout photo uploaded');
     } catch {

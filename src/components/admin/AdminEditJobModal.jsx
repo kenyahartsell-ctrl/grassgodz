@@ -46,7 +46,7 @@ export default function AdminEditJobModal({ job, onClose, onSaved }) {
     try {
       const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
       const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: safeFile });
       setPhotos(p => ({ ...p, [slotKey]: file_url }));
     } catch {
       toast.error('Failed to upload photo.');

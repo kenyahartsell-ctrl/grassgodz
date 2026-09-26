@@ -53,7 +53,7 @@ export default function AdminProviderPayoutModal({ job, onClose, onSaved }) {
       if (receiptFile) {
         const compressedFile = await imageCompression(receiptFile, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
         const safeFile = new File([compressedFile], receiptFile.name, { type: receiptFile.type || 'image/jpeg' });
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: safeFile });
         receiptData = { url: file_url, uploaded_at: new Date().toISOString() };
       }
 

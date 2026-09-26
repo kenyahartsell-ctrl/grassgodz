@@ -18,7 +18,7 @@ export default function YardPhotoUpload({ photos, onChange }) {
       try {
         const compressedFile = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
         const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: safeFile });
         uploaded.push(file_url);
       } catch (err) {
         console.error('Photo upload failed:', err);

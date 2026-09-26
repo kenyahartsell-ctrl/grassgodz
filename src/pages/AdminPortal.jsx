@@ -88,7 +88,7 @@ export default function AdminPortal() {
     if (!file || !file.type.startsWith('image/')) return;
     setAdminPhotoUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
       await base44.auth.updateMe({ profile_image_url: file_url });
       setAdminPhotoUrl(file_url);
       toast.success('Profile photo updated!');

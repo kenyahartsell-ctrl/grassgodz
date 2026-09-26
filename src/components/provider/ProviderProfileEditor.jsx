@@ -81,7 +81,7 @@ export default function ProviderProfileEditor({ user, profile, avgRating, review
         useWebWorker: true,
       });
       const safeFile = new File([compressedFile], file.name, { type: file.type || 'image/jpeg' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: safeFile });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file: safeFile });
       setPhotoUrl(file_url);
       if (profile?.id) {
         await base44.functions.invoke('updateMyProviderProfile', { profile_id: profile.id, profile_image_url: file_url });
